@@ -1,0 +1,422 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   KBG — SHEET 01 / THE STRAND
+   Shared primitives. Loaded on every route via App.jsx.
+   Tokens are declared in index.css ONLY — this file consumes, never declares.
+   No :root, no html, no body, no * in here.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── LAYOUT ──────────────────────────────────────────────────────────────── */
+
+#root {
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+main {
+  position: relative;
+  z-index: var(--z-content);
+  padding-top: var(--nav-h);
+  min-height: calc(100vh - var(--nav-h));
+}
+
+/* The content column. Hangs off the spine: inset by --gutter. */
+.shell {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* A vertical band of content. Rhythm only — carries no ink. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.section {
+  padding-block: var(--s-8);
+}
+
+@media (min-width: 1024px) {
+  .section { padding-block: var(--s-9); }
+}
+
+/* Screen-reader-only, for labels that must exist but not show. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── TYPE PRIMITIVES ─────────────────────────────────────────────────────── */
+
+/* The mono drafting label. Always UPPER, always --tr-label. */
+.label {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-0);
+  line-height: var(--lh-3);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--cyan-label);
+  margin: 0;
+  max-width: none;
+}
+
+/* LIVE label — the strand still moving. One per screen, ideally. */
+.label--live { color: var(--blue-lit); }
+
+/* Meta / date field. Renders raw strings verbatim — never reformatted. */
+.meta {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-1);
+  line-height: var(--lh-3);
+  letter-spacing: var(--tr-label);
+  color: var(--paper-2);
+  max-width: none;
+}
+
+.lead {
+  font-weight: 400;
+  font-size: var(--fs-3);
+  line-height: var(--lh-4);
+  letter-spacing: var(--tr-body);
+  color: var(--paper-2);
+  max-width: var(--measure);
+}
+
+.caption {
+  font-weight: 400;
+  font-size: var(--fs-1);
+  line-height: var(--lh-4);
+  color: var(--paper-2);
+  max-width: var(--measure);
+}
+
+/* ── THE RULE — engineered hairline ───────────────────────────────────────
+   Was a drawn helix tile. The helix is now rendered in 3D by the shader, so
+   the rules go back to what a rule should be on an engineering sheet: a fine
+   cyan→deep line that fades out to the right. Still broken at 71% (the shield
+   gap), still brightens + closes on hover — the clasp survives, the SVG does
+   not. Height is small so the rule never reserves the 24px a tile needed. */
+.rule {
+  height: 2px;
+  background-image: linear-gradient(
+    90deg,
+    var(--cyan-line) 0%,
+    var(--cyan-line) 38%,
+    var(--grid-line) 100%
+  );
+  background-repeat: no-repeat;
+}
+
+.rule--sm { height: 1px; }
+
+.rule--live {
+  background-image: linear-gradient(
+    90deg,
+    var(--blue-lit) 0%,
+    var(--cyan) 40%,
+    var(--grid-line) 100%
+  );
+}
+
+/* Broken rule — THE SHIELD. Two segments; the gap at 71% is real. */
+.rule--broken {
+  position: relative;
+  height: 2px;
+  background: none;
+}
+
+.rule--broken::before,
+.rule--broken::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background-image: linear-gradient(
+    90deg,
+    var(--cyan-line) 0%,
+    var(--cyan-line) 38%,
+    var(--grid-line) 100%
+  );
+  transition:
+    transform var(--dur-2) var(--ease),
+    background-image var(--dur-1) var(--ease),
+    opacity var(--dur-2) var(--ease);
+}
+
+.rule--broken::before { left: 0; width: var(--break-start); }
+.rule--broken::after  { left: calc(var(--break-start) + var(--break-size)); right: 0; }
+
+/* THE CLASP — the signature interaction. The right segment slides left by
+   exactly the gap; the shield closes; the rule goes live. Nothing else moves. */
+.entry:hover .rule--broken::after,
+.entry:focus-within .rule--broken::after {
+  transform: translateX(calc(-1 * var(--break-size)));
+}
+
+.entry:hover .rule--broken::before,
+.entry:hover .rule--broken::after,
+.entry:focus-within .rule--broken::before,
+.entry:focus-within .rule--broken::after {
+  background-image: linear-gradient(
+    90deg,
+    var(--blue-lit) 0%,
+    var(--cyan) 40%,
+    var(--grid-line) 100%
+  );
+}
+
+/* ── SECTION HEADING ─────────────────────────────────────────────────────── */
+
+.section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  margin-bottom: var(--s-6);
+}
+
+/* ── ENTRY — the one card. Flat, opaque, square, left-ruled. ─────────────── */
+
+.entry {
+  background: var(--sheet-2);
+  border: 0;
+  border-left: var(--rule-mid);
+  border-radius: var(--radius);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+/* The top rail. Sits inside the entry, above the eyebrow. */
+.entry > .rule--broken { margin-bottom: var(--s-1); }
+
+.entry h3,
+.entry h4 { max-width: var(--measure-h); }
+
+.entry p { max-width: var(--measure); }
+
+/* An entry whose whole surface is a link keeps prose-link ink off the heading. */
+.entry a { color: var(--cyan); }
+
+/* Live entry — upcoming events. The rule reads live: cyan→blue-lit. */
+.entry--live { border-left-color: var(--blue-lit); }
+
+.entry--live > .rule--broken::before,
+.entry--live > .rule--broken::after {
+  background-image: linear-gradient(90deg, var(--blue-lit) 0%, var(--cyan) 40%, var(--grid-line) 100%);
+}
+
+/* Grid of entries. Cards stretch; heights are never fixed; bios never clamped. */
+.entry-grid {
+  display: grid;
+  gap: var(--s-4);
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  align-items: stretch;
+}
+
+/* Single-column stack of entries — Events, Projects. */
+.entry-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+/* Pins a links row / footer row to the bottom of a stretched entry. */
+.entry-foot { margin-top: auto; }
+
+/* ── TAG ─────────────────────────────────────────────────────────────────── */
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-0);
+  line-height: var(--lh-3);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--cyan-label);
+  background: none;
+  border: var(--rule-mid);
+  border-radius: var(--radius);
+  padding: var(--s-1) var(--s-2);
+  max-width: none;
+}
+
+/* ── BUTTONS ─────────────────────────────────────────────────────────────── */
+
+/* --white on --deep = 6.34:1 — the ONLY text on a fill.
+   A --cyan label on --deep is 4.02:1 and is FORBIDDEN. */
+/* min-height 44px: --fs-1 on a line-height of 1 plus --s-3 of padding is 38px,
+   which made the site's primary CTA an under-size tap target on the phones this
+   is built for. inline-flex + centring, so the 44px is real height rather than
+   padding that would grow the button's optical weight. */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  background: var(--deep);
+  color: var(--white);
+  font: 700 var(--fs-1)/1 var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  padding: var(--s-3) var(--s-6);
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: box-shadow var(--dur-1) var(--ease);
+}
+
+.btn-primary:hover { box-shadow: var(--ring-cyan); }   /* zero blur = hard edge */
+.btn-primary:active { transform: translateY(1px); }
+
+.btn-ghost {
+  display: inline-flex;      /* 44px tap target — see .btn-primary above */
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  background: transparent;
+  color: var(--cyan);
+  font: 700 var(--fs-1)/1 var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  padding: var(--s-3) var(--s-6);
+  border: var(--rule-mid);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color var(--dur-1) var(--ease);
+}
+
+.btn-ghost:hover { border-color: var(--cyan); }
+.btn-ghost:active { transform: translateY(1px); }
+
+.btn-primary[disabled],
+.btn-ghost[disabled] {
+  color: var(--paper-2);
+  border-color: var(--grid-line);
+  cursor: not-allowed;
+}
+
+.btn-primary[disabled] { background: var(--sheet-3); }
+
+/* ── FORMS — none exist today. Binding for any that are added. ───────────── */
+
+.field {
+  background: var(--sheet-2);
+  border: var(--rule-mid);
+  border-radius: var(--radius);
+  color: var(--paper);
+  font: 400 var(--fs-2) var(--font-sans);
+  padding: var(--s-3);
+}
+
+.field:focus { border-color: var(--blue-lit); }
+
+/* There is no error red. Red is outside the hue jail. Invalid is LIVE. */
+[aria-invalid="true"] { border-color: var(--blue-lit); }
+
+/* ── MOTION — the sheet is plotted, not faded in. No opacity reveals. ────── */
+
+/* THE RESTING STATES ARE ARMED BY JS, NOT DECLARED AT REST.
+
+   `[data-draw-ready]` is stamped on the page root by useDrawOnScroll, in a
+   layout effect, before paint. Undrawn content therefore exists ONLY while the
+   observer that draws it is already wired up and running.
+
+   This is the safety net, and it is a real one: if the hook never runs — JS
+   error, no ref, an exception inside the observer — the attribute never lands,
+   these two rules never apply, and every band and row renders at its final
+   state. Content cannot be stranded behind a reveal that never fires.
+
+   It used to be the @media (prefers-reduced-motion) block below that unclipped
+   the bands, which meant that block was load-bearing for everyone: default
+   users got a permanently clipped (invisible) page and reduced-motion users
+   were the only ones who could read the site. The accessibility fallback was
+   the only working code path. It is now what it says it is — a preference. */
+
+/* Move 2 — SECTION REVEAL. Bands only. Never 15 rows at once. */
+.band { transition: clip-path var(--dur-3) var(--ease); }
+
+[data-draw-ready] .band { clip-path: inset(0 100% 0 0); }
+[data-draw-ready] .band.is-drawn { clip-path: inset(0); }
+
+/* Move 3 — RULE / ROW REVEAL. Staggered via --i on nth-child. */
+.row {
+  transform-origin: left;
+  transition: transform var(--dur-2) var(--ease);
+  transition-delay: calc(var(--i, 0) * 60ms);
+}
+
+[data-draw-ready] .row { transform: scaleX(0); }
+[data-draw-ready] .row.is-drawn { transform: scaleX(1); }
+
+/* Reduced motion: every move here is a final state minus a transform, so the
+   final state IS the reduced-motion state. Nothing is hidden behind a fade.
+   Wins on specificity (0,3,0 + !important would be needed otherwise, and there
+   are no !important in this file) — hence the [data-draw-ready] prefix. */
+@media (prefers-reduced-motion: reduce) {
+  [data-draw-ready] .band,
+  [data-draw-ready] .band.is-drawn { clip-path: none; }
+  [data-draw-ready] .row,
+  [data-draw-ready] .row.is-drawn { transform: none; }
+}
+
+/* ── LOADING — a rule drawn in, not a spinner. ───────────────────────────── */
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  padding: var(--s-8) var(--gutter);
+}
+
+.loading__strand {
+  width: 96px;
+  height: 2px;
+  background-image: linear-gradient(90deg, var(--blue-lit), var(--cyan));
+  transform-origin: left;
+  animation: strand-draw var(--dur-3) var(--ease) forwards;
+}
+
+@keyframes strand-draw {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+/* Reduced motion: render the final state. That is the point of drawing. */
+@media (prefers-reduced-motion: reduce) {
+  .loading__strand { transform: scaleX(1); }
+}
+
+/* ── ERROR — SIGNAL LOST. No page may render a blank sheet forever. ──────── */
+
+.sheet-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-4);
+  background: var(--sheet-2);
+  border-left: var(--rule-mid);
+  border-left-color: var(--blue-lit);
+  padding: var(--s-6);
+  margin: var(--s-8) 0;
+}

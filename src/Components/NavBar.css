@@ -1,0 +1,260 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   KBG — SHEET 01 / THE STRAND · NAV
+   Consumes tokens from index.css and primitives from App.css. Declares neither.
+   No :root, no html, no body, no *. Mobile-first; 640 / 1024 only.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── THE BAR ─────────────────────────────────────────────────────────────── */
+
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-h);
+  background: var(--sheet-3);          /* FLAT. Opaque. No blur, no gradient. */
+  /* Above the scrim, so the bar and its toggle stay live while the sheet blacks
+     out. The drawer is a child, so it rides this stacking context. */
+  z-index: var(--z-menu);
+}
+
+.nav__inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+/* The bottom edge. .rule--broken restates `height` after .rule--sm in App.css at
+   equal specificity, so the small height loses; the extra class wins it back. */
+.nav__edge.rule.rule--broken.rule--sm {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--strand-h-s) / -2);   /* straddle the edge */
+  height: var(--strand-h-s);
+}
+
+/* ── BRAND ───────────────────────────────────────────────────────────────── */
+
+.nav__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: none;
+  min-width: 0;
+  min-height: 44px;                    /* tap target — the shield alone is 40 */
+  text-decoration: none;               /* not prose — the strand carries state */
+}
+
+/* THE SHIELD — cropped out of the full logo with a wrapper.
+   public/vite.svg is the KBG logo and is never renamed, moved or edited.
+
+   Measured off the vite.svg ink bbox (verified by parsing the path data):
+     viewBox   5120
+     shield    x 1070 → 4119   y 120 → 3810   (w 3049, h 3690)
+     wordmark  y 4440 → 5007   — deliberately cropped OUT: at 40px the "KBG"
+               inside the SVG is illegible mush and the helix rungs alias.
+   Everything below derives from --mark-h and those five constants, so a
+   re-export with different padding means re-measuring the constants only.
+   If the club re-exports the logo, re-measure: the crop fails silently. */
+.nav__mark {
+  --mark-h: 40px;
+  width: calc(var(--mark-h) * 3049 / 3690);   /* 33.05px at 40 */
+  height: var(--mark-h);
+  overflow: hidden;
+  flex: none;
+  display: block;
+}
+
+.nav__mark img {
+  /* index.css sets `img { max-width: 100%; height: auto }` — both would clamp
+     the oversized crop back down to the wrapper and destroy it. Undo locally. */
+  max-width: none;
+  width: calc(var(--mark-h) * 5120 / 3690);            /* 55.50px at 40 */
+  height: calc(var(--mark-h) * 5120 / 3690);
+  margin-left: calc(var(--mark-h) * -1070 / 3690);     /* -11.60px at 40 */
+  margin-top: calc(var(--mark-h) * -120 / 3690);       /*  -1.30px at 40 */
+  display: block;
+}
+
+.nav__brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-1);
+  min-width: 0;
+}
+
+/* Live text from data.brand — was fetched and thrown away. Now selectable. */
+.nav__brand-name {
+  font-weight: 900;
+  font-size: var(--fs-3);
+  line-height: var(--lh-2);
+  letter-spacing: var(--tr-head);
+  color: var(--cyan);
+}
+
+/* data.tagline drops to line 2. The cramped centred composition is gone.
+   Compound selector on purpose: this element carries `.label` too, and both
+   .label and .nav__brand-tagline are (0,1,0) — which one won would depend on
+   whether App.css or NavBar.css sorted last in the bundle. Pinned, not lucky. */
+.nav__brand-tagline.label {
+  font-size: var(--fs-00);
+  color: var(--paper-2);
+  display: none;                       /* too wide to sit beside the toggle */
+  white-space: nowrap;
+}
+
+/* ── TOGGLE — 3 × 2px bars, square caps. Open → X. ───────────────────────── */
+
+.nav__toggle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  flex: none;
+  width: 44px;                         /* tap target */
+  height: 44px;
+  padding: 0;
+  align-items: flex-end;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.nav__bar {
+  width: 24px;
+  height: 2px;
+  background: var(--cyan);
+  border-radius: var(--radius);        /* square caps */
+  transition: transform var(--dur-1) var(--ease),
+              background-color var(--dur-1) var(--ease);
+}
+
+.nav__toggle.is-open .nav__bar { background: var(--blue-lit); }
+
+.nav__toggle.is-open .nav__bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav__toggle.is-open .nav__bar:nth-child(2) { transform: scaleX(0); }
+.nav__toggle.is-open .nav__bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── LINKS — drawer by default; a row at 1024. ───────────────────────────── */
+
+.nav__links {
+  position: fixed;
+  top: var(--nav-h);
+  right: 0;
+  bottom: 0;
+  width: min(320px, 85vw);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: var(--s-4) var(--s-5) var(--s-8);
+  background: var(--sheet-3);          /* flat, opaque, square */
+  border-left: var(--rule-mid);
+  overflow-y: auto;
+  transform: translateX(100%);
+  visibility: hidden;                  /* closed drawer is not a keyboard trap */
+  transition: transform var(--dur-2) var(--ease),
+              visibility var(--dur-2) var(--ease);
+}
+
+.nav__links.is-open {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+/* Compound with .label for the same cascade reason as the tagline: the resting
+   colour must beat .label's --cyan-label regardless of stylesheet order.
+   :hover and .is-active below are already (0,2,0) and come later, so they win. */
+.nav__link.label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 44px;                    /* tap target */
+  padding: var(--s-3) 0;
+  color: var(--paper-2);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--dur-1) var(--ease);
+}
+
+.nav__link:hover { color: var(--cyan); }
+
+/* Active = LIVE. --blue-lit text + an 8px live strand, drawn in with scaleX.
+   Exactly one active route per screen: mid-blue stays rare and stays meaningful. */
+.nav__link.is-active { color: var(--blue-lit); }
+
+.nav__link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  /* A live rule — cyan→blue-lit, matching .rule--live. The helix moved to 3D. */
+  background-image: linear-gradient(90deg, var(--blue-lit), var(--cyan));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-2) var(--ease);
+}
+
+.nav__link.is-active::after { transform: scaleX(1); }
+
+/* ── SCRIM — --void, flat and opaque. The sheet blacks out; the bar stands. ─ */
+
+.nav__scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--void);
+  z-index: var(--z-nav);
+  visibility: hidden;
+  transform: translateX(100%);         /* no opacity at rest — slide it out */
+  transition: transform var(--dur-2) var(--ease),
+              visibility var(--dur-2) var(--ease);
+}
+
+.nav__scrim.is-open {
+  visibility: visible;
+  transform: translateX(0);
+}
+
+/* ── 640 — the tagline earns its line ────────────────────────────────────── */
+
+@media (min-width: 640px) {
+  .nav__mark { --mark-h: 44px; }
+  /* Compound to match the (0,2,0) base rule — a media query adds no specificity,
+     so a bare .nav__brand-tagline here would silently lose to display:none. */
+  .nav__brand-tagline.label { display: block; }
+}
+
+/* ── 1024 — the drawer becomes the row ───────────────────────────────────── */
+
+@media (min-width: 1024px) {
+  .nav__toggle { display: none; }
+  .nav__scrim { display: none; }
+
+  .nav__links {
+    position: static;
+    width: auto;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--s-6);
+    padding: 0;
+    background: none;
+    border-left: 0;
+    overflow: visible;
+    transform: none;
+    visibility: visible;
+  }
+
+  /* Must stay compound to outrank the (0,2,0) resting rule above. */
+  .nav__link.label {
+    min-height: 0;
+    padding: var(--s-4) 0;
+  }
+}

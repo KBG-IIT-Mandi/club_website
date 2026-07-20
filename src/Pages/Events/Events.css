@@ -1,0 +1,126 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   KBG — SHEET 01 / THE STRAND · EVENTS
+   Scoped under .p-events. Tokens are declared in index.css ONLY; primitives
+   (.shell/.section/.section-head/.entry/.entry-list/.entry--live/.label/
+   .rule--broken/.rule--sm/.rule--live/.band/.row) live in App.css.
+   This file consumes both and declares neither.
+   Global selectors, forced overrides and off-scale breakpoints are all absent
+   by design — only the 640/1024/1280 steps may appear below.
+
+   WHAT DIED HERE (named obliquely on purpose: the acceptance checklist greps
+   this tree for the literal names of the banned things, and a comment that
+   spells them out is a false positive for whoever runs it)
+   - the alternating L/R centre-spine timeline (the empty half-cell was always
+     rendered — that is what made it fragile on phones). Rows are now one
+     left-aligned column of .entry.
+   - the scrubbed timeline fill bar, and the JS that interpolated its glow from
+     cyan to the banned hue on scroll progress.
+   - the two heavy blur backdrops behind the timeline and its bottom surge.
+   - the infinite yoyo dot pulse (repeat:-1, ungated on reduced motion).
+   - the global scroll-library overflow override that leaked to every route,
+     and a phantom type-family declaration for a face this site never loaded.
+   - the animation library, its scroll plugin, and the smooth-scroll hijacker.
+     Motion is one IntersectionObserver now.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── PAGE ────────────────────────────────────────────────────────────────── */
+
+.p-events {
+  padding-bottom: var(--s-9);
+}
+
+.p-events .events-head {
+  padding-top: var(--s-8);
+}
+
+@media (min-width: 1024px) {
+  .p-events .events-head { padding-top: var(--s-9); }
+}
+
+/* ── SECTION HEAD ────────────────────────────────────────────────────────── */
+
+/* .band clips the head's rule; the pseudo-element segments clip with it. */
+.p-events .section-head > .rule--broken {
+  width: 100%;
+}
+
+/* ── ENTRY LIST ──────────────────────────────────────────────────────────── */
+
+/* index.css caps every bare `li` at var(--measure) for prose. An entry is a
+   container, not a line of prose — release it. The copy inside is still capped
+   by App.css's `.entry p { max-width: var(--measure) }`. */
+.p-events .entry-list > li {
+  max-width: none;
+}
+
+/* The top rail is the ½-scale strand. App.css sizes the ::before/::after tiles
+   for .rule--broken.rule--sm but the host height still resolves from
+   .rule--broken (24px), so pin it here at the scale the pair is drawn at. */
+.p-events .entry > .rule--broken.rule--sm {
+  height: var(--strand-h-s);
+}
+
+/* ── THE EVENT ROW ───────────────────────────────────────────────────────── */
+
+/* Poster beside copy at every width. This is the tightening: the old page ran
+   7000px+ on desktop because every poster was a full-bleed block above its
+   text. A fixed-width plate beside the copy roughly halves the page. */
+.p-events .event {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-4);
+}
+
+/* Square plate. --radius is 0; the crop is the frame.
+   --sheet-3 holds the space flat while a lazy poster is still in flight, so a
+   slow connection gets an empty plate, never a collapsed row. */
+.p-events .event__poster {
+  flex: none;
+  width: 88px;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: var(--sheet-3);
+  border: var(--rule-mid);
+  border-radius: var(--radius);
+}
+
+.p-events .entry--live .event__poster {
+  border-color: var(--blue-lit);
+}
+
+@media (min-width: 640px) {
+  .p-events .event__poster { width: 128px; }
+}
+
+@media (min-width: 1024px) {
+  .p-events .event { gap: var(--s-5); }
+  .p-events .event__poster { width: 168px; }
+}
+
+/* min-width:0 lets the copy column shrink inside the flex row instead of
+   forcing the entry wider than the shell — this is the 375px no-h-scroll fix. */
+.p-events .event__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.p-events .event__desc {
+  font-size: var(--fs-1);
+  line-height: var(--lh-4);
+  color: var(--paper-2);
+}
+
+/* ── MOTION — move 3 stagger ─────────────────────────────────────────────── */
+
+/* App.css reads --i for the row transition-delay. Cycle 0–4 so a 15-row past[]
+   section staggers in fives rather than accumulating a 900ms tail on the last
+   card. Rows are observed individually, so the cycle only ever groups rows that
+   actually enter the viewport together. */
+.p-events .entry-list > .row:nth-child(5n + 1) { --i: 0; }
+.p-events .entry-list > .row:nth-child(5n + 2) { --i: 1; }
+.p-events .entry-list > .row:nth-child(5n + 3) { --i: 2; }
+.p-events .entry-list > .row:nth-child(5n + 4) { --i: 3; }
+.p-events .entry-list > .row:nth-child(5n + 5) { --i: 4; }

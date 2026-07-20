@@ -1,0 +1,98 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   KBG — SHEET 01 / THE STRAND — TEAM
+   The component schedule: one row per member, square plate, drafting labels.
+   Scoped under .p-team. Declares no tokens, no typeface, no global selector.
+   Layout, cards, rules, tags and reveals all come from App.css primitives —
+   this file only adds what a roster of photographed people needs.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── CARD RAIL HEIGHT — local correction of a shared-primitive bug ───────────
+   In App.css, `.rule--sm { height: 12px }` (l.114) is followed by
+   `.rule--broken { height: 24px }` (l.123). Equal specificity, so source order
+   hands the win to --broken: a `.rule--broken.rule--sm` box renders 24px tall
+   while its ::before/::after tile at 12px, and background-repeat: repeat-x
+   does not tile vertically — leaving 12px of dead space under every card rail.
+   Two classes here out-specify one and restore the half-scale rail. This also
+   affects the nav underline and the footer top edge; the real fix belongs in
+   App.css, which this page does not own. Remove this block once that lands. */
+
+.p-team .rule--broken.rule--sm {
+  height: var(--strand-h-s);
+}
+
+/* ── THE PLATE ───────────────────────────────────────────────────────────────
+   The frame owns the box, not the image. It is square, it reserves its space
+   before the network answers, and it survives a 404 — so a dead remote photo
+   recolours one cell and never reflows the grid. The fallback is the grid
+   ground plus a faint corner-to-corner gradient: it reads as an unexposed
+   plate, not a broken-image glyph. */
+
+.p-team .team-photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: var(--rule-mid);
+  border-radius: var(--radius);
+  background-color: var(--sheet-3);
+  background-image: linear-gradient(135deg, var(--sheet-2) 0%, var(--sheet-3) 55%, rgba(30, 140, 137, 0.14) 100%);
+}
+
+.p-team .team-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+
+/* ── COPY ────────────────────────────────────────────────────────────────────
+   role -> .label (App.css), name -> bare h3 (index.css). Both already correct.
+   Only the bio needs a rule: it ranges 22–268 chars across the roster, so the
+   card must stretch to it. No fixed height, no line-clamp — clamping hides
+   content, and half a sentence is not a design. */
+
+.p-team .team-bio {
+  font-size: var(--fs-1);
+  line-height: var(--lh-4);
+  color: var(--paper-2);
+}
+
+/* ── LINKS ───────────────────────────────────────────────────────────────────
+   Pinned to the bottom of a stretched card by .entry-foot, so every row of
+   links sits on one baseline no matter how long the bio above it runs.
+   The key from the socials object IS the label — generic, so instagram (and
+   anything the club adds later) renders without a code change. */
+
+.p-team .team-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  padding-top: var(--s-2);
+}
+
+/* 44px minimum tap target. A bare .label line box is ~17px tall — on a site
+   whose stated audience is phones, that made every social link on this page a
+   40%-size target. The height comes from min-height + centring rather than
+   padding-block so the links still sit on one baseline in a flex row, and
+   negative margin is NOT used to claw the space back: the gap is the point. */
+.p-team .team-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--cyan-label);
+  text-decoration-color: var(--cyan-line);
+  transition: color var(--dur-1) var(--ease),
+              text-decoration-color var(--dur-1) var(--ease);
+}
+
+.p-team .team-link:hover {
+  color: var(--cyan);
+  text-decoration-color: var(--cyan);
+}
+
+/* ── GRID ────────────────────────────────────────────────────────────────────
+   .entry-grid (App.css) owns the columns: auto-fit minmax(15rem, 1fr), items
+   stretched. That collapses to a single column on a phone on its own, so this
+   page needs no breakpoint of its own and declares none. */

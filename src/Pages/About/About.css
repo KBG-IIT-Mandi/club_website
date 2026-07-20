@@ -1,0 +1,138 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   KBG — SHEET 01 / THE STRAND — /about
+   Scoped under .p-about. Declares no tokens, no global selectors, no fonts.
+   Everything here composes primitives from index.css + App.css.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.p-about {
+  position: relative;
+  z-index: var(--z-content);
+  padding-bottom: var(--s-9);
+}
+
+/* ── HERO ────────────────────────────────────────────────────────────────────
+   data.title is the page h1 — it takes 900 / --fs-5 / UPPER / --cyan from the
+   base rule in index.css. data.mission is the lead: the club's proposition,
+   stated once, at reading scale. No pill, no gradient, no invented descriptor. */
+
+.p-about__hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding-top: var(--s-7);
+}
+
+/* ── THE ORIGIN STORY ────────────────────────────────────────────────────────
+   The founding copy is the best writing on the site, so it is the only prose
+   set at --fs-3 in --paper: lead scale, primary ink. It hangs off its own
+   broken strand and is given the width of a column of type, not a card. */
+
+.p-about__origin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.p-about__history {
+  font-size: var(--fs-3);
+  line-height: var(--lh-4);
+  letter-spacing: var(--tr-body);
+  color: var(--paper);
+  max-width: var(--measure);
+}
+
+/* ── THE LONG READ — plain body at the measure. --paper, per the type table. ── */
+
+.p-about__long p {
+  color: var(--paper);
+  max-width: var(--measure);
+}
+
+/* ── WHAT WE DO ──────────────────────────────────────────────────────────────
+   One-line commitments, not cards. Each hangs off a left rule — the entry's
+   edge without the entry's fill — and is drawn in with the row reveal. */
+
+.p-about__do {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-3);
+}
+
+.p-about__do li {
+  border-left: var(--rule-mid);
+  padding: var(--s-2) 0 var(--s-2) var(--s-4);
+  color: var(--paper);
+  max-width: var(--measure);
+}
+
+@media (min-width: 640px) {
+  .p-about__do {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--s-4) var(--s-5);
+  }
+}
+
+/* ── CONTACT ─────────────────────────────────────────────────────────────── */
+
+.p-about__contact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-7);
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .p-about__contact {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-8);
+  }
+}
+
+.p-about__contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  align-items: flex-start;
+}
+
+/* The address is the destination, so it carries the weight of a lead. It keeps
+   the base prose-link underline: never a colour-only distinction. */
+.p-about__email {
+  font-size: var(--fs-3);
+  line-height: var(--lh-2);
+  letter-spacing: var(--tr-head);
+  max-width: none;
+}
+
+/* ── SOCIAL ENTRIES ──────────────────────────────────────────────────────────
+   Each social is an .entry that is also a link, so the clasp (App.css) fires
+   on hover AND focus-within of a genuinely interactive surface: the break
+   closes and the strand goes live. That is the whole hover state.
+   The block link drops the prose underline — the card edge, the rail and the
+   focus ring carry the affordance, so this is not a colour-only distinction. */
+
+.p-about__socials {
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.p-about__social {
+  text-decoration: none;
+  gap: var(--s-2);
+}
+
+.p-about__handle {
+  font-size: var(--fs-1);
+  line-height: var(--lh-3);
+  color: var(--paper-2);
+}
+
+/* ── LOCAL CORRECTION ────────────────────────────────────────────────────────
+   In App.css, `.rule--broken` is authored after `.rule--sm` at equal
+   specificity, so a `.rule--broken.rule--sm` rail resolves to the 24px height
+   while painting the 12px tile — a half-empty rail. Re-asserting the small
+   height at page scope restores the intended ½-scale rail without editing the
+   shared file. If the shared rule is reordered, this becomes a no-op. */
+
+.p-about .rule--broken.rule--sm {
+  height: var(--strand-h-s);
+}

@@ -1,0 +1,43 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROJECTS — scoped under .p-projects. Tokens live in index.css only.
+   No :root, no html, no body, no *. No media queries: the grid is intrinsic.
+
+   Almost everything this page needs already ships in App.css / index.css:
+     .shell .section .section-head .band          layout + section reveal
+     .entry .entry-grid .entry-foot .row          the card, the grid, the stagger
+     .rule--broken .rule--sm                      the top rail + THE CLASP (free)
+     .tag-row .tag                                the tech list
+     h1 / h2                                      page title + project name roles
+   Base h2 is already 900 / --fs-4 / UPPER / --cyan — the exact project-name
+   role — so the name needs no rule here at all.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* projects.json carries name, summary and tech — no image, no link, no date.
+   So there is no eyebrow (no real field to put in one) and no thumbnail.
+   The card carries itself typographically. Do not invent either. */
+
+/* 3 columns at --page-max, 2 at tablet, 1 on a phone — with no media
+   query. minmax(20rem, …) is wider than .entry-grid's 15rem default so that
+   --fs-4 project names never get squeezed into four thin columns on desktop.
+
+   min(20rem, 100%), not a bare 20rem: minmax()'s min is a hard floor that does
+   NOT shrink. At 320px the .shell's --gutter leaves a 280px content box, so a
+   320px floor overflowed the page sideways by 40px and clipped the summaries.
+   min(…, 100%) lets the track collapse to the container below 20rem while
+   still holding the 20rem floor everywhere there is room for it. */
+.p-projects .entry-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+}
+
+/* Summary is secondary ink. Base p is --paper; the spec asks for --paper-2. */
+.p-projects .project-summary {
+  color: var(--paper-2);
+  font-size: var(--fs-1);
+  line-height: var(--lh-4);
+}
+
+/* The tag row is pinned to the card foot by .entry-foot, so it needs air above
+   it once a short summary leaves slack in a stretched cell. */
+.p-projects .tag-row {
+  padding-top: var(--s-2);
+}

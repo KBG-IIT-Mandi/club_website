@@ -1,0 +1,321 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   KBG — SHEET 01 / THE STRAND
+   index.css is the ONLY file that may declare :root, html, body or *.
+   Page stylesheets scope under .p-home / .p-about / .p-team / .p-events /
+   .p-projects and never touch a global selector.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── FONTS — self-hosted, latin subset, zero third-party requests ─────────── */
+
+@font-face {
+  font-family: "Archivo";
+  src: url("/fonts/archivo-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+2013-2014, U+2018-201A, U+201C-201E, U+2022, U+2026, U+00D7;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/plex-mono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+00D7;
+}
+
+/* ── TOKENS ──────────────────────────────────────────────────────────────── */
+
+:root {
+  /* GROUND — cyanotype, hue-locked to the logo's deep blue (225°). Flat. Opaque. */
+  --void:      #04080F;
+  --sheet:     #060E1C;
+  --sheet-2:   #0A1730;
+  --sheet-3:   #0E1E3F;
+
+  /* THE LOGO'S PALETTE — roles are FIXED and EXCLUSIVE */
+  --cyan:      #36E4DF;   /* FIGURE — default ink. 12.25:1 on --sheet. */
+  --blue:      #1177E1;   /* LIVE — NON-TEXT ONLY (4.37:1 fails AA). */
+  --deep:      #114BF2;   /* STRUCTURE — filled CTA + page frame ONLY. Never text. */
+
+  /* DERIVED — hue jail 178°–225°. Every neutral is blue-biased. No greys. */
+  --blue-lit:  #4FA8FF;   /* LIVE as TEXT + focus ring. 7.7:1 */
+  --cyan-line: #1E8C89;   /* RULES, strokes, ticks, borders. 4.75:1. NEVER text. */
+  --cyan-label:#2BB8B4;   /* mono labels as TEXT. 7.93:1 on --sheet */
+  --grid-line: #0B2A7A;   /* the 40px grid + gear. 1.5:1 — correctly invisible. */
+  --paper:     #DDEBFF;   /* body copy. 16.0:1 */
+  --paper-2:   #8FA9CE;   /* captions, secondary, bios. 8.03:1 */
+  --white:     #FFFFFF;   /* ONLY on a --deep fill. 6.34:1 */
+
+  /* ── THE RULE — the site's one ownable device ───────────────────────────
+     The double helix moved to 3D: it is now raymarched by <HelixField />, not
+     drawn as a flat SVG tile. On the page, a rule is a fine cyan→deep hairline
+     (see .rule in App.css). These tokens are just its heights; the old
+     --strand-dim / --strand-live tile URLs are retired. ─────────────────── */
+  --strand-h:   2px;   /* section rule height */
+  --strand-h-s: 1px;   /* card rail / nav underline / footer edge */
+
+  /* THE BREAK — measured off the shield's top rail: a gap of 7.2% of the rail's
+     length, starting at 71% across. Every long rule on the site carries it. */
+  --break-start: 71%;
+  --break-size:  7.2%;
+
+  /* STROKE WEIGHTS — the mark's 2 : 1.35 : 1 scale */
+  --rule-structure: 2px solid var(--deep);
+  --rule-mid:       1px solid var(--cyan-line);
+  --rule-hair:      1px solid var(--grid-line);
+
+  /* RADIUS — the mark's corner radius is 0. No exceptions on content. */
+  --radius:       0;
+  --radius-round: 50%;   /* ONLY: the gear, the gear bore, the lumen dot. */
+
+  /* SHADOWS — there are none. Only hard rings (zero blur radius). */
+  --ring-cyan:  0 0 0 2px var(--cyan);
+  --ring-blue:  0 0 0 2px var(--blue-lit);
+
+  /* GRID */
+  --grid: 40px;
+
+  /* SPACE — strict 4px base, 10 steps */
+  --s-1: 0.25rem;  --s-2: 0.5rem;   --s-3: 0.75rem;  --s-4: 1rem;    --s-5: 1.5rem;
+  --s-6: 2rem;     --s-7: 3rem;     --s-8: 4rem;     --s-9: 6rem;    --s-10: 8rem;
+
+  /* LAYOUT */
+  --nav-h:     64px;
+  --spine-w:   24px;
+  --spine-x:   8px;
+  --gutter:    calc(var(--spine-x) + var(--spine-w) + var(--s-2));
+  --measure:   68ch;
+  --measure-h: 30ch;
+  --page-max:  1180px;
+
+  /* TYPE */
+  --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
+
+  --fs-00: 0.6875rem;  /* 11px  — tick labels, footer meta */
+  --fs-0:  0.75rem;    /* 12px  — mono drafting label, nav links, tags */
+  --fs-1:  0.875rem;   /* 14px  — caption, mono body, bio */
+  --fs-2:  1rem;       /* 16px  — body */
+  --fs-3:  1.333rem;   /* 21.3px — lead, h4, member name, brand */
+  --fs-4:  1.777rem;   /* 28.4px — h3, project name */
+  /* Floors are set by the NARROWEST REAL CASE, not by taste: a 320px viewport
+     minus the 40px spine gutter leaves a ~264px column, and the JSON hands us
+     "interdisciplinary" (17ch) with no say in it. A 37.9px floor could not fit
+     that word, which is what forced `hyphens: auto` and produced "An in-
+     terdisciplinary / explor- / engi-neering" on every phone. Sizing the floor
+     so the longest real word fits is the fix; hyphenation was the symptom. */
+  --fs-5:  clamp(1.5rem,  1.286rem + 0.91vw, 2.369rem);   /* h2 / page h1 */
+  --fs-6:  clamp(1.85rem, 1.494rem + 1.52vw, 3.157rem);   /* HOME HERO h1 */
+  --fs-7:  clamp(2.25rem, 1.771rem + 2.05vw, 4.209rem);   /* 404 ONLY */
+
+  --lh-1: 0.95;   /* display */
+  --lh-2: 1.15;   /* headings */
+  --lh-3: 1.45;   /* mono, lists */
+  --lh-4: 1.65;   /* body */
+
+  --tr-display: -0.02em;
+  --tr-head:    -0.01em;
+  --tr-body:    0;
+  --tr-label:   0.14em;
+
+  /* MOTION */
+  --dur-1: 120ms;
+  --dur-2: 240ms;
+  --dur-3: 480ms;
+  --dur-index: 3s;
+  --ease:       cubic-bezier(.2, 0, 0, 1);
+  --ease-index: steps(8, end);
+
+  /* Z */
+  --z-sheet: 0; --z-content: 1; --z-nav: 10; --z-menu: 20;
+}
+
+@media (min-width: 640px)  { :root { --nav-h: 72px; --spine-x: 16px; } }
+@media (min-width: 1024px) { :root { --spine-x: 32px; } }
+
+/* ── RESET ───────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;                        /* never px-lock the root */
+  scroll-padding-top: var(--nav-h);
+  -webkit-text-size-adjust: 100%;
+  background-color: var(--void);
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-color: var(--sheet);
+  color: var(--paper);
+  /* Declared here and nowhere else. Page stylesheets must never restate it. */
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: var(--fs-2);
+  line-height: var(--lh-4);
+  letter-spacing: var(--tr-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+  border-radius: var(--radius);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* ── BASE TYPOGRAPHY ─────────────────────────────────────────────────────── */
+
+/* Display type comes from JSON we do not control, so a single word can be wider
+   than its column and would scroll the document sideways. break-word is the
+   backstop for a word with no legal break (a URL, a long compound); it only
+   fires when a word genuinely cannot fit, so normal headings are untouched.
+
+   `hyphens: auto` is deliberately NOT set. It was, and it shipped
+   "An in-/terdisciplinary ... explor-/ing ... engi-/neering" across the phone
+   hero — auto-hyphenation is very visible in tight display type and reads as
+   broken rather than typeset. The floor of --fs-6 is now sized so the longest
+   real word fits the narrowest real column, which removes the need for it. */
+h1, h2, h3, h4, h5, h6 {
+  max-width: var(--measure-h);
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+/* Same reasoning at body scale, minus the hyphenation: the JSON carries an
+   email address and social handles, and an unbreakable string in a 240px column
+   would scroll the page sideways. No hyphens here — auto-hyphenating body copy
+   is a visible change to every paragraph, and body copy does not need it. */
+p, li {
+  max-width: var(--measure);
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
+/* Page h1 — about / team / events / projects. Home overrides with .hero-title. */
+h1 {
+  font-weight: 900;
+  font-size: var(--fs-5);
+  line-height: var(--lh-1);
+  letter-spacing: var(--tr-display);
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+h2 {
+  font-weight: 900;
+  font-size: var(--fs-4);
+  line-height: var(--lh-2);
+  letter-spacing: var(--tr-head);
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+h3 {
+  font-weight: 700;
+  font-size: var(--fs-3);
+  line-height: var(--lh-2);
+  letter-spacing: var(--tr-head);
+  color: var(--paper);
+}
+
+h4 {
+  font-weight: 700;
+  font-size: var(--fs-3);
+  line-height: var(--lh-2);
+  letter-spacing: var(--tr-head);
+  color: var(--paper);
+}
+
+h5, h6 {
+  font-weight: 700;
+  font-size: var(--fs-2);
+  line-height: var(--lh-2);
+  letter-spacing: var(--tr-head);
+  color: var(--paper);
+}
+
+strong, b { font-weight: 700; }
+
+/* Prose links. Never a colour-only distinction. Never --blue (4.37:1 fails). */
+a {
+  color: var(--cyan);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: var(--cyan-line);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--dur-1) var(--ease);
+}
+
+a:hover { text-decoration-color: var(--cyan); }
+
+::selection {
+  background: var(--deep);
+  color: var(--white);
+}
+
+::placeholder { color: var(--paper-2); }
+
+/* ── FOCUS — the first focus style in this codebase. Global. No exceptions. ── */
+
+:focus-visible {
+  outline: 2px solid var(--blue-lit);
+  outline-offset: 3px;
+  border-radius: 0;
+}
+
+/* ── REDUCED MOTION — one block, global ──────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  /* The reveal's reduced-motion state lives with the reveal, in App.css
+     ([data-draw-ready] .band / .row). A `.is-drawn-target` rule used to sit
+     here; no element has ever carried that class, so it did nothing while
+     reading exactly like the rule that renders undrawn content. Deleted rather
+     than left as decoration — a safety net nobody can see is not a safety net.
+
+     The 3D helix shader honours reduced-motion inside <HelixField /> itself:
+     it paints a single static frame and never starts its animation loop. */
+}

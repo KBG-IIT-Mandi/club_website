@@ -1,0 +1,107 @@
+/* ── <Sheet /> — the site's ground ────────────────────────────────────────────
+   The whole background layer: ground, 40px grid, the helix spine, the lumen,
+   the 8-tooth gear, the broken frame. Zero JS. Zero canvas. Zero WebGL.
+   Two animations, both transform-only, both compositor-only.
+
+   This file declares NO tokens. Every value below is a var() from index.css.
+   The only literals are the two rotated strand tiles, which are the 96x24
+   tiles from index.css rotated 90deg for the vertical spine — the encoded
+   ink is byte-identical, only the wrapper <svg>/<g transform> differs.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+  /* Transparent: the ground colour lives on <body> now, and the 3D helix shader
+     (<HelixField />) renders beneath this layer. The grid/gear/frame are drawn
+     over the shader. */
+  background: transparent;
+}
+
+/* ── LAYER 2 — GRID. 40px, one scale only. Static paint, never repaints. ─── */
+
+.sheet__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--grid-line) 0,
+      var(--grid-line) 1px,
+      transparent 1px,
+      transparent var(--grid)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--grid-line) 0,
+      var(--grid-line) 1px,
+      transparent 1px,
+      transparent var(--grid)
+    );
+  background-position: 0 0;
+}
+
+/* ── THE GEAR. 8 teeth, tooth at 12 o'clock. steps(8, end) / 24s:
+   it indexes 45deg every 3s. The mechanism as behaviour, not as a picture. */
+
+.sheet__gear {
+  position: absolute;
+  right: -48px;
+  bottom: -48px;
+  width: 144px;
+  height: 144px;
+  display: none;
+  /* 8 teeth x --dur-index (3s) = 24s for a full turn. */
+  animation: gear calc(var(--dur-index) * 8) var(--ease-index) infinite;
+}
+
+.sheet__gear svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes gear {
+  to { transform: rotate(360deg); }
+}
+
+/* ── THE FRAME. --rule-structure on the page edges, broken at 71%
+   for 7.2% on the top rail. Frames never close.                          */
+
+.sheet__frame {
+  position: absolute;
+  inset: 0;
+  border-left: var(--rule-structure);
+  border-right: var(--rule-structure);
+  border-bottom: var(--rule-structure);
+}
+
+.sheet__frame::before,
+.sheet__frame::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  height: 2px;
+  background-color: var(--deep);
+}
+
+.sheet__frame::before {
+  left: 0;
+  width: var(--break-start);
+}
+
+.sheet__frame::after {
+  left: calc(var(--break-start) + var(--break-size));
+  right: 0;
+}
+
+/* ── Mobile budget: the gear is the only conditional layer; the grid ships at
+   375px. The 3D helix (the old spine's replacement) is drawn by the shader. ── */
+
+@media (min-width: 640px) {
+  .sheet__gear { display: block; }
+}

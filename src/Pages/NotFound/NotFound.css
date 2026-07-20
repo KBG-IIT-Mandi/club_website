@@ -1,0 +1,47 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   NOT FOUND — scoped under .p-404. Tokens live in index.css only.
+   No :root, no html, no body, no *. No media query: --fs-7 already clamps.
+
+   This file was 134 lines of legacy targeting classes the JSX never rendered
+   (.not-found-container, .not-found-title …) — an off-palette radial-gradient
+   ground, a blurred backdrop layer, rounded corners and gradient text, all
+   inert only because the component returned a bare <div>NotFound</div>.
+   Rewritten against what the page actually renders rather than deleted:
+   footer.json points /contact and /privacy at routes that do not exist, so this
+   IS where those links land. It is a destination, not just an error.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.p-404 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--s-5);
+  /* Fills the sheet without a fixed height, so the 404 is optically centred on
+     a phone and on a desktop without either scrolling or stranding the link. */
+  min-height: calc(100vh - var(--nav-h) - var(--s-10));
+  padding-block: var(--s-9);
+}
+
+/* The only use of --fs-7 on the site. Reserved for exactly this. */
+.p-404__code {
+  font-weight: 900;
+  font-size: var(--fs-7);
+  line-height: var(--lh-1);
+  letter-spacing: var(--tr-display);
+  color: var(--cyan);
+  margin: 0;
+  max-width: none;
+}
+
+/* A strand like every other rule here, broken like every other long rule:
+   the frame never closes. Held to --measure so it reads as a rule rather than
+   as an underline on the numerals. */
+.p-404__rule {
+  width: 100%;
+  max-width: var(--measure);
+}
+
+.p-404__note {
+  max-width: var(--measure);
+}

@@ -1,0 +1,34 @@
+/* The 3D shader ground. Fixed, behind everything, non-interactive. */
+.helix-field {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  pointer-events: none;
+  /* Sits to the LEFT: the helix occupies the old spine column so content, which
+     is inset by --gutter, never overlaps the brightest part of the render. On
+     wide screens it drifts further left of the reading column. */
+  background: transparent;
+}
+
+.helix-field__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Shown only if WebGL is unavailable or the shader gave up on a slow device.
+   A quiet cyan/blue wash in the same corner the helix would have lit. */
+.helix-field.is-fallback .helix-field__canvas {
+  display: none;
+}
+.helix-field.is-fallback {
+  background:
+    radial-gradient(60% 80% at 8% 40%, rgba(17, 119, 225, 0.16), transparent 70%),
+    radial-gradient(40% 60% at 4% 70%, rgba(54, 228, 223, 0.12), transparent 72%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* the JS already paints a single static frame; nothing to do here */
+}
