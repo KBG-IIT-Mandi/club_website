@@ -1,5 +1,9 @@
 // API Configuration for fetching data from GitHub
-const BASE_URL = 'https://raw.githubusercontent.com/Hasan72341/KBG_Links/refs/heads/main';
+//
+// Content lives in KBG-IIT-Mandi/KBG_Links — one JSON per page, plus the event
+// and team images. Edit that repo to change site copy; no redeploy needed.
+// It must stay PUBLIC: these are unauthenticated raw.githubusercontent reads.
+const BASE_URL = 'https://raw.githubusercontent.com/KBG-IIT-Mandi/KBG_Links/refs/heads/main';
 
 export const API_ENDPOINTS = {
   about: `${BASE_URL}/about.json`,

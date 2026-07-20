@@ -2,8 +2,9 @@
 
 The official website of the **Kamand Bioengineering Group (KBG)**, IIT Mandi.
 
-Built with React + Vite. Content is loaded at runtime from published Google
-Sheets, so the site can be updated without a redeploy.
+Built with React + Vite. Content is loaded at runtime from the
+[KBG_Links](https://github.com/KBG-IIT-Mandi/KBG_Links) repo, so the site can be
+updated without a redeploy.
 
 ## Stack
 
@@ -33,7 +34,7 @@ npm run lint     # eslint
 src/
   Components/     NavBar, Footer, Sheet, Background (WebGL helix)
   Pages/          Home, About, Team, Events, Projects, NotFound
-  config/api.js   Google Sheets endpoints + stale-while-revalidate fetch cache
+  config/api.js   Content endpoints + stale-while-revalidate fetch cache
   index.css       Design tokens (colour, type scale, spacing) — declared here ONLY
   App.css         Shared layout primitives (.shell, .rule, .band, .entry)
 ```
@@ -44,9 +45,26 @@ page/component class. Please keep it that way.
 
 ### Content
 
-Page content comes from published Google Sheets, mapped in `src/config/api.js`.
-To change copy, team members, events or projects, edit the sheet — no code
-change or redeploy is needed.
+All page content lives in a separate repo,
+**[KBG-IIT-Mandi/KBG_Links](https://github.com/KBG-IIT-Mandi/KBG_Links)** — one
+JSON file per page (`home.json`, `about.json`, `team.json`, `events.json`,
+`projects.json`, `navbar.json`, `footer.json`) plus the event posters in
+`Events/` and member photos in `Teams/`.
+
+To change copy, add an event, or update the team: edit that repo. The change is
+live on the next page load — **no code change and no redeploy**. The endpoints
+are mapped in `src/config/api.js`.
+
+Two constraints on that repo:
+
+- It must stay **public** — the site reads it unauthenticated over
+  `raw.githubusercontent.com`.
+- Image paths inside the JSON are **absolute URLs** into the same repo, so a new
+  poster needs both the file committed and its full raw URL written into
+  `events.json`.
+
+Responses are cached in `sessionStorage` stale-while-revalidate with an 8s
+timeout, so a return visit paints without waiting on the network.
 
 ## Design
 
