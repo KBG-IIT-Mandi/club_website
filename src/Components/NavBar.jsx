@@ -12,14 +12,9 @@ const ENDPOINT_FOR_PATH = {
   '/projects': 'projects',
 };
 
-// Prefetch on nav intent, via api.js's `prefetch` (which now exists, along with
-// the SWR cache the previous comment here was waiting on).
-//
-// The Set still earns its place, and more so than before: prefetch() is
-// stale-while-revalidate, so it returns the cached sheet AND fires a background
-// revalidate every single time. Without this dedupe, sweeping the cursor across
-// the nav would put a request on the wire per hover, forever — the cache would
-// make the network chattier, not quieter. Once per URL per page load is enough.
+// Prefetch on nav intent. The Set dedupes: prefetch() is
+// stale-while-revalidate, so without it every hover would put a request on
+// the wire. Once per URL per page load is enough.
 const prefetched = new Set();
 
 const prefetchRoute = (to) => {
@@ -34,8 +29,8 @@ const NavBar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [data, setData] = useState(null);
+  const [scrolled, setScrolled] = useState(false);
 
-  // Fetch navbar data from API
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -43,15 +38,23 @@ const NavBar = () => {
         setData(navbarData);
       } catch (error) {
         console.error('Failed to load navbar data:', error);
-        // Fallback data in case of error
         setData({
           brand: 'KBG',
           tagline: 'Kamand Bioengineering Group',
-          links: []
+          links: [],
         });
       }
     };
     loadData();
+  }, []);
+
+  // The brand mark is a living blob inside the hero and a square instrument
+  // past it. One boolean, one passive listener.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 48);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   // Close menu when route changes
@@ -86,7 +89,7 @@ const NavBar = () => {
   };
 
   if (!data) {
-    return null; // or return a loading skeleton
+    return null;
   }
 
   const closeMenu = () => {
@@ -97,23 +100,22 @@ const NavBar = () => {
 
   return (
     <>
-      <nav className="nav">
+      <nav className={`nav ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="shell nav__inner">
-          {/* === Brand: shield + KBG + tagline. One spine, hard-left. === */}
+          {/* Brand: the mark is alive at the top of the page (membrane blob,
+              breathing) and hardens into a square instrument once you scroll.
+              Life -> instrument, in one border-radius transition. */}
           <Link to="/" className="nav__brand" onClick={closeMenu}>
-            {/* The shield, cropped out of the full logo. See .nav__mark in NavBar.css. */}
-            <span className="nav__mark">
-              <img src="/vite.svg" alt="" />
-            </span>
+            <span className="nav__mark" aria-hidden="true" />
             <span className="nav__brand-text">
               {data.brand && <span className="nav__brand-name">{data.brand}</span>}
               {data.tagline && (
-                <span className="nav__brand-tagline label">{data.tagline}</span>
+                <span className="nav__brand-tagline">{data.tagline}</span>
               )}
             </span>
           </Link>
 
-          {/* === Mobile drawer toggle === */}
+          {/* Mobile drawer toggle */}
           <button
             type="button"
             className={`nav__toggle ${isMenuOpen ? 'is-open' : ''}`}
@@ -127,7 +129,7 @@ const NavBar = () => {
             <span className="nav__bar"></span>
           </button>
 
-          {/* === Links === */}
+          {/* Links + system status */}
           <div
             id="nav-links"
             className={`nav__links ${isMenuOpen ? 'is-open' : ''}`}
@@ -136,7 +138,7 @@ const NavBar = () => {
               <Link
                 key={i}
                 to={link.to}
-                className={`nav__link label ${location.pathname === link.to ? 'is-active' : ''}`}
+                className={`nav__link ${location.pathname === link.to ? 'is-active' : ''}`}
                 aria-current={location.pathname === link.to ? 'page' : undefined}
                 onClick={closeMenu}
                 onPointerEnter={() => prefetchRoute(link.to)}
@@ -146,14 +148,17 @@ const NavBar = () => {
               </Link>
             ))}
 
+            <span className="nav__status" aria-hidden="true">
+              <span className="nav__status-dot" />
+              EVOLVING
+            </span>
           </div>
         </div>
 
-        {/* The bar's bottom edge is a strand, broken at 71% — never a border. */}
-        <div className="nav__edge rule rule--broken rule--sm" aria-hidden="true"></div>
+        <div className="nav__edge" aria-hidden="true"></div>
       </nav>
 
-      {/* === Drawer scrim === */}
+      {/* Drawer scrim */}
       <div
         className={`nav__scrim ${isMenuOpen ? 'is-open' : ''}`}
         onClick={closeMenu}

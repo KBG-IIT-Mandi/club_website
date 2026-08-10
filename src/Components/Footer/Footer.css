@@ -1,37 +1,65 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   FOOTER — consumes tokens from index.css and primitives from App.css.
-   Declares neither. No :root, no html, no body, no *. 640 only.
+   FOOTER — the lab's telemetry block.
+   Consumes tokens from index.css. Declares no globals.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .foot {
   position: relative;
   z-index: var(--z-content);
-  background: var(--sheet-3);   /* flat, opaque, square — same fill as the nav */
   margin-top: var(--s-9);
 }
 
-/* Straddles the edge exactly as .nav__edge does. Compounded for the same
-   reason: .rule--broken restates `height` after .rule--sm at equal specificity
-   in App.css, so the small height needs the extra weight to win. */
-.foot__edge.rule.rule--broken.rule--sm {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: calc(var(--strand-h-s) / -2);
-  height: var(--strand-h-s);
+.foot__edge {
+  height: 1px;
+  background: var(--hairline);
 }
 
 .foot__inner {
   display: flex;
   flex-direction: column;
+  gap: var(--s-6);
+  padding-block: var(--s-7);
+}
+
+/* ── TELEMETRY ───────────────────────────────────────────────────────────── */
+
+.foot__telemetry {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.foot__row {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-00);
+  line-height: var(--lh-3);
+  letter-spacing: var(--tr-label);
+  color: var(--specimen-2);
+  margin: 0;
+  max-width: none;
+}
+
+.foot__row--name {
+  color: var(--specimen);
+}
+
+.foot__signal {
+  color: var(--bio);
+}
+
+/* ── SMALL PRINT ─────────────────────────────────────────────────────────── */
+
+.foot__small {
+  display: flex;
+  flex-direction: column;
   gap: var(--s-4);
-  padding-block: var(--s-6);
 }
 
 .foot__text {
   font-size: var(--fs-1);
   line-height: var(--lh-4);
-  color: var(--paper-2);
+  color: var(--specimen-2);
   margin: 0;
   max-width: var(--measure);
 }
@@ -42,24 +70,33 @@
   gap: var(--s-5);
 }
 
-/* 44px tap target. The label is ~17px tall on its own; the padding is what
-   makes it hittable on the phones this site is built for. */
-.foot__link.label {
+/* 44px tap target — the label is ~17px tall on its own. */
+.foot__link {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: var(--paper-2);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-0);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--specimen-2);
   text-decoration: none;
   transition: color var(--dur-1) var(--ease);
 }
 
-.foot__link.label:hover { color: var(--cyan); }
+.foot__link:hover { color: var(--bio); }
 
 @media (min-width: 640px) {
   .foot__inner {
     flex-direction: row;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
     gap: var(--s-6);
+  }
+
+  .foot__small {
+    align-items: flex-end;
+    text-align: right;
   }
 }

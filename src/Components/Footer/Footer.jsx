@@ -3,19 +3,32 @@ import { Link } from "react-router-dom";
 import { API_ENDPOINTS, fetchData } from "../../config/api";
 import "./Footer.css";
 
-/* footer.json has existed, and API_ENDPOINTS.footer has been defined, the whole
-   time — nothing ever fetched either. Every route simply ran out of content and
-   ended in bare sheet.
+/* The footer is the lab's telemetry block: station coordinates, the last
+   signal from the content repo, and the small print from footer.json.
 
-   Live shape: { text: string, links: [{ label, href }] }. Those keys are used
-   as-is; nothing here is invented and no key is added or renamed.
+   footer.json live shape: { text: string, links: [{ label, href }] }. Those
+   keys are used as-is; nothing is invented and no key is added or renamed.
+   The two live links point at /contact and /privacy, which are not routes —
+   they land on NotFound, which is a real page, so shipping them is fine. */
 
-   The two live links point at /contact and /privacy, which are not routes. We
-   neither add routes nor edit that JSON, so they land on NotFound — which is
-   now a real page rather than a bare <div>, which is the only reason shipping
-   them is acceptable. */
+const LINKS_REPO_COMMITS =
+  "https://api.github.com/repos/KBG-IIT-Mandi/KBG_Links/commits?per_page=1";
+
+/* "8 DAYS AGO" from an ISO date. Mono register, so uppercase and terse. */
+const relativeSignal = (iso) => {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return null;
+  const mins = Math.max(0, Math.round((Date.now() - then) / 60000));
+  if (mins < 60) return `${mins} MIN AGO`;
+  const hours = Math.round(mins / 60);
+  if (hours < 48) return `${hours} HR AGO`;
+  const days = Math.round(hours / 24);
+  return `${days} DAYS AGO`;
+};
+
 const Footer = () => {
   const [data, setData] = useState(null);
+  const [signal, setSignal] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,52 +38,70 @@ const Footer = () => {
       })
       .catch((error) => {
         console.error("Failed to load footer data:", error);
-        // No error surface here. A footer is not worth a SIGNAL LOST card on a
-        // page whose own content loaded fine — it just does not render.
+        // A footer is not worth a SIGNAL LOST card — it just does not render.
       });
+
+    // The content-repo pulse. Strictly decorative telemetry: fail-silent,
+    // row hidden when the API is unreachable or rate-limited.
+    fetchData(LINKS_REPO_COMMITS)
+      .then((commits) => {
+        if (cancelled || !Array.isArray(commits) || !commits[0]) return;
+        const iso = commits[0]?.commit?.committer?.date;
+        const rel = iso ? relativeSignal(iso) : null;
+        if (rel) setSignal(rel);
+      })
+      .catch(() => {});
+
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Same contract as every other surface: render nothing until data arrives.
   if (!data) return null;
 
   const links = Array.isArray(data.links) ? data.links : [];
 
   return (
-    <footer className="foot">
-      {/* Top edge is a strand broken at 71%, like every other edge. Not a border. */}
-      <div className="foot__edge rule rule--broken rule--sm" aria-hidden="true" />
+    <footer className="foot world-lab">
+      <div className="foot__edge" aria-hidden="true" />
 
       <div className="shell foot__inner">
-        {data.text && <p className="foot__text">{data.text}</p>}
+        <div className="foot__telemetry">
+          <p className="foot__row foot__row--name">KAMAND BIOENGINEERING GROUP</p>
+          <p className="foot__row">31.7754°N 76.9861°E · IIT MANDI · HIMACHAL PRADESH</p>
+          {signal && (
+            <p className="foot__row">
+              LAST SIGNAL <span className="foot__signal">{signal}</span>
+            </p>
+          )}
+        </div>
 
-        {!!links.length && (
-          <nav className="foot__links">
-            {links.map((link, i) => {
-              if (!link || !link.href || !link.label) return null;
+        <div className="foot__small">
+          {data.text && <p className="foot__text">{data.text}</p>}
 
-              // An internal href stays inside the router; anything else is a
-              // real external link and gets the noopener/noreferrer pair.
-              return link.href.startsWith("/") ? (
-                <Link className="label foot__link" key={i} to={link.href}>
-                  {link.label}
-                </Link>
-              ) : (
-                <a
-                  className="label foot__link"
-                  key={i}
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {link.label}
-                </a>
-              );
-            })}
-          </nav>
-        )}
+          {!!links.length && (
+            <nav className="foot__links">
+              {links.map((link, i) => {
+                if (!link || !link.href || !link.label) return null;
+                return link.href.startsWith("/") ? (
+                  <Link className="foot__link" key={i} to={link.href}>
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a
+                    className="foot__link"
+                    key={i}
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
+            </nav>
+          )}
+        </div>
       </div>
     </footer>
   );

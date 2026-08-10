@@ -1,0 +1,115 @@
+- generic [ref=f1e2]:
+  - navigation [ref=f1e3]:
+    - generic [ref=f1e4]:
+      - link "KBG Kamand Bioengineering Group - IIT Mandi" [ref=f1e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f1e7]:
+          - generic [ref=f1e8]: KBG
+          - generic [ref=f1e9]: Kamand Bioengineering Group - IIT Mandi
+      - generic [ref=f1e10]:
+        - link "Home" [ref=f1e11] [cursor=pointer]:
+          - /url: /
+        - link "About" [ref=f1e12] [cursor=pointer]:
+          - /url: /about
+        - link "Team" [ref=f1e13] [cursor=pointer]:
+          - /url: /team
+        - link "Events" [ref=f1e14] [cursor=pointer]:
+          - /url: /events
+        - link "Projects" [ref=f1e15] [cursor=pointer]:
+          - /url: /projects
+        - generic [ref=f1e16]: EVOLVING
+  - main [ref=f1e19]:
+    - main [ref=f1e21]:
+      - generic [ref=f1e23]:
+        - generic [ref=f1e24]:
+          - paragraph [ref=f1e25]: KBG - Kamand Bioengineering Group
+          - heading "An interdisciplinary student club at IIT Mandi exploring the frontiers of biology, engineering, and technology." [level=1] [ref=f1e26]
+        - paragraph [ref=f1e27]: From synthetic biodesigns to AI-driven bio-models, we blend biology with computation, hardware, and creative engineering. Join us to build projects, attend workshops, and apply various engineering concepts with a biological twist.
+        - paragraph [ref=f1e28]:
+          - link "Contact Us" [ref=f1e29] [cursor=pointer]:
+            - /url: mailto:kbg@students.iitmandi.ac.in
+      - generic [ref=f1e32]:
+        - article [ref=f1e33]:
+          - heading "Our Projects" [level=3] [ref=f1e34]
+          - paragraph [ref=f1e35]: From biosensing systems and cellular automata to bio-AI models, all developed by interdisciplinary teams.
+        - article [ref=f1e36]:
+          - heading "Events hosted" [level=3] [ref=f1e37]
+          - paragraph [ref=f1e38]: Hands-on workshops, technical talks, design challenges, and hackathons bridging biology with computing and engineering.
+        - article [ref=f1e39]:
+          - heading "Lab Access" [level=3] [ref=f1e40]
+          - paragraph [ref=f1e41]: Access to IIT Mandi research labs for real experimentation
+      - generic [ref=f1e43]:
+        - article [ref=f1e44]:
+          - heading "Why KBG" [level=2] [ref=f1e46]
+          - paragraph [ref=f1e47]: Biotechnology, data science, and engineering are converging faster than ever before. KBG empowers students to work at this intersection — where circuits meet cells, and algorithms meet ecosystems. Through events and projects, we aim to have fun while exploring new topics.
+        - article [ref=f1e48]:
+          - heading "What we do" [level=2] [ref=f1e50]
+          - paragraph [ref=f1e51]: We do projects that combine biology with several engineering disciplines. We host workshops, talks, and hackathons to explore emerging topics at this intersection.
+          - list [ref=f1e52]:
+            - listitem [ref=f1e53]: Synthetic biology
+            - listitem [ref=f1e54]: AI x Biology
+            - listitem [ref=f1e55]: and many more
+        - article [ref=f1e56]:
+          - heading "What we have done" [level=2] [ref=f1e58]
+          - paragraph [ref=f1e59]: Since our inception in 2020, KBG has successfully organized multiple workshops, talks, and hackathons. Our members have even represented IIT Mandi at iGEM. Following that legacy, we continue to spread knowledge about this field through our events and projects.
+      - generic [ref=f1e61]:
+        - heading "Focus Tracks" [level=2] [ref=f1e63]
+        - generic [ref=f1e64]:
+          - article [ref=f1e65]:
+            - heading "AI × Biology" [level=3] [ref=f1e66]
+            - paragraph [ref=f1e67]: Leverage data-driven models to interpret biological patterns and simulate life-inspired systems.
+            - list [ref=f1e68]:
+              - listitem [ref=f1e69]: Medical imaging and biosignal analysis
+              - listitem [ref=f1e70]: AI in healthcare and genomics
+              - listitem [ref=f1e71]: Neural Cellular Automata and generative bio-simulations
+          - article [ref=f1e72]:
+            - heading "Synthetic Biology & Biodesign" [level=3] [ref=f1e73]
+            - paragraph [ref=f1e74]: Design and construct new biological parts, devices, and systems, or to redesign existing ones for useful purposes
+            - list [ref=f1e75]:
+              - listitem [ref=f1e76]: Drug development software
+              - listitem [ref=f1e77]: Genetic circuit design and simulation
+              - listitem [ref=f1e78]: Participation in iGEM and other biodesign competitions
+          - article [ref=f1e79]:
+            - heading "Bio Instrumentation" [level=3] [ref=f1e80]
+            - paragraph [ref=f1e81]: Build hardware systems that interface with biological entities for monitoring, analysis, or intervention.
+            - list [ref=f1e82]:
+              - listitem [ref=f1e83]: Build our own EEG/ECG devices
+              - listitem [ref=f1e84]: Analysis of biosignals using embedded systems
+              - listitem [ref=f1e85]: Making exciting biosensors
+      - generic [ref=f1e87]:
+        - heading "Field Notes" [level=2] [ref=f1e89]
+        - generic [ref=f1e90]:
+          - figure [ref=f1e91]:
+            - blockquote [ref=f1e92]: CRISPR gene editing now corrects sickle cell disease in living patients. We're literally rewriting genetic code to cure diseases once thought permanent.
+          - figure [ref=f1e93]:
+            - blockquote [ref=f1e94]: Lab-grown neurons learned to play Pong in 5 minutes. Biological cells outperformed AI at learning—brain-computer hybrids are here.
+          - figure [ref=f1e95]:
+            - blockquote [ref=f1e96]: Bacteria navigate using Earth's magnetic field with built-in compasses. Engineers are now embedding similar bio-magnetic sensors in medical nanorobots.
+      - generic [ref=f1e99]:
+        - heading "Let’s stimulate some neurons together!" [level=2] [ref=f1e100]
+        - paragraph [ref=f1e101]: Reach out to propose a project, suggest a session or event to be conducted by us.
+        - link "kbg@students.iitmandi.ac.in" [ref=f1e103] [cursor=pointer]:
+          - /url: mailto:kbg@students.iitmandi.ac.in
+        - list [ref=f1e104]:
+          - listitem [ref=f1e105]:
+            - link "LinkedIn" [ref=f1e106] [cursor=pointer]:
+              - /url: https://www.linkedin.com/company/kbg-iit-mandi/
+          - listitem [ref=f1e107]:
+            - link "Instagram" [ref=f1e108] [cursor=pointer]:
+              - /url: https://www.instagram.com/kbg_iitmandi/
+          - listitem [ref=f1e109]:
+            - link "GitHub" [ref=f1e110] [cursor=pointer]:
+              - /url: https://github.com/KBG-IIT-Mandi
+  - contentinfo [ref=f1e111]:
+    - generic [ref=f1e113]:
+      - generic [ref=f1e114]:
+        - paragraph [ref=f1e115]: KAMAND BIOENGINEERING GROUP
+        - paragraph [ref=f1e116]: 31.7754°N 76.9861°E · IIT MANDI · HIMACHAL PRADESH
+        - paragraph [ref=f1e117]: LAST SIGNAL 20 DAYS AGO
+      - generic [ref=f1e118]:
+        - paragraph [ref=f1e119]: © 2025 KBG — Bioengineering Club, IIT Mandi
+        - navigation [ref=f1e120]:
+          - link "Contact" [ref=f1e121] [cursor=pointer]:
+            - /url: /contact
+          - link "Privacy" [ref=f1e122] [cursor=pointer]:
+            - /url: /privacy

@@ -1,10 +1,8 @@
 .grain {
   position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0.04;
+  opacity: 0.5;
+  background-repeat: repeat;
   pointer-events: none;
   z-index: calc(var(--z-menu) + 1);
-  mix-blend-mode: overlay;
 }
