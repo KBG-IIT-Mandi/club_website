@@ -1,0 +1,14 @@
+.focus-shift {
+  animation: focus-pull var(--dur-3) var(--ease-out);
+}
+
+@keyframes focus-pull {
+  from {
+    filter: blur(6px);
+    opacity: 0.4;
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+  }
+}

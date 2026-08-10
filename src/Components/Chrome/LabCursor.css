@@ -1,0 +1,70 @@
+.lab-cursor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-cursor);
+}
+
+.lab-cursor__dot,
+.lab-cursor__ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  will-change: transform;
+}
+
+.lab-cursor__dot.is-seen,
+.lab-cursor__ring.is-seen {
+  opacity: 1;
+}
+
+.lab-cursor__dot::after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--bio);
+}
+
+.lab-cursor__ring::before {
+  content: "";
+  position: absolute;
+  top: -16px;
+  left: -16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--bio-dim);
+  transition:
+    transform var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease);
+}
+
+.lab-cursor__ring.has-mode::before {
+  transform: scale(1.5);
+  border-color: var(--bio);
+}
+
+.lab-cursor__ring[data-mode="observe"]::before {
+  border-color: var(--data);
+}
+
+.lab-cursor__label {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.5625rem;
+  letter-spacing: var(--tr-label);
+  color: var(--bio);
+  white-space: nowrap;
+}
+
+.lab-cursor__ring[data-mode="observe"] .lab-cursor__label {
+  color: var(--data);
+}
