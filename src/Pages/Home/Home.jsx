@@ -153,6 +153,9 @@ const Home = () => {
       {sections.length > 0 && (
         <section className="section world-journal home-journal">
           <div className="shell">
+            {/* The nameplate every world carries — THE ARCHIVE, THE
+                CONSTELLATION, THE SAMPLE LOG — the journal gets its own. */}
+            <p className="label home-journal__plate band">THE FIELD JOURNAL</p>
             {sections.map((section, i) => (
               <article key={section.title || i} className="home-journal__article band">
                 {section.title && (

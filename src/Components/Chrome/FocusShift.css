@@ -1,5 +1,8 @@
 .focus-shift {
-  animation: focus-pull var(--dur-3) var(--ease-out);
+  /* 360ms: long enough to read as a focus rack, short enough that repeat
+     navigation never feels gated. (480ms tested sluggish on the third hop.) */
+  animation: focus-pull 360ms var(--ease-out);
+  outline: none; /* the wrapper takes programmatic focus on route change */
 }
 
 @keyframes focus-pull {

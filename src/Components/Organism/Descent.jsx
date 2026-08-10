@@ -47,7 +47,9 @@ export default function SpecimenField({ hero }) {
           trigger: field,
           start: "top top",
           end: "bottom bottom",
-          scrub: 0.6,
+          /* 0.45: the stage text tracks the hand tightly; the organism keeps
+             its own softness from the probe/breathing easing in cellScene. */
+          scrub: 0.45,
           onUpdate: (self) => {
             organismRef.current?.setProgress(self.progress);
           },

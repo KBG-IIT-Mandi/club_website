@@ -102,6 +102,10 @@
 
 /* ── THE JOURNAL ─────────────────────────────────────────────────────────── */
 
+.p-home .home-journal__plate {
+  margin-bottom: var(--s-6);
+}
+
 .p-home .home-journal__article {
   display: flex;
   flex-direction: column;
@@ -182,12 +186,13 @@
   padding-block: var(--s-4);
   text-decoration: none;
   color: var(--specimen);
-  transition: padding-left var(--dur-2) var(--ease-out);
+  /* transform, not padding: the nudge stays on the compositor */
+  transition: transform var(--dur-2) var(--ease-out), color var(--dur-1) var(--ease);
 }
 
 .p-home .home-tray__link:hover {
   color: var(--bio);
-  padding-left: var(--s-3);
+  transform: translateX(var(--s-3));
 }
 
 .p-home .home-tray__title {
