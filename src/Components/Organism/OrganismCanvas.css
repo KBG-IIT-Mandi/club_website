@@ -1,0 +1,42 @@
+.organism {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.organism__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+
+.organism.is-live .organism__canvas {
+  opacity: 1;
+}
+
+/* The poster: a pure-CSS membrane for WebGL-less browsers and dead GPUs.
+   Same silhouette, no motion — layout is identical either way. */
+.organism__poster {
+  position: absolute;
+  inset: 12%;
+  border-radius: var(--radius-membrane);
+  border: 1px solid var(--bio-dim);
+  background:
+    radial-gradient(38% 38% at 46% 44%, color-mix(in srgb, var(--data) 26%, transparent), transparent 70%),
+    radial-gradient(70% 70% at 50% 50%, color-mix(in srgb, var(--bio) 8%, transparent), transparent 72%);
+  opacity: 0;
+  transition: opacity 600ms var(--ease);
+  pointer-events: none;
+}
+
+.organism.is-fallback .organism__canvas { opacity: 0; }
+.organism.is-fallback .organism__poster { opacity: 1; }
+
+/* Until the three chunk lands, the poster holds the silhouette so the hero
+   never reads as an empty void. It cross-fades out when the scene goes live. */
+.organism:not(.is-live):not(.is-fallback) .organism__poster {
+  opacity: 0.35;
+}

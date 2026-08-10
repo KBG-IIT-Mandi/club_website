@@ -1,127 +1,159 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import './Home.css';
 import useDocumentTitle from '../../CustomHooks/useDocumentTitle';
 import useDrawOnScroll from '../../CustomHooks/useDrawOnScroll';
 import { API_ENDPOINTS, fetchData } from '../../config/api';
-import { LoadingSpinner, ErrorState } from '../../Components/Loading';
+import { ErrorState } from '../../Components/Loading';
+
+/* The field (gsap + the three scene behind it) is its own chunk. The hero
+   copy below paints from the main bundle; the Suspense fallback holds the
+   identical layout so nothing shifts when the chunk lands. */
+const SpecimenField = lazy(() => import('../../Components/Organism/Descent'));
+
+/* ── live telemetry — numbers that drift like an instrument, not a GIF ───── */
+
+const useTelemetry = () => {
+  const [activity, setActivity] = useState(94.7);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return undefined;
+    }
+    const id = setInterval(() => {
+      setActivity((a) => {
+        const next = a + (Math.random() - 0.5) * 0.8;
+        return Math.min(97.3, Math.max(91.8, Math.round(next * 10) / 10));
+      });
+    }, 2400);
+    return () => clearInterval(id);
+  }, []);
+  return activity;
+};
+
+/* ── the hero overlay — pure HTML/CSS, paints before the three chunk ─────── */
+
+const Hero = ({ home }) => {
+  const activity = useTelemetry();
+  const hero = home?.hero || {};
+  const cta = hero.cta && hero.cta.href && hero.cta.label ? hero.cta : null;
+
+  return (
+    <>
+      <div className="hud" aria-hidden="true">
+        <div className="hud__block hud__block--tl">
+          <span>SPECIMEN 001</span>
+          <span>KAMAND BIOENGINEERING GROUP</span>
+        </div>
+        <div className="hud__block hud__block--tr">
+          <span>
+            CELLULAR ACTIVITY <b className="hud__live">{activity.toFixed(1)}%</b>
+          </span>
+          <span>GENE EXPRESSION <b className="hud__live">ACTIVE</b></span>
+          <span>SYSTEM STATUS <b className="hud__live">EVOLVING</b></span>
+        </div>
+      </div>
+
+      <div className="hero-copy">
+        <h1 className="display hero-thesis">
+          Life is now an engineering medium<span className="hero-thesis__dot">.</span>
+        </h1>
+
+        {hero.subtitle && <p className="hero-sub">{hero.subtitle}</p>}
+
+        <div className="hero-actions">
+          <Link className="btn-primary" to="/projects" data-cursor="explore">
+            Enter the lab
+          </Link>
+          {cta && (
+            <a className="btn-ghost" href={cta.href} data-cursor="explore">
+              Join the collective
+            </a>
+          )}
+        </div>
+      </div>
+
+      <p className="hero-cue" aria-hidden="true">
+        SCROLL TO DESCEND <span className="hero-cue__arrow">↓</span>
+      </p>
+    </>
+  );
+};
+
+/* ── the page ────────────────────────────────────────────────────────────── */
 
 const Home = () => {
   useDocumentTitle('Home');
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [home, setHome] = useState(null);
+  const [homeError, setHomeError] = useState(false);
+  const [projects, setProjects] = useState(null);
+  const [events, setEvents] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(false);
+  const loadHome = useCallback(async () => {
+    setHomeError(false);
     try {
-      const homeData = await fetchData(API_ENDPOINTS.home);
-      setData(homeData);
+      setHome(await fetchData(API_ENDPOINTS.home));
     } catch (err) {
       console.error('Failed to load home data:', err);
-      setError(true);
-    } finally {
-      setLoading(false);
+      setHomeError(true);
     }
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    loadHome();
+    /* teaser + tray are enrichment: fail-silent, sections simply absent */
+    fetchData(API_ENDPOINTS.projects)
+      .then((d) => setProjects(Array.isArray(d?.projects) ? d.projects : null))
+      .catch(() => {});
+    fetchData(API_ENDPOINTS.events)
+      .then((d) => setEvents(Array.isArray(d?.upcoming) ? d.upcoming : null))
+      .catch(() => {});
+  }, [loadHome]);
 
-  /* The reveal system lives in useDrawOnScroll. One observer, no threshold
-     (a threshold deadlocks .band — see the hook), and no per-page options. */
-  const pageRef = useDrawOnScroll(!!data);
+  /* The reveal hook collects .band/.row targets when `ready` CHANGES — but
+     this page's sections arrive from three async fetches at different times.
+     A boolean would arm once and permanently miss later arrivals, leaving
+     whole bands at opacity 0. The signature re-runs the effect per arrival. */
+  const pageRef = useDrawOnScroll(`${!!home}-${!!projects}-${!!events}`);
 
-  if (loading) {
-    return <LoadingSpinner variant="dna" />;
-  }
+  const sections = Array.isArray(home?.sections) ? home.sections : [];
+  const teaser = Array.isArray(projects) ? projects.slice(0, 3) : [];
+  const upcoming = Array.isArray(events) ? events.slice(0, 3) : [];
+  const mailto = home?.hero?.cta?.href || 'mailto:kbg@students.iitmandi.ac.in';
 
-  if (error || !data) {
-    return (
-      <ErrorState
-        message="The home sheet did not arrive. Check your connection and draw it again."
-        onRetry={load}
-      />
-    );
-  }
-
-  const hero = data.hero || {};
-  const highlights = Array.isArray(data.highlights) ? data.highlights : [];
-  const sections = Array.isArray(data.sections) ? data.sections : [];
-  const tracks = Array.isArray(data.tracks) ? data.tracks : [];
-  const stories = Array.isArray(data.stories) ? data.stories : [];
-  const contact = data.contact || null;
-
-  /* HIERARCHY INVERTED USING ONLY EXISTING KEYS.
-     hero.title ("KBG - Kamand Bioengineering Group") is the fourth repetition of what
-     the nav already says — it drops to a mono label. hero.subtitle is the actual
-     proposition, so it becomes the h1. Guarded: the JSON lives in another repo. */
-  const heroEyebrow = hero.subtitle ? hero.title : null;
-  const heroHeading = hero.subtitle || hero.title;
-  const cta = hero.cta && hero.cta.href && hero.cta.label ? hero.cta : null;
+  const heroContent = <Hero home={home} />;
 
   return (
-    <main className="p-home" ref={pageRef}>
-      {/* ── HERO ────────────────────────────────────────────────────────── */}
-      <section className="section hero-block">
-        <div className="shell">
-          <div className="hero-copy band">
-            {heroEyebrow && <p className="label hero-eyebrow">{heroEyebrow}</p>}
-            {heroHeading && <h1 className="hero-title">{heroHeading}</h1>}
-          </div>
-
-          <div className="rule--broken hero-rule row" />
-
-          {hero.description && (
-            <p className="lead hero-description band">
-              {hero.description}
-            </p>
-          )}
-
-          {cta && (
-            <p className="hero-actions">
-              <a className="btn-primary" href={cta.href}>
-                {cta.label}
-              </a>
-            </p>
-          )}
-        </div>
-      </section>
-
-      {/* ── HIGHLIGHTS ──────────────────────────────────────────────────── */}
-      {!!highlights.length && (
-        <section className="section">
-          <div className="shell">
-            <div className="entry-grid">
-              {highlights.map((item, i) => (
-                <article
-                  key={item.title || i}
-                  className="entry row"
-                  style={{ '--i': i }}
-                >
-                  <div className="rule--broken rule--sm" />
-                  {item.title && <h3>{item.title}</h3>}
-                  {item.text && <p className="caption">{item.text}</p>}
-                </article>
-              ))}
+    <div className="p-home" ref={pageRef}>
+      {/* ── THE SPECIMEN + THE DESCENT ─────────────────────────────────── */}
+      <Suspense
+        fallback={
+          <div className="specimen-field">
+            <div className="specimen-field__sticky">
+              <div className="specimen-field__hero">{heroContent}</div>
             </div>
           </div>
-        </section>
-      )}
+        }
+      >
+        <SpecimenField hero={heroContent} />
+      </Suspense>
 
-      {/* ── NARRATIVE ───────────────────────────────────────────────────── */}
-      {!!sections.length && (
-        <section className="section">
-          <div className="shell narrative">
+      {/* ── THE JOURNAL — ivory editorial band ─────────────────────────── */}
+      {(sections.length > 0 || homeError) && (
+        <section className="section world-journal home-journal">
+          <div className="shell">
+            {homeError && (
+              <ErrorState
+                message="The journal did not arrive. Check your connection and try again."
+                onRetry={loadHome}
+              />
+            )}
             {sections.map((section, i) => (
-              <article key={section.title || i} className="narrative-band band">
-                <div className="section-head">
-                  <div className="rule--broken" />
-                  {section.title && <h2>{section.title}</h2>}
-                </div>
-                {section.copy && <p>{section.copy}</p>}
+              <article key={section.title || i} className="home-journal__article band">
+                {section.title && (
+                  <h2 className="home-journal__head display-2">{section.title}</h2>
+                )}
+                {section.copy && <p className="home-journal__copy">{section.copy}</p>}
                 {Array.isArray(section.bullets) && section.bullets.length > 0 && (
                   <ul className="tick-list">
                     {section.bullets.map((b, bi) => (
@@ -135,109 +167,76 @@ const Home = () => {
         </section>
       )}
 
-      {/* ── TRACKS ──────────────────────────────────────────────────────── */}
-      {!!tracks.length && (
-        <section className="section">
+      {/* ── LIVE EXPERIMENTS — teaser dossiers ─────────────────────────── */}
+      {teaser.length > 0 && (
+        <section className="section world-lab home-lab">
           <div className="shell">
             <div className="section-head band">
-              <div className="rule--broken" />
-              <h2>Focus Tracks</h2>
+              <p className="label label--live">LIVE EXPERIMENTS</p>
+              <h2>Current specimens</h2>
             </div>
             <div className="entry-grid">
-              {tracks.map((track, i) => (
-                <article
-                  key={track.title || i}
-                  className="entry row"
-                  style={{ '--i': i }}
-                >
-                  <div className="rule--broken rule--sm" />
-                  {track.title && <h3>{track.title}</h3>}
-                  {track.summary && <p className="caption">{track.summary}</p>}
-                  {Array.isArray(track.focus) && track.focus.length > 0 && (
-                    <ul className="tick-list entry-foot">
-                      {track.focus.map((f, fi) => (
-                        <li key={fi}>{f}</li>
+              {teaser.map((project, i) => (
+                <article key={project.name || i} className="entry row" style={{ '--i': i }}>
+                  <p className="label">EXPERIMENT {String(i + 1).padStart(2, '0')}</p>
+                  {project.name && <h3>{project.name}</h3>}
+                  {project.summary && <p className="caption">{project.summary}</p>}
+                  {Array.isArray(project.tech) && project.tech.length > 0 && (
+                    <div className="tag-row entry-foot">
+                      {project.tech.slice(0, 3).map((t, ti) => (
+                        <span key={ti} className="tag">{t}</span>
                       ))}
-                    </ul>
+                    </div>
                   )}
                 </article>
               ))}
             </div>
+            <p className="home-lab__more">
+              <Link className="btn-ghost" to="/projects" data-cursor="open">
+                Open the archive
+              </Link>
+            </p>
           </div>
         </section>
       )}
 
-      {/* ── FIELD NOTES ─────────────────────────────────────────────────────
-          stories[].author and .role are empty strings in the live JSON and the
-          quotes are general science facts, not member testimonials. They render
-          as figure captions; the attribution is guarded, so no empty
-          <span>/<small> ever ships. */}
-      {!!stories.length && (
-        <section className="section">
+      {/* ── SAMPLE TRAY — upcoming events as labelled samples ──────────── */}
+      {upcoming.length > 0 && (
+        <section className="section world-lab home-tray">
           <div className="shell">
             <div className="section-head band">
-              <div className="rule--broken" />
-              <h2>Field Notes</h2>
+              <p className="label label--live">SAMPLE TRAY</p>
+              <h2>Upcoming</h2>
             </div>
-            <div className="entry-grid">
-              {stories.map((story, i) => (
-                <figure key={i} className="entry story row" style={{ '--i': i }}>
-                  <div className="rule--broken rule--sm" />
-                  {story.quote && <blockquote>{story.quote}</blockquote>}
-                  {(story.author || story.role) && (
-                    <figcaption className="entry-foot story-caption">
-                      {story.author && <span className="label">{story.author}</span>}
-                      {story.role && <span className="caption">{story.role}</span>}
-                    </figcaption>
-                  )}
-                </figure>
+            <ul className="home-tray__list">
+              {upcoming.map((event, i) => (
+                <li key={event.title || i} className="home-tray__item row" style={{ '--i': i }}>
+                  <Link to="/events" className="home-tray__link" data-cursor="open">
+                    <span className="tag tag--live">SAMPLE {event.date || '—'}</span>
+                    <span className="home-tray__title">{event.title}</span>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </section>
       )}
 
-      {/* ── CONTACT ─────────────────────────────────────────────────────── */}
-      {contact && (
-        <section className="section">
-          <div className="shell">
-            <div className="entry contact-entry row">
-              <div className="rule--broken" />
-              {contact.headline && <h2>{contact.headline}</h2>}
-              {contact.description && <p>{contact.description}</p>}
-
-              <div className="contact-foot entry-foot">
-                {contact.email && (
-                  <a className="btn-ghost" href={`mailto:${contact.email}`}>
-                    {contact.email}
-                  </a>
-                )}
-                {contact.phone && <span className="meta">{contact.phone}</span>}
-              </div>
-
-              {Array.isArray(contact.socials) && contact.socials.length > 0 && (
-                <ul className="contact-socials">
-                  {contact.socials.map((s, i) =>
-                    s && s.href && s.label ? (
-                      <li key={s.label || i}>
-                        <a
-                          className="label contact-social"
-                          href={s.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {s.label}
-                        </a>
-                      </li>
-                    ) : null
-                  )}
-                </ul>
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-    </main>
+      {/* ── JOIN MEMBRANE ──────────────────────────────────────────────── */}
+      <section className="section world-lab home-join">
+        <div className="shell home-join__inner band">
+          <div className="home-join__blob" aria-hidden="true" />
+          <h2 className="display-2">Grow with us</h2>
+          <p className="home-join__copy">
+            The lab takes new researchers every semester. Bring biology,
+            bring code, bring hardware — bring curiosity.
+          </p>
+          <a className="btn-primary" href={mailto} data-cursor="explore">
+            Join the collective
+          </a>
+        </div>
+      </section>
+    </div>
   );
 };
 

@@ -1,0 +1,133 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPECIMEN FIELD — hero + descent. A 600vh field; a sticky 100vh viewport.
+   Native scroll. The canvas never moves; the world inside it does.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.specimen-field {
+  position: relative;
+  height: 600vh;
+  background: var(--void);
+}
+
+/* Under reduced motion the journey is stacked sections, so the field must
+   never reserve 600vh — this also covers the Suspense fallback frame. */
+@media (prefers-reduced-motion: reduce) {
+  .specimen-field { height: auto; min-height: 100vh; }
+  .specimen-field .specimen-field__sticky { position: relative; }
+}
+
+.specimen-field__sticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.specimen-field__sticky .organism {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── HERO OVERLAY (content supplied by Home) ─────────────────────────────── */
+
+.specimen-field__hero {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: calc(var(--nav-h) + var(--s-6)) var(--gutter) var(--s-8);
+  pointer-events: none;
+}
+
+/* interactive children opt back in */
+.specimen-field__hero a,
+.specimen-field__hero button {
+  pointer-events: auto;
+}
+
+/* ── DESCENT STAGES ──────────────────────────────────────────────────────── */
+
+.descent-stage {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: 14vh;
+  /* wide enough that BIO INSTRUMENTATION never fractures at the display cap */
+  max-width: 46rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* GSAP autoAlpha drives opacity/visibility; links must work while shown */
+.descent-stage[style*="visibility: visible"] { pointer-events: auto; }
+
+.descent-stage__level {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-00);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--bio);
+  margin: 0;
+  max-width: none;
+}
+
+.descent-stage__title {
+  color: var(--specimen);
+  margin: 0;
+}
+
+.descent-stage__copy {
+  color: var(--specimen-2);
+  font-size: var(--fs-2);
+  max-width: 44ch;
+  margin: 0;
+}
+
+.descent-stage__link {
+  align-self: flex-start;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-0);
+  letter-spacing: var(--tr-label);
+  color: var(--specimen);
+  text-decoration: none;
+  border-bottom: 1px solid var(--bio-dim);
+  padding-bottom: 2px;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+
+.descent-stage__link:hover {
+  color: var(--bio);
+  border-color: var(--bio);
+}
+
+/* ── REDUCED-MOTION STATIC BUILD ─────────────────────────────────────────── */
+
+.specimen-field--static {
+  height: auto;
+}
+
+.specimen-field--static .specimen-field__sticky {
+  position: relative;
+  height: 100vh;
+}
+
+.specimen-field--static .specimen-field__static-stages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-9);
+  padding: var(--s-9) var(--gutter);
+}
+
+.specimen-field--static .descent-stage {
+  position: static;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}

@@ -95,7 +95,7 @@
      viewport minus gutters leaves ~264px, and the brand line hands us
      "ENGINEERING." at Archivo 900. The brief's 64px floor only exists from
      ~650px up, where the vw term exceeds it anyway. */
-  --fs-display:   clamp(2.25rem, 9.8vw, 10rem);           /* hero thesis */
+  --fs-display:   clamp(2.25rem, 8.4vw, 9rem);            /* hero thesis */
   --fs-display-2: clamp(1.85rem, 1.5rem + 3.2vw, 4.5rem); /* section display */
 
   --lh-0: 0.9;    /* display */

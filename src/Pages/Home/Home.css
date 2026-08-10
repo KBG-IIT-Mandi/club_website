@@ -1,204 +1,249 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   HOME — SHEET 01 / THE STRAND
-   Everything here is scoped under .p-home. No :root, no html, no body, no *.
-   Tokens are declared in index.css; primitives (.shell .entry .rule--* .band
-   .row .label .lead .caption .tag .btn-*) live in App.css. This file only adds
-   what is genuinely Home-specific.
+   HOME — the living interface.
+   Scoped under .p-home. Tokens from index.css, primitives from App.css.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── HERO ────────────────────────────────────────────────────────────────────
-   The hierarchy is inverted in the JSX: hero.title (the fourth repetition of
-   what the nav already says) is a mono label; hero.subtitle — the actual
-   proposition — is the h1. This is the ONE place an h1 departs from the
-   page-h1 role in index.css: 700 / --fs-6 / sentence case / --paper.        */
+/* ── HUD — instrument telemetry in the hero corners ──────────────────────── */
 
-.p-home .hero-block {
-  padding-block: var(--s-8) var(--s-6);
+.p-home .hud__block {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-00);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--specimen-2);
 }
 
-@media (min-width: 1024px) {
-  .p-home .hero-block { padding-block: var(--s-9) var(--s-7); }
+.p-home .hud__block--tl {
+  top: calc(var(--nav-h) + var(--s-5));
+  left: var(--gutter);
 }
+
+.p-home .hud__block--tr {
+  top: calc(var(--nav-h) + var(--s-5));
+  right: var(--gutter);
+  text-align: right;
+}
+
+.p-home .hud__live {
+  font-weight: 500;
+  color: var(--bio);
+}
+
+/* On phones the right block would collide with the left — stack them. */
+@media (max-width: 640px) {
+  .p-home .hud__block--tr {
+    top: calc(var(--nav-h) + var(--s-5) + 4.5rem);
+    right: auto;
+    left: var(--gutter);
+    text-align: left;
+  }
+}
+
+/* ── HERO COPY ───────────────────────────────────────────────────────────── */
 
 .p-home .hero-copy {
   display: flex;
   flex-direction: column;
-  gap: var(--s-3);
+  gap: var(--s-5);
+  max-width: 60rem;
 }
 
-.p-home .hero-eyebrow {
-  color: var(--cyan-label);
-}
-
-.p-home .hero-title {
-  font-weight: 700;
-  font-size: var(--fs-6);
-  line-height: var(--lh-2);
-  letter-spacing: var(--tr-head);
-  text-transform: none;
-  color: var(--paper);
-  max-width: var(--measure-h);
-}
-
-.p-home .hero-rule {
-  margin-block: var(--s-6);
-}
-
-.p-home .hero-description {
-  margin-bottom: var(--s-6);
-}
-
-.p-home .hero-actions {
+.p-home .hero-thesis {
+  /* The 60rem .hero-copy container controls the wrap; a ch-based cap here
+     fractured "ENGINEERING" mid-word (caps at weight 900 run wider than ch). */
   max-width: none;
+}
+
+.p-home .hero-thesis__dot {
+  color: var(--bio);
+}
+
+.p-home .hero-sub {
+  font-size: var(--fs-3);
+  line-height: var(--lh-4);
+  color: var(--specimen-2);
+  max-width: 44ch;
   margin: 0;
 }
 
-/* ── NARRATIVE BANDS ─────────────────────────────────────────────────────── */
-
-.p-home .narrative {
+.p-home .hero-actions {
   display: flex;
-  flex-direction: column;
-  gap: var(--s-8);
+  flex-wrap: wrap;
+  gap: var(--s-3);
 }
 
-.p-home .narrative-band {
+.p-home .hero-cue {
+  position: absolute;
+  right: var(--gutter);
+  bottom: var(--s-6);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-00);
+  letter-spacing: var(--tr-label);
+  color: var(--specimen-2);
+  margin: 0;
+  max-width: none;
+}
+
+.p-home .hero-cue__arrow {
+  display: inline-block;
+  animation: cue-drop 2.2s var(--ease) infinite;
+}
+
+@keyframes cue-drop {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50%      { transform: translateY(4px); opacity: 0.4; }
+}
+
+@media (max-width: 640px) {
+  .p-home .hero-cue { display: none; }
+}
+
+/* ── THE JOURNAL ─────────────────────────────────────────────────────────── */
+
+.p-home .home-journal__article {
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
+  padding-block: var(--s-6);
+  border-top: 1px solid var(--ivory-2);
 }
 
-.p-home .narrative-band .section-head {
-  margin-bottom: 0;
+.p-home .home-journal__article:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
-/* ── TICK LIST — the engineered half: a hard 12px rule, never a bullet glyph. */
+.p-home .home-journal__head {
+  color: var(--ink);
+}
+
+.p-home .home-journal__copy {
+  font-size: var(--fs-3);
+  line-height: var(--lh-4);
+  font-weight: 300;
+  color: var(--ink);
+  max-width: 58ch;
+}
 
 .p-home .tick-list {
   display: flex;
   flex-direction: column;
   gap: var(--s-2);
-  padding: 0;
-  margin: 0;
 }
 
 .p-home .tick-list li {
   position: relative;
   padding-left: var(--s-5);
-  font-size: var(--fs-2);
-  line-height: var(--lh-4);
-  color: var(--paper);
-}
-
-.p-home .entry .tick-list li {
-  font-size: var(--fs-1);
-  color: var(--paper-2);
+  color: var(--ink-2);
 }
 
 .p-home .tick-list li::before {
   content: "";
   position: absolute;
   left: 0;
-  top: calc(var(--lh-4) * 0.5em);
-  width: var(--s-3);
+  top: 0.62em;
+  width: 10px;
   height: 1px;
-  background: var(--cyan-line);
+  background: var(--ink-2);
 }
 
-/* ── ENTRIES ─────────────────────────────────────────────────────────────── */
+/* lab-world tick list variant */
+.p-home .world-lab .tick-list li { color: var(--specimen-2); }
+.p-home .world-lab .tick-list li::before { background: var(--bio-dim); }
 
-.p-home .entry .tick-list {
-  padding-top: var(--s-2);
-}
+/* ── LIVE EXPERIMENTS ────────────────────────────────────────────────────── */
 
-/* ── FIELD NOTES — figure captions, not testimonials. ─────────────────────── */
-
-.p-home .story blockquote {
-  margin: 0;
-  max-width: var(--measure);
-  font-size: var(--fs-2);
-  line-height: var(--lh-4);
-  color: var(--paper);
-}
-
-.p-home .story-caption {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  padding-top: var(--s-2);
-}
-
-/* ── CONTACT ─────────────────────────────────────────────────────────────── */
-
-.p-home .contact-entry {
-  padding: var(--s-6);
-  gap: var(--s-4);
-}
-
-.p-home .contact-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--s-4);
-  padding-top: var(--s-2);
-}
-
-/* The email sits on a .btn-ghost; it must not inherit the prose underline. */
-.p-home .contact-foot .btn-ghost {
-  text-transform: none;
-  letter-spacing: var(--tr-body);
-  font-weight: 500;
-  text-decoration: none;
-  overflow-wrap: anywhere;
-}
-
-.p-home .contact-socials {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-2) var(--s-5);
-  padding: 0;
-  margin: 0;
-}
-
-.p-home .contact-socials li {
+.p-home .home-lab__more {
+  margin-top: var(--s-6);
   max-width: none;
 }
 
-.p-home .contact-social {
-  display: inline-block;
-  color: var(--cyan-label);
-  text-decoration: underline;
-  text-decoration-color: var(--cyan-line);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.2em;
-  transition: color var(--dur-1) var(--ease),
-              text-decoration-color var(--dur-1) var(--ease);
+/* ── SAMPLE TRAY ─────────────────────────────────────────────────────────── */
+
+.p-home .home-tray__list {
+  display: flex;
+  flex-direction: column;
 }
 
-.p-home .contact-social:hover {
-  color: var(--cyan);
-  text-decoration-color: var(--cyan);
+.p-home .home-tray__item {
+  border-top: 1px solid var(--hairline);
 }
 
-/* ── LAYOUT ESCALATION ───────────────────────────────────────────────────── */
-
-@media (min-width: 640px) {
-  .p-home .entry-grid { gap: var(--s-5); }
+.p-home .home-tray__item:last-child {
+  border-bottom: 1px solid var(--hairline);
 }
 
-@media (min-width: 1024px) {
-  .p-home .contact-entry {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "rule rule"
-      "head foot"
-      "body social";
-    column-gap: var(--s-8);
-    align-items: start;
+.p-home .home-tray__link {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  padding-block: var(--s-4);
+  text-decoration: none;
+  color: var(--specimen);
+  transition: padding-left var(--dur-2) var(--ease-out);
+}
+
+.p-home .home-tray__link:hover {
+  color: var(--bio);
+  padding-left: var(--s-3);
+}
+
+.p-home .home-tray__title {
+  font-weight: 700;
+  font-size: var(--fs-3);
+  letter-spacing: var(--tr-head);
+}
+
+@media (max-width: 640px) {
+  .p-home .home-tray__link {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-2);
   }
-  .p-home .contact-entry > .rule--broken { grid-area: rule; }
-  .p-home .contact-entry > h2            { grid-area: head; }
-  .p-home .contact-entry > p             { grid-area: body; }
-  .p-home .contact-foot                  { grid-area: foot; justify-content: flex-end; }
-  .p-home .contact-socials               { grid-area: social; justify-content: flex-end; }
+}
+
+/* ── JOIN MEMBRANE ───────────────────────────────────────────────────────── */
+
+.p-home .home-join__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-5);
+  padding-block: var(--s-8);
+}
+
+.p-home .home-join__blob {
+  position: absolute;
+  right: 4%;
+  top: 50%;
+  width: clamp(180px, 26vw, 340px);
+  height: clamp(180px, 26vw, 340px);
+  transform: translateY(-50%);
+  border: 1px solid var(--bio-dim);
+  border-radius: var(--radius-membrane);
+  animation: join-morph 14s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes join-morph {
+  0%, 100% { border-radius: 58% 42% 55% 45% / 45% 52% 48% 55%; }
+  33%      { border-radius: 45% 55% 42% 58% / 55% 45% 58% 42%; }
+  66%      { border-radius: 52% 48% 60% 40% / 42% 55% 45% 58%; }
+}
+
+.p-home .home-join__copy {
+  color: var(--specimen-2);
+  max-width: 40ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p-home .hero-cue__arrow { animation: none; }
+  .p-home .home-join__blob { animation: none; }
 }
