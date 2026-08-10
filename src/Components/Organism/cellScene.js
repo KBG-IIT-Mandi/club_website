@@ -717,11 +717,17 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     },
 
     setQuality(q) {
-      /* shedding load without a rebuild: halve the drawn particles and stop
-         paying for the high-detail membrane by dropping its draw distance */
+      /* Strike-one shedding targets the two dominant per-frame costs:
+         half the particles, and a membrane rebuilt at half the segments
+         (the 152×104 sphere runs ~6 snoise calls per vertex per frame). */
       if (q === "low") {
         baseSize = 9;
         cloudGeo.setDrawRange(0, Math.floor(count / 2));
+        if (membrane.geometry === membraneGeo) {
+          const coarseGeo = new THREE.SphereGeometry(1.15, 88, 60);
+          membrane.geometry = coarseGeo;
+          membraneGeo.dispose();
+        }
       } else {
         baseSize = quality === "high" ? 11 : 9;
         cloudGeo.setDrawRange(0, count);
@@ -733,7 +739,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       running = false;
       cancelAnimationFrame(raf);
       mutationObserver.disconnect();
-      membraneGeo.dispose();
+      membrane.geometry.dispose(); // may be the coarse swap, not membraneGeo
       membraneMat.dispose();
       cloudGeo.dispose();
       cloudMat.dispose();

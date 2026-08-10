@@ -139,15 +139,20 @@ const Home = () => {
       </Suspense>
 
       {/* ── THE JOURNAL — ivory editorial band ─────────────────────────── */}
-      {(sections.length > 0 || homeError) && (
+      {/* The error panel is a LAB surface (dark ground, lime rail): rendered
+          inside .world-journal its text would inherit journal ink and land at
+          ~1-3:1 contrast. It lives on lab ground, outside the ivory band. */}
+      {homeError && (
+        <section className="section world-lab">
+          <ErrorState
+            message="The journal did not arrive. Check your connection and try again."
+            onRetry={loadHome}
+          />
+        </section>
+      )}
+      {sections.length > 0 && (
         <section className="section world-journal home-journal">
           <div className="shell">
-            {homeError && (
-              <ErrorState
-                message="The journal did not arrive. Check your connection and try again."
-                onRetry={loadHome}
-              />
-            )}
             {sections.map((section, i) => (
               <article key={section.title || i} className="home-journal__article band">
                 {section.title && (

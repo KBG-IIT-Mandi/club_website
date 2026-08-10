@@ -54,11 +54,12 @@ const OrganismCanvas = forwardRef(function OrganismCanvas(
     let io = null;
     let visible = true;
     let degradations = 0;
+    let fellBack = false; // the poster is TERMINAL — nothing may restart the loop
 
     const coarse = window.matchMedia("(pointer: coarse)").matches;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     reducedRef.current = reduced;
-    const dprCap = coarse ? 1.3 : 1.75;
+    let dprCap = coarse ? 1.3 : 1.75;
 
     const fallback = () => host.classList.add("is-fallback");
 
@@ -68,6 +69,9 @@ const OrganismCanvas = forwardRef(function OrganismCanvas(
       const w = host.clientWidth || 1;
       const h = host.clientHeight || 1;
       scene.resize(w, h, dpr);
+      // With no loop running (reduced motion), setSize wiped the drawing
+      // buffer — repaint the static frame or the cell vanishes on resize.
+      if (reduced) scene.renderOnce();
     };
 
     const onMove = (e) => {
@@ -83,7 +87,7 @@ const OrganismCanvas = forwardRef(function OrganismCanvas(
     };
 
     const onVisibility = () => {
-      if (!scene || reduced) return;
+      if (!scene || reduced || fellBack) return;
       if (document.hidden || !visible) scene.stop();
       else scene.start();
     };
@@ -117,14 +121,24 @@ const OrganismCanvas = forwardRef(function OrganismCanvas(
       if (reduced) {
         scene.renderOnce();
       } else {
+        /* Threshold 27, not 34: a healthy 30Hz environment (iOS Low Power
+           Mode, 30Hz external panels) delivers a steady ~29-30 and must not
+           trip the ladder; genuinely struggling GPUs land well under 27. */
         scene.onFps((fps) => {
-          if (fps < 34) {
+          if (fps < 27) {
             degradations += 1;
             if (degradations === 1) {
+              // Strike 1 sheds the real load: fewer particles + coarser
+              // membrane (setQuality) AND fewer pixels (DPR floor).
               scene.setQuality("low");
+              dprCap = 1.0;
+              resize();
             } else {
+              fellBack = true;
               scene.stop();
               scene.onFps(null);
+              io?.disconnect();
+              document.removeEventListener("visibilitychange", onVisibility);
               fallback();
             }
           }

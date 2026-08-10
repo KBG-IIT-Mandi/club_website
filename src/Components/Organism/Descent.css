@@ -63,7 +63,10 @@
   pointer-events: none;
 }
 
-/* GSAP autoAlpha drives opacity/visibility; links must work while shown */
+/* GSAP autoAlpha drives opacity/visibility; links must work while shown.
+   GSAP ≥3.10 serializes the shown state as `visibility: inherit` (NOT
+   `visible` — verified in gsap.js _addNonTweeningPT), so match both. */
+.descent-stage[style*="visibility: inherit"],
 .descent-stage[style*="visibility: visible"] { pointer-events: auto; }
 
 .descent-stage__level {

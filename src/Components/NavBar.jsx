@@ -65,15 +65,22 @@ const NavBar = () => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
-  // Prevent body scroll when menu is open
+  // Drawer open: lock body scroll AND take the covered page out of the tab
+  // order — a full-void overlay with reachable content behind it is a
+  // keyboard trap in reverse. NavBar doesn't render <main>/<footer>, so the
+  // attribute is toggled on the live DOM; cleanup always restores.
   useEffect(() => {
+    const covered = document.querySelectorAll('main, footer');
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
+      covered.forEach((el) => el.setAttribute('inert', ''));
     } else {
       document.body.style.overflow = 'unset';
+      covered.forEach((el) => el.removeAttribute('inert'));
     }
     return () => {
       document.body.style.overflow = 'unset';
+      covered.forEach((el) => el.removeAttribute('inert'));
     };
   }, [isMenuOpen]);
 
