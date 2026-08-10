@@ -96,9 +96,7 @@
      "ENGINEERING." at Archivo 900. The brief's 64px floor only exists from
      ~650px up, where the vw term exceeds it anyway. */
   --fs-display:   clamp(2.25rem, 8.4vw, 9rem);            /* hero thesis */
-  /* Floor 1.7rem: "INSTRUMENTATION" (15ch) must fit a 320px viewport's
-     ~264px column at Archivo 900 — 1.85rem left it ~8px short. */
-  --fs-display-2: clamp(1.7rem, 1.35rem + 3.2vw, 4.5rem); /* section display */
+  --fs-display-2: clamp(1.85rem, 1.5rem + 3.2vw, 4.5rem); /* section display */
 
   --lh-0: 0.9;    /* display */
   --lh-1: 0.95;

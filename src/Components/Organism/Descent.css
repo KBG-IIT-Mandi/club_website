@@ -83,6 +83,18 @@
 .descent-stage__title {
   color: var(--specimen);
   margin: 0;
+  /* The hand-set soft hyphen in "Instrumen­tation" is for PHONES ONLY:
+     hyphens:none makes wide screens ignore it (they break at the space),
+     while ≤640px re-arms manual hyphenation so the word fits the column. */
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+
+@media (max-width: 640px) {
+  .descent-stage__title {
+    hyphens: manual;
+    -webkit-hyphens: manual;
+  }
 }
 
 .descent-stage__copy {

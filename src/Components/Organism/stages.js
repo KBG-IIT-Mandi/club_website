@@ -8,7 +8,10 @@ export const STAGES = [
   {
     id: "organism",
     level: "LEVEL 01 · ORGANISM · 0.1 M",
-    title: "Bio Instrumentation",
+    /* The soft hyphen is hand-set typesetting, not auto-hyphenation: it only
+       fires on viewports where INSTRUMENTATION (10.6× the font-size, measured)
+       cannot fit one line, i.e. small phones. Desktop never sees it. */
+    title: "Bio Instrumen­tation",
     copy: "EEG, ECG and biosensor hardware that listens to living systems — built, soldered and debugged in-house.",
     to: "/projects",
     band: [0.05, 0.18],
