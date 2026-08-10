@@ -40,6 +40,30 @@ main {
   .section { padding-block: var(--s-10); }
 }
 
+/* Skip link — the first tab stop. Off-canvas until focused, then it lands
+   as a lab chip under the nav. */
+.skip-link {
+  position: fixed;
+  top: calc(var(--nav-h) + var(--s-2));
+  left: var(--gutter);
+  z-index: calc(var(--z-cursor) - 1);
+  transform: translateY(-200%);
+  background: var(--bio);
+  color: var(--void);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-0);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: var(--s-3) var(--s-4);
+  transition: transform var(--dur-1) var(--ease);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
 /* Screen-reader-only, for labels that must exist but not show. */
 .sr-only {
   position: absolute;

@@ -1,0 +1,127 @@
+- generic [ref=e2]:
+  - navigation [ref=e3]:
+    - generic [ref=e4]:
+      - link "KBG Kamand Bioengineering Group - IIT Mandi" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e7]:
+          - generic [ref=e8]: KBG
+          - generic [ref=e9]: Kamand Bioengineering Group - IIT Mandi
+      - generic [ref=e10]:
+        - link "Home" [ref=e11] [cursor=pointer]:
+          - /url: /
+        - link "About" [ref=e12] [cursor=pointer]:
+          - /url: /about
+        - link "Team" [ref=e13] [cursor=pointer]:
+          - /url: /team
+        - link "Events" [ref=e14] [cursor=pointer]:
+          - /url: /events
+        - link "Projects" [ref=e15] [cursor=pointer]:
+          - /url: /projects
+        - generic [ref=e16]: EVOLVING
+  - main [ref=e19]:
+    - generic [ref=e21]:
+      - generic [ref=e23]:
+        - generic:
+          - generic:
+            - generic: SPECIMEN 001
+            - generic: KAMAND BIOENGINEERING GROUP
+          - generic:
+            - generic:
+              - text: CELLULAR ACTIVITY
+              - generic: 94.7%
+            - generic: GENE EXPRESSION ACTIVE
+            - generic: SYSTEM STATUS EVOLVING
+          - generic:
+            - heading "Life is now an engineering medium." [level=1]
+            - paragraph: An interdisciplinary student club at IIT Mandi exploring the frontiers of biology, engineering, and technology.
+            - generic:
+              - link "Enter the lab" [ref=e24] [cursor=pointer]:
+                - /url: /projects
+              - link "Join the collective" [ref=e25] [cursor=pointer]:
+                - /url: mailto:kbg@students.iitmandi.ac.in
+          - paragraph:
+            - text: SCROLL TO DESCEND
+            - generic: ↓
+      - generic [ref=e27]:
+        - article [ref=e28]:
+          - heading "Why KBG" [level=2] [ref=e29]
+          - paragraph [ref=e30]: Biotechnology, data science, and engineering are converging faster than ever before. KBG empowers students to work at this intersection — where circuits meet cells, and algorithms meet ecosystems. Through events and projects, we aim to have fun while exploring new topics.
+        - article [ref=e31]:
+          - heading "What we do" [level=2] [ref=e32]
+          - paragraph [ref=e33]: We do projects that combine biology with several engineering disciplines. We host workshops, talks, and hackathons to explore emerging topics at this intersection.
+          - list [ref=e34]:
+            - listitem [ref=e35]: Synthetic biology
+            - listitem [ref=e36]: AI x Biology
+            - listitem [ref=e37]: and many more
+        - article [ref=e38]:
+          - heading "What we have done" [level=2] [ref=e39]
+          - paragraph [ref=e40]: Since our inception in 2020, KBG has successfully organized multiple workshops, talks, and hackathons. Our members have even represented IIT Mandi at iGEM. Following that legacy, we continue to spread knowledge about this field through our events and projects.
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - paragraph [ref=e44]: LIVE EXPERIMENTS
+          - heading "Current specimens" [level=2] [ref=e45]
+        - generic [ref=e46]:
+          - article [ref=e47]:
+            - paragraph [ref=e48]: EXPERIMENT 01
+            - heading "BioSphere" [level=3] [ref=e49]
+            - paragraph [ref=e50]: Terrarium-based project promoting ecological balance and sustainability. Encourages students to design self-sustaining ecosystems and study natural resource cycles hands-on.
+            - generic [ref=e51]:
+              - generic [ref=e52]: Arduino
+              - generic [ref=e53]: IoT Sensors
+              - generic [ref=e54]: Python
+          - article [ref=e55]:
+            - paragraph [ref=e56]: EXPERIMENT 02
+            - heading "DynaSync" [level=3] [ref=e57]
+            - paragraph [ref=e58]: Classifying the EEG signals using machine learning algorithms to detect which pattern corresponds to which word.
+            - generic [ref=e59]:
+              - generic [ref=e60]: Python
+              - generic [ref=e61]: Scikit-learn
+              - generic [ref=e62]: MNE-Python
+          - article [ref=e63]:
+            - paragraph [ref=e64]: EXPERIMENT 03
+            - heading "Gogec" [level=3] [ref=e65]
+            - paragraph [ref=e66]: Synthetic biology aimed project for participation in Gogec international competition.
+            - generic [ref=e67]:
+              - generic [ref=e68]: Computational Biology
+              - generic [ref=e69]: ML/DL
+        - paragraph [ref=e70]:
+          - link "Open the archive" [ref=e71] [cursor=pointer]:
+            - /url: /projects
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - paragraph [ref=e75]: SAMPLE TRAY
+          - heading "Upcoming" [level=2] [ref=e76]
+        - list [ref=e77]:
+          - listitem [ref=e78]:
+            - link "SAMPLE 2026 HackBio" [ref=e79] [cursor=pointer]:
+              - /url: /events
+              - generic [ref=e80]: SAMPLE 2026
+              - generic [ref=e81]: HackBio
+          - listitem [ref=e82]:
+            - link "SAMPLE 2026 Cell Saga 4.0" [ref=e83] [cursor=pointer]:
+              - /url: /events
+              - generic [ref=e84]: SAMPLE 2026
+              - generic [ref=e85]: Cell Saga 4.0
+          - listitem [ref=e86]:
+            - link "SAMPLE 2025-11-20 AI × Bio 2.0" [ref=e87] [cursor=pointer]:
+              - /url: /events
+              - generic [ref=e88]: SAMPLE 2025-11-20
+              - generic [ref=e89]: AI × Bio 2.0
+      - generic [ref=e91]:
+        - heading "Grow with us" [level=2] [ref=e92]
+        - paragraph [ref=e93]: The lab takes new researchers every semester. Bring biology, bring code, bring hardware — bring curiosity.
+        - link "Join the collective" [ref=e94] [cursor=pointer]:
+          - /url: mailto:kbg@students.iitmandi.ac.in
+  - contentinfo [ref=e95]:
+    - generic [ref=e97]:
+      - generic [ref=e98]:
+        - paragraph [ref=e99]: KAMAND BIOENGINEERING GROUP
+        - paragraph [ref=e100]: 31.7754°N 76.9861°E · IIT MANDI · HIMACHAL PRADESH
+        - paragraph [ref=e101]: LAST SIGNAL 20 DAYS AGO
+      - generic [ref=e102]:
+        - paragraph [ref=e103]: © 2025 KBG — Bioengineering Club, IIT Mandi
+        - navigation [ref=e104]:
+          - link "Contact" [ref=e105] [cursor=pointer]:
+            - /url: /contact
+          - link "Privacy" [ref=e106] [cursor=pointer]:
+            - /url: /privacy

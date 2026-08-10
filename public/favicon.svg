@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- KBG — the specimen: a breathing membrane with its nucleus.
+       Lime on transparent so it reads on light and dark tab bars alike. -->
+  <path d="M16 3.2
+           C 21.5 2.6, 27.4 6.4, 28.4 12.1
+           C 29.4 17.8, 27.2 24.4, 21.8 27.0
+           C 16.4 29.6, 8.9 28.6, 5.3 23.8
+           C 1.7 19.0, 2.6 11.6, 6.3 7.6
+           C 9.0 4.7, 12.4 3.6, 16 3.2 Z"
+        fill="none" stroke="#B6FF2E" stroke-width="2.4"/>
+  <circle cx="14.2" cy="15.4" r="3.4" fill="#B6FF2E"/>
+  <circle cx="21.2" cy="11.8" r="1.5" fill="#4FA8FF"/>
+</svg>

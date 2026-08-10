@@ -20,10 +20,15 @@ export default function App() {
 
   return (
     <Router>
+      {/* First tab stop on every page. Visible only on focus (App.css). */}
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+
       <NavBar />
 
       {/* FocusShift keys on the pathname: each route racks into focus. */}
-      <main>
+      <main id="main">
         <FocusShift>
           <Routes>
             <Route path="/" element={<Home />} />
