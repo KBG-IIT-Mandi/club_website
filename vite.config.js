@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // Production source maps: no runtime cost, and stack traces from the
+    // club server point at real source. The repo is public anyway.
+    sourcemap: true,
+  },
   server: {
     // listen on all addresses, allow access from LAN
     // Use `true` so Vite will listen on all interfaces and provide

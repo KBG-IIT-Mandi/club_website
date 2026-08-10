@@ -95,6 +95,19 @@ const OrganismCanvas = forwardRef(function OrganismCanvas(
     const onResize = () => resize();
 
     (async () => {
+      /* The three chunk is ~525KB of parse/eval — on a throttled phone CPU
+         that is a multi-second main-thread task. Waiting for idle keeps it
+         out of the load-critical window; the 1600ms timeout still delivers
+         the organism promptly when the thread never goes idle. */
+      await new Promise((r) => {
+        if ("requestIdleCallback" in window) {
+          requestIdleCallback(r, { timeout: 1600 });
+        } else {
+          setTimeout(r, 350);
+        }
+      });
+      if (disposed) return;
+
       let mod;
       try {
         mod = await import("./cellScene.js");

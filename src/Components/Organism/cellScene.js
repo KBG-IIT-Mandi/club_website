@@ -512,8 +512,11 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     transparent: true,
     depthWrite: false,
   });
-  const ORGANELLES = 18;
-  const organelles = new THREE.InstancedMesh(organelleGeo, organelleMat, ORGANELLES);
+  /* Low quality (coarse pointers, demoted GPUs): the nucleus cloud carries
+     the interior alone — organelles are a desktop garnish, not structure. */
+  const ORGANELLES = quality === "high" ? 18 : 0;
+  const organelles = new THREE.InstancedMesh(organelleGeo, organelleMat, Math.max(1, ORGANELLES));
+  organelles.count = ORGANELLES;
   {
     const rand = mulberry32(7);
     const m = new THREE.Matrix4();
