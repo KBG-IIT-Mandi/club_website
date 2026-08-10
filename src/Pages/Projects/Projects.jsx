@@ -1,22 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./Projects.css";
 import useDocumentTitle from "../../CustomHooks/useDocumentTitle";
 import useDrawOnScroll from "../../CustomHooks/useDrawOnScroll";
 import { API_ENDPOINTS, fetchData } from "../../config/api";
 import { LoadingSpinner, ErrorState } from "../../Components/Loading";
+import SpecimenCard from "../../Components/SpecimenCard/SpecimenCard";
+import { disciplineFor } from "../../lib/discipline";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PROJECTS — THE ARCHIVE.
+   Every project is a specimen dossier (SpecimenCard). The filter row is
+   DERIVED from the live data: only disciplines that actually occur become
+   chips, so an empty category can never render an empty archive.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 const Projects = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [filter, setFilter] = useState("all");
+  const [openIndex, setOpenIndex] = useState(-1);
 
-  // data.title is the source of truth; the fallback is a tab label, not club copy.
   useDocumentTitle(data?.title || "Projects");
 
   useEffect(() => {
     let cancelled = false;
-
     const loadData = async () => {
       setLoading(true);
       setError(false);
@@ -30,21 +39,38 @@ const Projects = () => {
         if (!cancelled) setLoading(false);
       }
     };
-
     loadData();
     return () => {
       cancelled = true;
     };
   }, [attempt]);
 
-  // THE REVEAL — the entire system. One IntersectionObserver adds .is-drawn;
-  // CSS transitions do the rest. Bands plot left-to-right (clip-path),
-  // rows draw out from the left rule (scaleX), staggered via --i.
-  // A reduced preference is honoured in CSS: every target renders at its
-  // final state, because each move here is a final state minus a transform.
-  /* The reveal system lives in useDrawOnScroll. One observer, no threshold
-     (a threshold deadlocks .band — see the hook), and no per-page options. */
   const pageRef = useDrawOnScroll(!!data);
+
+  const projects = useMemo(
+    () => (Array.isArray(data?.projects) ? data.projects.filter(Boolean) : []),
+    [data]
+  );
+
+  /* Chips: ALL + each discipline present in the live data, in first-seen
+     order. Indices are preserved from the ARCHIVE order — EXPERIMENT numbers
+     never renumber when a filter narrows the view. */
+  const disciplines = useMemo(() => {
+    const seen = new Map();
+    projects.forEach((p) => {
+      const d = disciplineFor(p.tech);
+      if (!seen.has(d.id)) seen.set(d.id, d.label);
+    });
+    return Array.from(seen, ([id, label]) => ({ id, label }));
+  }, [projects]);
+
+  const visible = useMemo(
+    () =>
+      projects
+        .map((p, i) => ({ project: p, index: i }))
+        .filter(({ project }) => filter === "all" || disciplineFor(project.tech).id === filter),
+    [projects, filter]
+  );
 
   if (loading) {
     return <LoadingSpinner variant="dna" />;
@@ -53,47 +79,73 @@ const Projects = () => {
   if (error || !data) {
     return (
       <ErrorState
-        message="Failed to load projects data. Please try again later."
-        onRetry={() => setAttempt((n) => n + 1)}
+        message="The archive did not arrive. Check your connection and try again."
+        onRetry={() => setAttempt((a) => a + 1)}
       />
     );
   }
 
-  const projects = Array.isArray(data.projects) ? data.projects : [];
-
   return (
-    <div className="p-projects" ref={pageRef}>
-      <section className="shell section">
-        <header className="section-head band">
-          {data.title && <h1>{data.title}</h1>}
-          <div className="rule--broken" aria-hidden="true" />
-        </header>
-
-        {!!projects.length && (
-          <div className="entry-grid">
-            {projects.map((p, i) => {
-              const tech = Array.isArray(p.tech) ? p.tech : [];
-              return (
-                <article className="entry row" key={p.name || i} style={{ "--i": i }}>
-                  <div className="rule--broken rule--sm" aria-hidden="true" />
-                  <h2>{p.name}</h2>
-                  {p.summary && <p className="project-summary">{p.summary}</p>}
-                  {!!tech.length && (
-                    <div className="tag-row entry-foot">
-                      {tech.map((t, j) => (
-                        <span className="tag" key={j}>
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              );
-            })}
+    <main className="p-projects world-lab" ref={pageRef}>
+      <section className="section">
+        <div className="shell">
+          <div className="section-head band">
+            <p className="label label--live">THE ARCHIVE</p>
+            <h1>{data.title || "Projects"}</h1>
+            <p className="lead">
+              Every project is a running experiment. Open a dossier to read the
+              full record.
+            </p>
           </div>
-        )}
+
+          {disciplines.length > 1 && (
+            <div
+              className="archive-filter tag-row band"
+              role="group"
+              aria-label="Filter by discipline"
+            >
+              <button
+                type="button"
+                className={`tag archive-filter__chip${filter === "all" ? " is-active" : ""}`}
+                aria-pressed={filter === "all"}
+                onClick={() => setFilter("all")}
+                data-cursor="explore"
+              >
+                ALL ({projects.length})
+              </button>
+              {disciplines.map((d) => (
+                <button
+                  key={d.id}
+                  type="button"
+                  className={`tag archive-filter__chip${filter === d.id ? " is-active" : ""}`}
+                  aria-pressed={filter === d.id}
+                  onClick={() => setFilter(d.id)}
+                  data-cursor="explore"
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="archive-list">
+            {visible.map(({ project, index }) => (
+              <SpecimenCard
+                key={project.name || index}
+                project={project}
+                index={index}
+                expanded={openIndex === index}
+                onToggle={() => setOpenIndex((cur) => (cur === index ? -1 : index))}
+              />
+            ))}
+          </div>
+
+          {!visible.length && (
+            <p className="label archive-empty">NO SPECIMENS UNDER THIS DISCIPLINE</p>
+          )}
+        </div>
       </section>
-    </div>
+    </main>
   );
 };
 

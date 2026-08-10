@@ -5,6 +5,8 @@ import useDrawOnScroll from '../../CustomHooks/useDrawOnScroll'
 import { API_ENDPOINTS, fetchData } from '../../config/api'
 import { LoadingSpinner, ErrorState } from '../../Components/Loading'
 
+const pad2 = (n) => String(n).padStart(2, '0')
+
 const About = () => {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -31,7 +33,8 @@ const About = () => {
   }, [load])
 
   /* The reveal system lives in useDrawOnScroll. One observer, no threshold
-     (a threshold deadlocks .band — see the hook), and no per-page options. */
+     (a threshold deadlocks .band — see the hook). One fetch, early returns
+     until it lands: `!!data` flips exactly when the targets first exist. */
   const pageRef = useDrawOnScroll(!!data)
 
   if (loading) {
@@ -55,51 +58,57 @@ const About = () => {
   const socials = Array.isArray(contact?.socials) ? contact.socials : []
 
   return (
-    <section className="p-about" ref={pageRef}>
+    <div className="p-about world-journal" ref={pageRef}>
       <div className="shell">
-        <header className="p-about__hero section band">
-          <h1>{data.title}</h1>
-          {data.mission && <p className="lead">{data.mission}</p>}
+        {/* ── THE MASTHEAD ─────────────────────────────────────────────── */}
+        <header className="about-head band">
+          <p className="label">The journal</p>
+          {data.title && <h1 className="display-2 about-title">{data.title}</h1>}
         </header>
 
-        {data.history && (
-          <div className="p-about__origin section band">
-            <div className="rule--broken" aria-hidden="true" />
-            <p className="p-about__history">{data.history}</p>
+        {/* ── MISSION — the pull-quote. 200 against the 900 masthead: the
+               journal's whole typographic argument in one spread. ────────── */}
+        {data.mission && (
+          <p className="about-mission band">{data.mission}</p>
+        )}
+
+        {/* ── THE LONG READ — history, then the full account ───────────── */}
+        {(data.history || data.aboutLong) && (
+          <div className="about-prose band">
+            {data.history && <p>{data.history}</p>}
+            {data.aboutLong && <p>{data.aboutLong}</p>}
           </div>
         )}
 
-        {data.aboutLong && (
-          <div className="p-about__long section band">
-            <p>{data.aboutLong}</p>
-          </div>
-        )}
-
+        {/* ── FEATURES — margin-noted like a paper's numbered figures ──── */}
         {features.length > 0 && (
-          <section className="section band">
-            <div className="section-head">
-              <div className="rule--broken" aria-hidden="true" />
+          <section className="section about-features">
+            <div className="section-head band">
               <h2>Features</h2>
+              <div className="rule" aria-hidden="true" />
             </div>
-            <div className="entry-grid">
+            <ol className="feature-list">
               {features.map((f, i) => (
-                <article className="entry" key={i}>
-                  <div className="rule--broken rule--sm" aria-hidden="true" />
-                  <h3>{f.title}</h3>
-                  <p className="caption">{f.description}</p>
-                </article>
+                <li className="feature row" style={{ '--i': i }} key={f.title || i}>
+                  <p className="label feature__note">FEATURE {pad2(i + 1)}</p>
+                  <div className="feature__body">
+                    {f.title && <h3 className="feature__title">{f.title}</h3>}
+                    {f.description && <p className="feature__desc">{f.description}</p>}
+                  </div>
+                </li>
               ))}
-            </div>
+            </ol>
           </section>
         )}
 
+        {/* ── WHAT WE DO — the tick-list of commitments ────────────────── */}
         {whatWeDo.length > 0 && (
-          <section className="section band">
-            <div className="section-head">
-              <div className="rule--broken" aria-hidden="true" />
+          <section className="section about-do">
+            <div className="section-head band">
               <h2>What we do</h2>
+              <div className="rule" aria-hidden="true" />
             </div>
-            <ul className="p-about__do">
+            <ul className="tick-list">
               {whatWeDo.map((item, i) => (
                 <li className="row" style={{ '--i': i }} key={i}>
                   {item}
@@ -109,51 +118,58 @@ const About = () => {
           </section>
         )}
 
+        {/* ── CONTACT ──────────────────────────────────────────────────── */}
         {contact && (
-          <section className="section">
-            <div className="section-head">
-              <div className="rule--broken" aria-hidden="true" />
-              <h2>Say hello</h2>
+          <section className="section about-contact">
+            <div className="section-head band">
+              <h2>Contact</h2>
+              <div className="rule" aria-hidden="true" />
             </div>
 
-            <div className="p-about__contact">
-              <div className="p-about__contact-details">
-                {contact.location && (
-                  <p className="caption">{contact.location}</p>
-                )}
+            <div className="about-contact__grid">
+              <div className="about-contact__details band">
                 {contact.email && (
-                  <a className="p-about__email" href={`mailto:${contact.email}`}>
+                  <a
+                    className="btn-ghost about-contact__email"
+                    href={`mailto:${contact.email}`}
+                    data-cursor="explore"
+                  >
                     {contact.email}
                   </a>
                 )}
-                {contact.phone && <p className="meta">{contact.phone}</p>}
+                {contact.location && (
+                  <p className="about-contact__loc">{contact.location}</p>
+                )}
               </div>
 
               {socials.length > 0 && (
-                <div className="entry-grid p-about__socials">
-                  {socials.map((social, i) => (
-                    <a
-                      className="entry p-about__social row"
-                      style={{ '--i': i }}
-                      key={i}
-                      href={social.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <div className="rule--broken rule--sm" aria-hidden="true" />
-                      <span className="label">{social.label}</span>
-                      {social.handle && (
-                        <span className="p-about__handle">{social.handle}</span>
-                      )}
-                    </a>
-                  ))}
-                </div>
+                <ul className="about-socials">
+                  {socials.map(
+                    (social, i) =>
+                      social.href && (
+                        <li className="row" style={{ '--i': i }} key={social.label || i}>
+                          <a
+                            className="about-social"
+                            href={social.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-cursor="explore"
+                          >
+                            <span className="about-social__label">{social.label}</span>
+                            {social.handle && (
+                              <span className="about-social__handle">{social.handle}</span>
+                            )}
+                          </a>
+                        </li>
+                      )
+                  )}
+                </ul>
               )}
             </div>
           </section>
         )}
       </div>
-    </section>
+    </div>
   )
 }
 

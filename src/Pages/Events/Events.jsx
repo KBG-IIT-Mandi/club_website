@@ -5,6 +5,15 @@ import useDrawOnScroll from "../../CustomHooks/useDrawOnScroll";
 import { API_ENDPOINTS, fetchData } from "../../config/api";
 import { LoadingSpinner, ErrorState } from "../../Components/Loading";
 
+/* The four membrane silhouettes cycle by index so adjacent samples never
+   share an outline. Variant 1 is the bare primitive (App.css). */
+const MEMBRANES = [
+  "membrane",
+  "membrane membrane--2",
+  "membrane membrane--3",
+  "membrane membrane--4",
+];
+
 export default function Events() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -36,13 +45,10 @@ export default function Events() {
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
-  /* THE ENTIRE MOTION SYSTEM: one IntersectionObserver adds .is-drawn; CSS does
-     the rest. Bands plot left-to-right (move 2), rows draw with scaleX (move 3).
-     No rAF, no scroll listener, no library. If IO is unavailable the content is
-     marked drawn immediately — nothing is ever hidden behind a reveal that never
-     fires. prefers-reduced-motion is handled in CSS: .band/.row rest at final. */
   /* The reveal system lives in useDrawOnScroll. One observer, no threshold
-     (a threshold deadlocks .band — see the hook), and no per-page options. */
+     (a threshold deadlocks .band — see the hook). This page has one fetch and
+     early-returns until it lands, so `!!data` changes exactly when the
+     .band/.row targets first exist — nothing arrives after arming. */
   const rootRef = useDrawOnScroll(!!data);
 
   if (loading) return <LoadingSpinner variant="dna" />;
@@ -58,49 +64,58 @@ export default function Events() {
 
   if (!data) return null;
 
-  /* Section names are the JSON's own keys, not invented editorial copy.
-     events.json carries no heading field, so the structure names itself. */
+  /* Section names are the lab's own vocabulary for the JSON's own keys:
+     upcoming samples are LIVE, past samples go to THE FREEZER. */
   const groups = [
-    { key: "upcoming", heading: "Upcoming", live: true, items: data.upcoming || [] },
-    { key: "past", heading: "Past", live: false, items: data.past || [] },
+    {
+      key: "upcoming",
+      heading: "Live samples",
+      live: true,
+      items: Array.isArray(data.upcoming) ? data.upcoming : [],
+    },
+    {
+      key: "past",
+      heading: "The freezer",
+      live: false,
+      items: Array.isArray(data.past) ? data.past : [],
+    },
   ];
 
-  const renderEntry = (event, i, live, key) => (
-    <li className={`entry row${live ? " entry--live" : ""}`} key={`${key}-${i}`}>
-      {/* The top rail. Broken at 71% — the shield. Hover closes it (the clasp);
-          App.css wires that for any .rule--broken inside an .entry. */}
-      <div className="rule--broken rule--sm" aria-hidden="true" />
-
-      <div className="event">
+  /* date is a RAW STRING in mixed formats ("2026", "2025-11-20").
+     Rendered verbatim on the tag — never parsed, never reformatted. */
+  const renderSample = (event, i, live, key) => (
+    <li className="sample row" style={{ "--i": i % 4 }} key={`${key}-${i}`}>
+      <div className="sample__specimen">
+        <p className={live ? "tag tag--live" : "tag"}>
+          {live ? "SAMPLE" : "ARCHIVED"}
+          {event.date ? ` ${event.date}` : ""}
+        </p>
         {event.image && (
-          <img
-            className="event__poster"
-            src={event.image}
-            alt=""
-            width="168"
-            height="168"
-            loading="lazy"
-            decoding="async"
-          />
+          <div
+            className={`sample__dish ${MEMBRANES[i % MEMBRANES.length]}`}
+            aria-hidden="true"
+          >
+            <img src={event.image} alt="" loading="lazy" decoding="async" />
+          </div>
         )}
-
-        <div className="event__body">
-          {/* date is a RAW STRING in mixed formats ("2026", "2025-11-20").
-              Rendered verbatim — never parsed, never reformatted. */}
-          {event.date && (
-            <p className={`label${live ? " label--live" : ""}`}>{event.date}</p>
-          )}
-          {event.title && <h3>{event.title}</h3>}
-          {event.description && <p className="event__desc">{event.description}</p>}
-        </div>
       </div>
+
+      {(event.title || event.description) && (
+        <div className="sample__body world-journal">
+          {event.title && <h3 className="sample__title">{event.title}</h3>}
+          {event.description && (
+            <p className="sample__desc">{event.description}</p>
+          )}
+        </div>
+      )}
     </li>
   );
 
   return (
-    <div className="p-events" ref={rootRef}>
+    <div className="p-events world-lab" ref={rootRef}>
       <div className="shell">
-        <header className="events-head">
+        <header className="events-head band">
+          <p className="label">The sample log</p>
           <h1>{data.title || "Events"}</h1>
         </header>
 
@@ -108,18 +123,18 @@ export default function Events() {
           ({ key, heading, live, items }) =>
             items.length > 0 && (
               <section className="section" key={key}>
-                <div className="section-head">
+                <div className="section-head band">
+                  <h2>{heading}</h2>
                   <div
-                    className={`rule--broken band${live ? " rule--live" : ""}`}
+                    className={live ? "rule rule--live" : "rule"}
                     aria-hidden="true"
                   />
-                  <h2>{heading}</h2>
                 </div>
 
                 {/* Display order is JSON order. past[] is not chronologically
                     sorted in the source and we do not reorder the club's data. */}
-                <ol className="entry-list">
-                  {items.map((event, i) => renderEntry(event, i, live, key))}
+                <ol className="sample-list">
+                  {items.map((event, i) => renderSample(event, i, live, key))}
                 </ol>
               </section>
             )

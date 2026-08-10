@@ -1,80 +1,164 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   KBG — SHEET 01 / THE STRAND — /about
-   Scoped under .p-about. Declares no tokens, no global selectors, no fonts.
-   Everything here composes primitives from index.css + App.css.
+   ABOUT — THE JOURNAL.
+   Scoped under .p-about. Tokens from index.css, primitives from App.css
+   (.shell/.section/.section-head/.label/.rule/.display-2/.btn-ghost/
+   .band/.row). This file consumes both and declares neither.
+
+   The full ivory editorial world: .world-journal sits on the page root, so
+   the ink/ivory palette, journal links and journal selection all come from
+   index.css. No new typeface anywhere — the typographic contrast is Archivo's
+   weight extremes: the 900 masthead against the 200 mission pull-quote, with
+   tiny mono margin-notes as the scientific-paper register.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ── PAGE ────────────────────────────────────────────────────────────────── */
+
 .p-about {
-  position: relative;
-  z-index: var(--z-content);
+  padding-top: calc(var(--nav-h) + var(--s-8));
   padding-bottom: var(--s-9);
 }
 
-/* ── HERO ────────────────────────────────────────────────────────────────────
-   data.title is the page h1 — it takes 900 / --fs-5 / UPPER / --cyan from the
-   base rule in index.css. data.mission is the lead: the club's proposition,
-   stated once, at reading scale. No pill, no gradient, no invented descriptor. */
+@media (min-width: 1024px) {
+  .p-about { padding-top: calc(var(--nav-h) + var(--s-9)); }
+}
 
-.p-about__hero {
+/* ── MASTHEAD ────────────────────────────────────────────────────────────── */
+
+.p-about .about-head {
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
-  padding-top: var(--s-7);
 }
 
-/* ── THE ORIGIN STORY ────────────────────────────────────────────────────────
-   The founding copy is the best writing on the site, so it is the only prose
-   set at --fs-3 in --paper: lead scale, primary ink. It hangs off its own
-   broken strand and is given the width of a column of type, not a card. */
+/* ── MISSION — the 200-weight pull-quote ─────────────────────────────────── */
 
-.p-about__origin {
+/* Archivo variable spans 100–900; 200 is a real cut, not faux-light. Balanced
+   rag, tight leading, a measure short enough to read as a quotation rather
+   than a paragraph. */
+.p-about .about-mission {
+  margin-top: var(--s-7);
+  font-weight: 200;
+  font-size: clamp(1.65rem, 1.1rem + 2.75vw, 3.4rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  max-width: 30ch;
+  text-wrap: balance;
+}
+
+/* ── THE LONG READ ───────────────────────────────────────────────────────── */
+
+.p-about .about-prose {
+  margin-top: var(--s-8);
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
 }
 
-.p-about__history {
+/* The journal's reading register: 18px/1.7 (spec §Typography), full ink,
+   held to the measure. */
+.p-about .about-prose p {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--ink);
+  max-width: var(--measure);
+}
+
+/* ── FEATURES — margin-noted list ────────────────────────────────────────── */
+
+.p-about .feature-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* index.css caps bare `li` at the measure; these are containers. */
+.p-about .feature-list > li {
+  max-width: none;
+}
+
+.p-about .feature {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s-2) var(--s-6);
+  padding-block: var(--s-5);
+  border-top: 1px solid var(--ivory-2);
+}
+
+.p-about .feature:last-child {
+  border-bottom: 1px solid var(--ivory-2);
+}
+
+/* The margin-note. .label already sets mono/uppercase/ink-2 in the journal. */
+.p-about .feature__note {
+  max-width: none;
+}
+
+.p-about .feature__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* 900 against the note's 11px mono — the paper's figure-heading register. */
+.p-about .feature__title {
+  font-weight: 900;
   font-size: var(--fs-3);
-  line-height: var(--lh-4);
-  letter-spacing: var(--tr-body);
-  color: var(--paper);
+  line-height: var(--lh-2);
+  letter-spacing: var(--tr-head);
+  text-transform: uppercase;
+}
+
+.p-about .feature__desc {
+  color: var(--ink-2);
   max-width: var(--measure);
 }
 
-/* ── THE LONG READ — plain body at the measure. --paper, per the type table. ── */
+@media (min-width: 640px) {
+  .p-about .feature {
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+  }
 
-.p-about__long p {
-  color: var(--paper);
-  max-width: var(--measure);
+  /* Optically align the cap-height of the mono note with the 900 title. */
+  .p-about .feature__note {
+    padding-top: 0.4em;
+  }
 }
 
-/* ── WHAT WE DO ──────────────────────────────────────────────────────────────
-   One-line commitments, not cards. Each hangs off a left rule — the entry's
-   edge without the entry's fill — and is drawn in with the row reveal. */
+/* ── WHAT WE DO — tick-list ──────────────────────────────────────────────── */
 
-.p-about__do {
+.p-about .tick-list {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--s-3);
 }
 
-.p-about__do li {
-  border-left: var(--rule-mid);
-  padding: var(--s-2) 0 var(--s-2) var(--s-4);
-  color: var(--paper);
+.p-about .tick-list li {
+  position: relative;
+  padding-left: var(--s-5);
+  color: var(--ink);
   max-width: var(--measure);
 }
 
+.p-about .tick-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.68em;
+  width: 10px;
+  height: 1px;
+  background: var(--ink-2);
+}
+
 @media (min-width: 640px) {
-  .p-about__do {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--s-4) var(--s-5);
+  .p-about .tick-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-3) var(--s-6);
   }
 }
 
 /* ── CONTACT ─────────────────────────────────────────────────────────────── */
 
-.p-about__contact {
+.p-about .about-contact__grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--s-7);
@@ -82,57 +166,85 @@
 }
 
 @media (min-width: 1024px) {
-  .p-about__contact {
+  .p-about .about-contact__grid {
     grid-template-columns: 1fr 1fr;
     gap: var(--s-8);
   }
 }
 
-.p-about__contact-details {
+.p-about .about-contact__details {
   display: flex;
   flex-direction: column;
-  gap: var(--s-4);
   align-items: flex-start;
+  gap: var(--s-4);
 }
 
-/* The address is the destination, so it carries the weight of a lead. It keeps
-   the base prose-link underline: never a colour-only distinction. */
-.p-about__email {
-  font-size: var(--fs-3);
-  line-height: var(--lh-2);
-  letter-spacing: var(--tr-head);
+/* The address is data and renders verbatim — the primitive's uppercase
+   transform is lifted for exactly this button. */
+.p-about .about-contact__email {
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+/* The location line, in the instrument register but never shouted. */
+.p-about .about-contact__loc {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-1);
+  line-height: var(--lh-3);
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
   max-width: none;
 }
 
-/* ── SOCIAL ENTRIES ──────────────────────────────────────────────────────────
-   Each social is an .entry that is also a link, so the clasp (App.css) fires
-   on hover AND focus-within of a genuinely interactive surface: the break
-   closes and the strand goes live. That is the whole hover state.
-   The block link drops the prose underline — the card edge, the rail and the
-   focus ring carry the affordance, so this is not a colour-only distinction. */
+/* ── SOCIALS — mono links railed by hairlines ────────────────────────────── */
 
-.p-about__socials {
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+.p-about .about-socials {
+  display: flex;
+  flex-direction: column;
 }
 
-.p-about__social {
-  text-decoration: none;
-  gap: var(--s-2);
+.p-about .about-socials > li {
+  max-width: none;
+  border-top: 1px solid var(--ivory-2);
 }
 
-.p-about__handle {
+.p-about .about-socials > li:last-child {
+  border-bottom: 1px solid var(--ivory-2);
+}
+
+.p-about .about-social {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2) var(--s-4);
+  padding-block: var(--s-4);
+  font-family: var(--font-mono);
+  font-weight: 500;
   font-size: var(--fs-1);
-  line-height: var(--lh-3);
-  color: var(--paper-2);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ink);
 }
 
-/* ── LOCAL CORRECTION ────────────────────────────────────────────────────────
-   In App.css, `.rule--broken` is authored after `.rule--sm` at equal
-   specificity, so a `.rule--broken.rule--sm` rail resolves to the 24px height
-   while painting the 12px tile — a half-empty rail. Re-asserting the small
-   height at page scope restores the intended ½-scale rail without editing the
-   shared file. If the shared rule is reordered, this becomes a no-op. */
+/* The label keeps a permanent underline: the row is a link, and that is
+   never a colour-only distinction. Hover only deepens it. */
+.p-about .about-social__label {
+  text-decoration: underline;
+  text-decoration-color: var(--ink-2);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--dur-1) var(--ease);
+}
 
-.p-about .rule--broken.rule--sm {
-  height: var(--strand-h-s);
+.p-about .about-social:hover .about-social__label {
+  text-decoration-color: var(--ink);
+}
+
+/* Handles are data — verbatim case, no tracking theatre. */
+.p-about .about-social__handle {
+  color: var(--ink-2);
+  text-transform: none;
+  letter-spacing: 0.04em;
 }

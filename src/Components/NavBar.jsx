@@ -49,13 +49,16 @@ const NavBar = () => {
   }, []);
 
   // The brand mark is a living blob inside the hero and a square instrument
-  // past it. One boolean, one passive listener.
+  // past it. Transparency is a HOME-HERO privilege: every other route starts
+  // with content (About starts on IVORY, where light nav text would vanish),
+  // so off-home the bar always carries its backdrop.
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 48);
+    const onScroll = () =>
+      setScrolled(window.scrollY > 48 || location.pathname !== '/');
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [location.pathname]);
 
   // Close menu when route changes
   useEffect(() => {

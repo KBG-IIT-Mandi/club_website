@@ -1,17 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
-import { API_ENDPOINTS, fetchData } from "../../config/api";
-import { LoadingSpinner, ErrorState } from "../../Components/Loading";
+import React, { useCallback, useEffect, useState } from "react";
+import "./Team.css";
 import useDocumentTitle from "../../CustomHooks/useDocumentTitle";
 import useDrawOnScroll from "../../CustomHooks/useDrawOnScroll";
-import "./Team.css";
+import { API_ENDPOINTS, fetchData } from "../../config/api";
+import { LoadingSpinner, ErrorState } from "../../Components/Loading";
+import Constellation from "../../Components/Constellation/Constellation";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TEAM — THE CONSTELLATION.
+   team.json is the page; projects.json only enriches the graph with project
+   nodes and edges, so its failure is silent — the constellation simply has
+   fewer stars, and the roster grid is always the accessible record.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function Team() {
   const [data, setData] = useState(null);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  // Indices whose remote photo failed to load. The frame keeps its box either
-  // way, so a 404 recolours the cell — it never reflows the grid.
-  const [brokenPhotos, setBrokenPhotos] = useState(() => new Set());
 
   useDocumentTitle(data?.title || "Team");
 
@@ -31,105 +37,44 @@ export default function Team() {
 
   useEffect(() => {
     load();
+    fetchData(API_ENDPOINTS.projects)
+      .then((d) => setProjects(Array.isArray(d?.projects) ? d.projects : []))
+      .catch(() => {});
   }, [load]);
 
-  /* The reveal system lives in useDrawOnScroll. One observer, no threshold
-     (a threshold deadlocks .band — see the hook), and no per-page options.
-     The grid is a single band (move 2), so seven cards plot as one
-     left-to-right wipe rather than seven competing reveals. */
-  const pageRef = useDrawOnScroll(!!data);
-
-  const markPhotoBroken = (index) => {
-    setBrokenPhotos((prev) => {
-      if (prev.has(index)) return prev;
-      const next = new Set(prev);
-      next.add(index);
-      return next;
-    });
-  };
+  const pageRef = useDrawOnScroll(`${!!data}-${projects.length}`);
 
   if (loading) {
-    return <LoadingSpinner variant="ring" />;
+    return <LoadingSpinner variant="dna" />;
   }
 
   if (error || !data) {
     return (
       <ErrorState
-        message="Could not reach the team roster. Check your connection and try again."
+        message="The constellation did not arrive. Check your connection and try again."
         onRetry={load}
       />
     );
   }
 
-  // Guarded: a members-less payload renders a header, never a thrown page.
-  const members = Array.isArray(data.members) ? data.members : [];
+  const members = Array.isArray(data.members) ? data.members.filter(Boolean) : [];
 
   return (
-    /* The ref goes on the page ROOT, not on the band: the hook collects its
-       targets with root.querySelectorAll(), which never matches the root
-       element itself. A ref on the band would arm the reveal and then find
-       nothing to draw — clipping the grid permanently. */
-    <div className="p-team" ref={pageRef}>
-      <div className="shell section">
-        <header className="section-head">
-          <div className="rule--broken" aria-hidden="true" />
-          <h1>{data.title || "Team"}</h1>
-        </header>
-
-        {!!members.length && (
-          <div className="entry-grid band">
-            {members.map((m, i) => {
-              // Iterate the socials object generically. Hardcoding github +
-              // linkedin is what dropped instagram for 3 members and left one
-              // card with an empty links row.
-              const socials = Object.entries(m.socials || {}).filter(
-                ([, href]) => typeof href === "string" && href.trim() !== ""
-              );
-
-              return (
-                <article className="entry team-member" key={m.name || i}>
-                  <div className="rule--broken rule--sm" aria-hidden="true" />
-
-                  <div className="team-photo">
-                    {!brokenPhotos.has(i) && m.image && (
-                      <img
-                        src={m.image}
-                        alt={m.name || ""}
-                        width="320"
-                        height="320"
-                        loading="lazy"
-                        decoding="async"
-                        onError={() => markPhotoBroken(i)}
-                      />
-                    )}
-                  </div>
-
-                  {m.role && <p className="label">{m.role}</p>}
-                  {m.name && <h3>{m.name}</h3>}
-                  {m.bio && <p className="team-bio">{m.bio}</p>}
-
-                  {!!socials.length && (
-                    <div className="entry-foot team-links">
-                      {socials.map(([key, href]) => (
-                        <a
-                          className="label team-link"
-                          key={key}
-                          href={href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {key}
-                          <span className="sr-only"> — {m.name}</span>
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              );
-            })}
+    <main className="p-team world-lab" ref={pageRef}>
+      <section className="section">
+        <div className="shell">
+          <div className="section-head band">
+            <p className="label label--live">THE CONSTELLATION</p>
+            <h1>{data.title || "Our Team"}</h1>
+            <p className="lead">
+              Every researcher, project and discipline is a node in one living
+              network. Hover a star to see what it touches.
+            </p>
           </div>
-        )}
-      </div>
-    </div>
+
+          <Constellation members={members} projects={projects} />
+        </div>
+      </section>
+    </main>
   );
 }

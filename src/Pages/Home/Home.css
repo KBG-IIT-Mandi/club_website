@@ -34,14 +34,10 @@
   color: var(--bio);
 }
 
-/* On phones the right block would collide with the left — stack them. */
+/* Phones: the live-telemetry block would crowd the thesis on short
+   viewports. The instrument panel is a desktop luxury — SPECIMEN 001 stays. */
 @media (max-width: 640px) {
-  .p-home .hud__block--tr {
-    top: calc(var(--nav-h) + var(--s-5) + 4.5rem);
-    right: auto;
-    left: var(--gutter);
-    text-align: left;
-  }
+  .p-home .hud__block--tr { display: none; }
 }
 
 /* ── HERO COPY ───────────────────────────────────────────────────────────── */

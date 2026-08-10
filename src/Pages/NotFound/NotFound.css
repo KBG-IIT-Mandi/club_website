@@ -1,46 +1,79 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   NOT FOUND — scoped under .p-404. Tokens live in index.css only.
-   No :root, no html, no body, no *. No media query: --fs-7 already clamps.
+   NOT FOUND — SPECIMEN NOT FOUND.
+   Scoped under .p-404. Tokens from index.css, primitives from App.css
+   (.shell/.label/.display/.btn-primary). No :root, no html, no body, no *.
 
-   This file was 134 lines of legacy targeting classes the JSX never rendered
-   (.not-found-container, .not-found-title …) — an off-palette radial-gradient
-   ground, a blurred backdrop layer, rounded corners and gradient text, all
-   inert only because the component returned a bare <div>NotFound</div>.
-   Rewritten against what the page actually renders rather than deleted:
-   footer.json points /contact and /privacy at routes that do not exist, so this
-   IS where those links land. It is a destination, not just an error.
+   The page is an empty petri dish: two concentric CSS rings on the void, one
+   small bio-lime culture drifting inside — the only thing alive on a page
+   about absence. Under reduced motion the culture simply rests where the
+   base transform puts it; the drift is never load-bearing.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.p-404 {
+.p-404__inner {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
   gap: var(--s-5);
-  /* Fills the sheet without a fixed height, so the 404 is optically centred on
-     a phone and on a desktop without either scrolling or stranding the link. */
-  min-height: calc(100vh - var(--nav-h) - var(--s-10));
+  /* Fills the viewport minus the nav so the dish is optically centred on a
+     phone and a desktop alike, without stranding the return link. */
+  min-height: calc(100vh - var(--nav-h));
   padding-block: var(--s-9);
 }
 
-/* The only use of --fs-7 on the site. Reserved for exactly this. */
-.p-404__code {
-  font-weight: 900;
-  font-size: var(--fs-7);
-  line-height: var(--lh-1);
-  letter-spacing: var(--tr-display);
-  color: var(--cyan);
-  margin: 0;
-  max-width: none;
+/* ── THE PETRI DISH ──────────────────────────────────────────────────────── */
+
+.p-404__dish {
+  position: relative;
+  width: clamp(150px, 24vw, 230px);
+  aspect-ratio: 1;
+  background: var(--depth-1);
+  border: 1px solid var(--hairline);
+  border-radius: 50%;
+  margin-block: var(--s-4);
 }
 
-/* A strand like every other rule here, broken like every other long rule:
-   the frame never closes. Held to --measure so it reads as a rule rather than
-   as an underline on the numerals. */
-.p-404__rule {
-  width: 100%;
-  max-width: var(--measure);
+/* The inner rim of the dish. */
+.p-404__dish::before {
+  content: "";
+  position: absolute;
+  inset: 9%;
+  border: 1px solid var(--depth-2);
+  border-radius: 50%;
 }
+
+/* One small culture, alive and adrift. The base transform is its resting
+   position, so with the animation removed (reduced motion, or the global
+   kill in index.css) it sits naturally off-centre rather than dead middle. */
+.p-404__dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--bio);
+  transform: translate(-34px, 10px);
+  animation: petri-drift 16s ease-in-out infinite;
+}
+
+/* Drift stays within ±38px: inside the inner rim even at the 150px dish. */
+@keyframes petri-drift {
+  0%   { transform: translate(-34px, 10px); }
+  22%  { transform: translate(14px, -30px); }
+  48%  { transform: translate(38px, 12px); }
+  74%  { transform: translate(-8px, 34px); }
+  100% { transform: translate(-34px, 10px); }
+}
+
+/* index.css already kills all animation globally under reduced motion; this
+   restates the intent locally so the file survives that block being edited. */
+@media (prefers-reduced-motion: reduce) {
+  .p-404__dot { animation: none; }
+}
+
+/* ── COPY ────────────────────────────────────────────────────────────────── */
 
 .p-404__note {
   max-width: var(--measure);

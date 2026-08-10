@@ -1,6 +1,9 @@
-# KBG — Club Website
+# KBG — The Living Interface
 
-The official website of the **Kamand Bioengineering Group (KBG)**, IIT Mandi.
+The official website of the **Kamand Bioengineering Group (KBG)**, IIT Mandi —
+built as a living laboratory rather than a club website. A breathing 3D cell
+greets the visitor; scrolling descends through it, macro to micro, five levels
+deep: organism → tissue → cell → protein → code, one per KBG track.
 
 Built with React + Vite. Content is loaded at runtime from the
 [KBG_Links](https://github.com/KBG-IIT-Mandi/KBG_Links) repo, so the site can be
@@ -13,10 +16,18 @@ updated without a redeploy.
 | Framework | React 19 |
 | Build | Vite 7 |
 | Routing | react-router-dom 7 |
-| Animation | GSAP 3 (ScrollTrigger, SplitText, CustomEase) — vendored locally |
-| Background | Custom raymarched WebGL DNA-helix shader (`src/Components/Background/HelixField.jsx`) |
+| 3D | three (custom ShaderMaterials — no helper layers) |
+| Scroll | GSAP 3 + ScrollTrigger (`@gsap/react`) |
+| Fonts | Self-hosted Archivo variable + IBM Plex Mono 500 |
 
 No CDN dependencies at runtime — everything ships from the same origin.
+
+### Bundle discipline
+
+The three.js scene (`cellScene`) and the GSAP field (`Descent`) are lazy
+chunks. The main bundle stays ~77 KB gz — the hero headline and CTAs are plain
+HTML/CSS and never wait on a 3D engine. Order of arrival: text → GSAP field →
+organism, each layer enhancing the one before it.
 
 ## Getting started
 
@@ -32,54 +43,76 @@ npm run lint     # eslint
 
 ```
 src/
-  Components/     NavBar, Footer, Sheet, Background (WebGL helix)
-  Pages/          Home, About, Team, Events, Projects, NotFound
-  config/api.js   Content endpoints + stale-while-revalidate fetch cache
-  index.css       Design tokens (colour, type scale, spacing) — declared here ONLY
-  App.css         Shared layout primitives (.shell, .rule, .band, .entry)
+  Components/
+    Organism/       cellScene.js (three, framework-free) · OrganismCanvas
+                    (lifecycle, quality ladder) · Descent (the scroll journey)
+    Chrome/         Grain, LabCursor (probe cursor), FocusShift (route focus-pull)
+    SpecimenCard/   projects as experiment dossiers
+    Constellation/  the team as a force-directed research network
+    NavBar, Footer  instrument rail + telemetry block
+  Pages/            Home, About, Team, Events, Projects, NotFound
+  config/api.js     Content endpoints + stale-while-revalidate fetch cache
+  lib/discipline.js tech[] → discipline map (single source)
+  index.css         Design tokens — declared here ONLY
+  App.css           Shared primitives (.shell, .tag, .entry, .membrane, reveals)
 ```
 
-**Styling convention:** design tokens are declared in `src/index.css` and nowhere
-else. Every other stylesheet consumes them via `var()` and is scoped to its own
-page/component class. Please keep it that way.
+**Styling convention:** design tokens are declared in `src/index.css` and
+nowhere else. Every other stylesheet consumes them via `var()` and is scoped to
+its own page/component class. Please keep it that way.
+
+## Design
+
+Two worlds alternate across the site:
+
+- **The Lab** — near-black (`--void #030507`), immersive, telemetry-labelled.
+- **The Journal** — warm ivory (`--ivory #F2EFE6`), editorial, long-form.
+
+Two accents carry the club's thesis and are never interchangeable:
+
+| Token | Value | Means |
+|---|---|---|
+| `--bio` | `#B6FF2E` | biological / alive / active (GFP fluorescence) |
+| `--data` | `#4FA8FF` | computational / informational (logo heritage) |
+
+The signature element is the **specimen field**: a single three.js scene that
+is both the hero organism (membrane deforms toward the cursor like a
+microscope probe) and the descent (scroll scrubs the camera through the
+membrane while the interior particle cloud morphs through five stages — the
+protein stage is a double helix, the club's logo motif returned as a
+life-form).
+
+Performance is a design feature: DPR caps, an FPS ladder that sheds particle
+load and finally swaps to a CSS poster, IntersectionObserver/visibility
+pausing, and a full `prefers-reduced-motion` build where the journey becomes
+stacked sections and the organism renders a single static frame.
+
+Easter egg: the Konami code mutates the palette.
 
 ### Content
 
-All page content lives in a separate repo,
+All page content lives in
 **[KBG-IIT-Mandi/KBG_Links](https://github.com/KBG-IIT-Mandi/KBG_Links)** — one
 JSON file per page (`home.json`, `about.json`, `team.json`, `events.json`,
-`projects.json`, `navbar.json`, `footer.json`) plus the event posters in
-`Events/` and member photos in `Teams/`.
-
-To change copy, add an event, or update the team: edit that repo. The change is
-live on the next page load — **no code change and no redeploy**. The endpoints
-are mapped in `src/config/api.js`.
+`projects.json`, `navbar.json`, `footer.json`) plus event posters in `Events/`
+and member photos in `Teams/`. Edit that repo; the change is live on the next
+page load — no code change and no redeploy.
 
 Two constraints on that repo:
 
 - It must stay **public** — the site reads it unauthenticated over
   `raw.githubusercontent.com`.
-- Image paths inside the JSON are **absolute URLs** into the same repo, so a new
-  poster needs both the file committed and its full raw URL written into
-  `events.json`.
+- Image paths inside the JSON are **absolute URLs** into the same repo.
+
+Optional schema extensions the site already honours when present:
+
+- `projects.json` per project: `status`, `team` (count), `progress` (0–100),
+  `discipline`, `links { github, report }` — extra dossier rows appear.
+- `team.json` per member: `projects: ["BioSense", …]` — draws real
+  member↔project edges in the constellation.
 
 Responses are cached in `sessionStorage` stale-while-revalidate with an 8s
 timeout, so a return visit paints without waiting on the network.
-
-## Design
-
-The palette is a cyanotype "blueprint" scheme derived from the KBG logo:
-
-| Token | Value |
-|---|---|
-| `--cyan` | `#36E4DF` |
-| `--blue` | `#1177E1` |
-| `--blue-deep` | `#114BF2` |
-
-The background is a real WebGL shader, not an image: a raymarched signed-distance
-DNA double helix. It adapts to the device — capped device-pixel-ratio, reduced
-march steps on mobile, paused when off-screen via `IntersectionObserver`, and
-fully disabled under `prefers-reduced-motion`.
 
 ## Deployment
 
