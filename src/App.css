@@ -44,10 +44,13 @@ main {
    as a lab chip under the nav. */
 .skip-link {
   position: fixed;
-  top: calc(var(--nav-h) + var(--s-2));
+  top: var(--s-2);
   left: var(--gutter);
   z-index: calc(var(--z-cursor) - 1);
-  transform: translateY(-200%);
+  /* -100% of own height minus the top offset and a margin: fully off-canvas
+     regardless of element height. (A -200% at top:80px left it 95% visible —
+     percentage translate is relative to the ELEMENT, not the viewport.) */
+  transform: translateY(calc(-100% - var(--s-4)));
   background: var(--bio);
   color: var(--void);
   font-family: var(--font-mono);

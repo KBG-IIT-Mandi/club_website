@@ -74,7 +74,9 @@
   font-weight: 500;
   font-size: var(--fs-00);
   letter-spacing: var(--tr-label);
-  text-transform: uppercase;
+  /* NO text-transform: the labels are authored uppercase in stages.js, and
+     uppercasing maps µ (10 µM) to Greek capital Mu — a glyph outside the
+     font subset, which rendered the scale as "10 MM". */
   color: var(--bio);
   margin: 0;
   max-width: none;
