@@ -1,8 +1,16 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   KBG — SHEET 01 / THE STRAND
+   KBG — THE LIVING INTERFACE
    index.css is the ONLY file that may declare :root, html, body or *.
    Page stylesheets scope under .p-home / .p-about / .p-team / .p-events /
    .p-projects and never touch a global selector.
+
+   Two worlds:
+     .world-lab      near-black cinematic laboratory (immersive, telemetry)
+     .world-journal  warm ivory editorial (readable, long-form)
+
+   Two accents, roles FIXED and EXCLUSIVE — they encode the club's thesis:
+     --bio   acid bio-lime  = biological / alive / active   (GFP fluorescence)
+     --data  electric blue  = computational / informational (logo heritage)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── FONTS — self-hosted, latin subset, zero third-party requests ─────────── */
@@ -22,60 +30,42 @@
   font-weight: 500;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+0000-00FF, U+00D7;
+  unicode-range: U+0000-00FF, U+00D7, U+25CF, U+2191-2193;
 }
 
 /* ── TOKENS ──────────────────────────────────────────────────────────────── */
 
 :root {
-  /* GROUND — cyanotype, hue-locked to the logo's deep blue (225°). Flat. Opaque. */
-  --void:      #04080F;
-  --sheet:     #060E1C;
-  --sheet-2:   #0A1730;
-  --sheet-3:   #0E1E3F;
+  /* THE LAB — near-black, blue-biased. Flat. Opaque. */
+  --void:      #030507;
+  --depth-1:   #070D16;
+  --depth-2:   #0B1422;
+  --hairline:  #16233A;   /* rules, borders on the lab ground. NEVER text. */
 
-  /* THE LOGO'S PALETTE — roles are FIXED and EXCLUSIVE */
-  --cyan:      #36E4DF;   /* FIGURE — default ink. 12.25:1 on --sheet. */
-  --blue:      #1177E1;   /* LIVE — NON-TEXT ONLY (4.37:1 fails AA). */
-  --deep:      #114BF2;   /* STRUCTURE — filled CTA + page frame ONLY. Never text. */
+  /* THE TWO ACCENTS */
+  --bio:       #B6FF2E;   /* ALIVE — GFP lime. 15.6:1 on --void. */
+  --bio-dim:   #5E8A1E;   /* bio strokes/rules. NEVER text. */
+  --data:      #4FA8FF;   /* COMPUTATIONAL as text/figure. 8.6:1 on --void. */
+  --data-deep: #1177E1;   /* blue fills + strokes (logo heritage). NEVER text. */
 
-  /* DERIVED — hue jail 178°–225°. Every neutral is blue-biased. No greys. */
-  --blue-lit:  #4FA8FF;   /* LIVE as TEXT + focus ring. 7.7:1 */
-  --cyan-line: #1E8C89;   /* RULES, strokes, ticks, borders. 4.75:1. NEVER text. */
-  --cyan-label:#2BB8B4;   /* mono labels as TEXT. 7.93:1 on --sheet */
-  --grid-line: #0B2A7A;   /* the 40px grid + gear. 1.5:1 — correctly invisible. */
-  --paper:     #DDEBFF;   /* body copy. 16.0:1 */
-  --paper-2:   #8FA9CE;   /* captions, secondary, bios. 8.03:1 */
-  --white:     #FFFFFF;   /* ONLY on a --deep fill. 6.34:1 */
+  /* LAB TEXT */
+  --specimen:   #E8F4FF;  /* lab body copy. 16:1 on --void. */
+  --specimen-2: #8CA3C3;  /* lab captions/secondary. 7.5:1. */
 
-  /* ── THE RULE — the site's one ownable device ───────────────────────────
-     The double helix moved to 3D: it is now raymarched by <HelixField />, not
-     drawn as a flat SVG tile. On the page, a rule is a fine cyan→deep hairline
-     (see .rule in App.css). These tokens are just its heights; the old
-     --strand-dim / --strand-live tile URLs are retired. ─────────────────── */
-  --strand-h:   2px;   /* section rule height */
-  --strand-h-s: 1px;   /* card rail / nav underline / footer edge */
+  /* THE JOURNAL — warm ivory editorial world. */
+  --ivory:   #F2EFE6;
+  --ivory-2: #E7E2D3;
+  --ink:     #141609;     /* 15.8:1 on --ivory */
+  --ink-2:   #5C5F4C;     /* 6.1:1 on --ivory */
 
-  /* THE BREAK — measured off the shield's top rail: a gap of 7.2% of the rail's
-     length, starting at 71% across. Every long rule on the site carries it. */
-  --break-start: 71%;
-  --break-size:  7.2%;
+  /* RADIUS — instruments are square; only LIFE is organic. Membrane blobs
+     declare their own radii in component CSS. Nothing else rounds. */
+  --radius: 0;
+  --radius-membrane: 58% 42% 55% 45% / 45% 52% 48% 55%;
 
-  /* STROKE WEIGHTS — the mark's 2 : 1.35 : 1 scale */
-  --rule-structure: 2px solid var(--deep);
-  --rule-mid:       1px solid var(--cyan-line);
-  --rule-hair:      1px solid var(--grid-line);
-
-  /* RADIUS — the mark's corner radius is 0. No exceptions on content. */
-  --radius:       0;
-  --radius-round: 50%;   /* ONLY: the gear, the gear bore, the lumen dot. */
-
-  /* SHADOWS — there are none. Only hard rings (zero blur radius). */
-  --ring-cyan:  0 0 0 2px var(--cyan);
-  --ring-blue:  0 0 0 2px var(--blue-lit);
-
-  /* GRID */
-  --grid: 40px;
+  /* RINGS — hard edges, zero blur. */
+  --ring-bio:  0 0 0 2px var(--bio);
+  --ring-data: 0 0 0 2px var(--data);
 
   /* SPACE — strict 4px base, 10 steps */
   --s-1: 0.25rem;  --s-2: 0.5rem;   --s-3: 0.75rem;  --s-4: 1rem;    --s-5: 1.5rem;
@@ -83,34 +73,33 @@
 
   /* LAYOUT */
   --nav-h:     64px;
-  --spine-w:   24px;
-  --spine-x:   8px;
-  --gutter:    calc(var(--spine-x) + var(--spine-w) + var(--s-2));
+  --gutter:    clamp(1rem, 4vw, 3rem);
   --measure:   68ch;
   --measure-h: 30ch;
-  --page-max:  1180px;
+  --page-max:  1240px;
 
   /* TYPE */
   --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
 
-  --fs-00: 0.6875rem;  /* 11px  — tick labels, footer meta */
-  --fs-0:  0.75rem;    /* 12px  — mono drafting label, nav links, tags */
-  --fs-1:  0.875rem;   /* 14px  — caption, mono body, bio */
-  --fs-2:  1rem;       /* 16px  — body */
-  --fs-3:  1.333rem;   /* 21.3px — lead, h4, member name, brand */
-  --fs-4:  1.777rem;   /* 28.4px — h3, project name */
-  /* Floors are set by the NARROWEST REAL CASE, not by taste: a 320px viewport
-     minus the 40px spine gutter leaves a ~264px column, and the JSON hands us
-     "interdisciplinary" (17ch) with no say in it. A 37.9px floor could not fit
-     that word, which is what forced `hyphens: auto` and produced "An in-
-     terdisciplinary / explor- / engi-neering" on every phone. Sizing the floor
-     so the longest real word fits is the fix; hyphenation was the symptom. */
+  --fs-00: 0.6875rem;  /* 11px — telemetry, sample tags, footer meta */
+  --fs-0:  0.75rem;    /* 12px — mono labels, nav links */
+  --fs-1:  0.875rem;   /* 14px — captions, mono body, metadata tables */
+  --fs-2:  1rem;       /* 16px — body */
+  --fs-3:  1.333rem;   /* lead, h4, member name */
+  --fs-4:  1.777rem;   /* h3, dossier name */
   --fs-5:  clamp(1.5rem,  1.286rem + 0.91vw, 2.369rem);   /* h2 / page h1 */
-  --fs-6:  clamp(1.85rem, 1.494rem + 1.52vw, 3.157rem);   /* HOME HERO h1 */
-  --fs-7:  clamp(2.25rem, 1.771rem + 2.05vw, 4.209rem);   /* 404 ONLY */
 
-  --lh-1: 0.95;   /* display */
+  /* DISPLAY — the enormous register. The floor is set by the NARROWEST REAL
+     CASE, not by taste (same reasoning that sized the old --fs-6): a 320px
+     viewport minus gutters leaves ~264px, and the brand line hands us
+     "ENGINEERING." at Archivo 900. The brief's 64px floor only exists from
+     ~650px up, where the vw term exceeds it anyway. */
+  --fs-display:   clamp(2.25rem, 9.8vw, 10rem);           /* hero thesis */
+  --fs-display-2: clamp(1.85rem, 1.5rem + 3.2vw, 4.5rem); /* section display */
+
+  --lh-0: 0.9;    /* display */
+  --lh-1: 0.95;
   --lh-2: 1.15;   /* headings */
   --lh-3: 1.45;   /* mono, lists */
   --lh-4: 1.65;   /* body */
@@ -124,16 +113,21 @@
   --dur-1: 120ms;
   --dur-2: 240ms;
   --dur-3: 480ms;
-  --dur-index: 3s;
   --ease:       cubic-bezier(.2, 0, 0, 1);
-  --ease-index: steps(8, end);
+  --ease-out:   cubic-bezier(.22, 1, .36, 1);
 
   /* Z */
-  --z-sheet: 0; --z-content: 1; --z-nav: 10; --z-menu: 20;
+  --z-content: 1; --z-nav: 10; --z-menu: 20; --z-cursor: 100;
 }
 
-@media (min-width: 640px)  { :root { --nav-h: 72px; --spine-x: 16px; } }
-@media (min-width: 1024px) { :root { --spine-x: 32px; } }
+@media (min-width: 640px)  { :root { --nav-h: 72px; } }
+
+/* THE MUTATION — Konami code. The bio accent mutates; nothing else changes.
+   Applied to <html> by useKonami. */
+.mutated {
+  --bio:     #FF3DF2;
+  --bio-dim: #8A2183;
+}
 
 /* ── RESET ───────────────────────────────────────────────────────────────── */
 
@@ -146,7 +140,7 @@
 }
 
 html {
-  font-size: 100%;                        /* never px-lock the root */
+  font-size: 100%;
   scroll-padding-top: var(--nav-h);
   -webkit-text-size-adjust: 100%;
   background-color: var(--void);
@@ -156,9 +150,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   overflow-x: hidden;
-  background-color: var(--sheet);
-  color: var(--paper);
-  /* Declared here and nowhere else. Page stylesheets must never restate it. */
+  background-color: var(--void);
+  color: var(--specimen);
   font-family: var(--font-sans);
   font-weight: 400;
   font-size: var(--fs-2);
@@ -203,40 +196,28 @@ ol {
 
 /* ── BASE TYPOGRAPHY ─────────────────────────────────────────────────────── */
 
-/* Display type comes from JSON we do not control, so a single word can be wider
-   than its column and would scroll the document sideways. break-word is the
-   backstop for a word with no legal break (a URL, a long compound); it only
-   fires when a word genuinely cannot fit, so normal headings are untouched.
-
-   `hyphens: auto` is deliberately NOT set. It was, and it shipped
-   "An in-/terdisciplinary ... explor-/ing ... engi-/neering" across the phone
-   hero — auto-hyphenation is very visible in tight display type and reads as
-   broken rather than typeset. The floor of --fs-6 is now sized so the longest
-   real word fits the narrowest real column, which removes the need for it. */
+/* Display type includes JSON we do not control; break-word is the backstop
+   for a word with no legal break. No auto-hyphenation — it reads as broken
+   in tight display type (see git history of this file). */
 h1, h2, h3, h4, h5, h6 {
   max-width: var(--measure-h);
   text-wrap: balance;
   overflow-wrap: break-word;
 }
 
-/* Same reasoning at body scale, minus the hyphenation: the JSON carries an
-   email address and social handles, and an unbreakable string in a 240px column
-   would scroll the page sideways. No hyphens here — auto-hyphenating body copy
-   is a visible change to every paragraph, and body copy does not need it. */
 p, li {
   max-width: var(--measure);
   text-wrap: pretty;
   overflow-wrap: break-word;
 }
 
-/* Page h1 — about / team / events / projects. Home overrides with .hero-title. */
 h1 {
   font-weight: 900;
   font-size: var(--fs-5);
   line-height: var(--lh-1);
   letter-spacing: var(--tr-display);
   text-transform: uppercase;
-  color: var(--cyan);
+  color: var(--specimen);
 }
 
 h2 {
@@ -245,7 +226,7 @@ h2 {
   line-height: var(--lh-2);
   letter-spacing: var(--tr-head);
   text-transform: uppercase;
-  color: var(--cyan);
+  color: var(--specimen);
 }
 
 h3 {
@@ -253,7 +234,7 @@ h3 {
   font-size: var(--fs-3);
   line-height: var(--lh-2);
   letter-spacing: var(--tr-head);
-  color: var(--paper);
+  color: var(--specimen);
 }
 
 h4 {
@@ -261,7 +242,7 @@ h4 {
   font-size: var(--fs-3);
   line-height: var(--lh-2);
   letter-spacing: var(--tr-head);
-  color: var(--paper);
+  color: var(--specimen);
 }
 
 h5, h6 {
@@ -269,37 +250,79 @@ h5, h6 {
   font-size: var(--fs-2);
   line-height: var(--lh-2);
   letter-spacing: var(--tr-head);
-  color: var(--paper);
+  color: var(--specimen);
 }
 
 strong, b { font-weight: 700; }
 
-/* Prose links. Never a colour-only distinction. Never --blue (4.37:1 fails). */
+/* Prose links. Never a colour-only distinction. */
 a {
-  color: var(--cyan);
+  color: var(--specimen);
   font-weight: 500;
   text-decoration: underline;
-  text-decoration-color: var(--cyan-line);
+  text-decoration-color: var(--bio-dim);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
-  transition: text-decoration-color var(--dur-1) var(--ease);
+  transition: color var(--dur-1) var(--ease), text-decoration-color var(--dur-1) var(--ease);
 }
 
-a:hover { text-decoration-color: var(--cyan); }
+a:hover {
+  color: var(--bio);
+  text-decoration-color: var(--bio);
+}
 
+/* Fluorescent selection — the reader's own probe. */
 ::selection {
-  background: var(--deep);
-  color: var(--white);
+  background: var(--bio);
+  color: var(--void);
 }
 
-::placeholder { color: var(--paper-2); }
+::placeholder { color: var(--specimen-2); }
 
-/* ── FOCUS — the first focus style in this codebase. Global. No exceptions. ── */
+/* ── THE TWO WORLDS ──────────────────────────────────────────────────────── */
+
+.world-lab {
+  background-color: var(--void);
+  color: var(--specimen);
+}
+
+.world-journal {
+  background-color: var(--ivory);
+  color: var(--ink);
+}
+
+.world-journal h1,
+.world-journal h2,
+.world-journal h3,
+.world-journal h4,
+.world-journal h5,
+.world-journal h6 { color: var(--ink); }
+
+.world-journal a {
+  color: var(--ink);
+  text-decoration-color: var(--ink-2);
+}
+
+.world-journal a:hover {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+}
+
+.world-journal ::selection {
+  background: var(--ink);
+  color: var(--ivory);
+}
+
+/* ── FOCUS — global. No exceptions. Custom cursor never suppresses this. ─── */
 
 :focus-visible {
-  outline: 2px solid var(--blue-lit);
+  outline: 2px solid var(--data);
   outline-offset: 3px;
   border-radius: 0;
+}
+
+.world-journal :focus-visible {
+  outline-color: var(--ink);
 }
 
 /* ── REDUCED MOTION — one block, global ──────────────────────────────────── */
@@ -310,12 +333,7 @@ a:hover { text-decoration-color: var(--cyan); }
     transition: none !important;
     scroll-behavior: auto !important;
   }
-  /* The reveal's reduced-motion state lives with the reveal, in App.css
-     ([data-draw-ready] .band / .row). A `.is-drawn-target` rule used to sit
-     here; no element has ever carried that class, so it did nothing while
-     reading exactly like the rule that renders undrawn content. Deleted rather
-     than left as decoration — a safety net nobody can see is not a safety net.
-
-     The 3D helix shader honours reduced-motion inside <HelixField /> itself:
-     it paints a single static frame and never starts its animation loop. */
+  /* The organism honours reduced-motion inside <OrganismCanvas /> itself:
+     it paints a single static frame and never starts its loop. The descent
+     un-pins into ordinary stacked sections. */
 }
