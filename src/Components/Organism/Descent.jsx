@@ -80,6 +80,12 @@ export default function SpecimenField({ hero }) {
           tl.to(el, { autoAlpha: 0, y: -34, duration: fade }, b - fade);
         }
       });
+
+      /* Anchor the timeline's total duration at exactly 1: the scrub maps
+         scroll progress onto timeline TIME/duration, so without this the
+         last tween's end (~0.91) becomes "1.0" and every band fires ~9%
+         late — the stage text lagged its own scenery. */
+      tl.set({}, {}, 1);
     },
     { scope: fieldRef, dependencies: [reduced] }
   );

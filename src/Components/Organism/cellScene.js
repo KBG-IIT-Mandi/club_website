@@ -366,33 +366,36 @@ function buildStages(count) {
     stages.push(a);
   }
 
-  /* S3 PROTEIN — the double helix. The logo motif, alive. */
+  /* S3 PROTEIN — the double helix. The logo motif, alive.
+     Crisp strands (tight jitter), three full turns, and 24 evenly spaced
+     base-pair rungs bridging them — a real ladder, not a hint of one. */
   {
     const a = new Float32Array(count * 3);
-    const turns = 2.6;
-    const height = 3.4;
-    const R = 0.55;
+    const turns = 3.0;
+    const height = 3.9;
+    const R = 0.62;
+    const RUNGS = 24;
     for (let i = 0; i < count; i++) {
       const kind = rand();
       const t = rand();
       const y = (t - 0.5) * height;
       const ang = t * turns * Math.PI * 2;
-      if (kind < 0.42) {
-        a[i * 3] = Math.cos(ang) * R + gauss(rand) * 0.03;
+      if (kind < 0.38) {
+        a[i * 3] = Math.cos(ang) * R + gauss(rand) * 0.018;
         a[i * 3 + 1] = y;
-        a[i * 3 + 2] = Math.sin(ang) * R + gauss(rand) * 0.03;
-      } else if (kind < 0.84) {
-        a[i * 3] = -Math.cos(ang) * R + gauss(rand) * 0.03;
+        a[i * 3 + 2] = Math.sin(ang) * R + gauss(rand) * 0.018;
+      } else if (kind < 0.76) {
+        a[i * 3] = -Math.cos(ang) * R + gauss(rand) * 0.018;
         a[i * 3 + 1] = y;
-        a[i * 3 + 2] = -Math.sin(ang) * R + gauss(rand) * 0.03;
+        a[i * 3 + 2] = -Math.sin(ang) * R + gauss(rand) * 0.018;
       } else {
-        /* rungs — base pairs bridging the strands */
+        /* rungs — evenly spaced base pairs; s runs strand-to-strand */
         const s = rand() * 2 - 1;
-        const yq = (Math.round(t * 14) / 14 - 0.5) * height;
+        const yq = ((rand() * RUNGS | 0) / (RUNGS - 1) - 0.5) * height;
         const aq = (yq / height + 0.5) * turns * Math.PI * 2;
-        a[i * 3] = Math.cos(aq) * R * s;
-        a[i * 3 + 1] = yq;
-        a[i * 3 + 2] = Math.sin(aq) * R * s;
+        a[i * 3] = Math.cos(aq) * R * s + gauss(rand) * 0.012;
+        a[i * 3 + 1] = yq + gauss(rand) * 0.012;
+        a[i * 3 + 2] = Math.sin(aq) * R * s + gauss(rand) * 0.012;
       }
     }
     stages.push(a);
@@ -475,7 +478,7 @@ function readPalette() {
 
 /* ── the scene ───────────────────────────────────────────────────────────── */
 
-const COUNTS = { high: 2600, low: 1300 };
+const COUNTS = { high: 4200, low: 2000 };
 
 export function createCellScene(canvas, { quality = "high" } = {}) {
   const renderer = new THREE.WebGLRenderer({
@@ -695,12 +698,24 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       );
 
       /* F3 — the macro helix: the whole sky becomes the club's logo motif,
-         a giant double helix wrapping the small one */
+         a giant double helix wrapping the small one — with base-pair rungs */
       float side = step(0.5, fract(aSeed * 3.77));
       float hy = (fract(aSeed * 17.9) - 0.5) * 24.0;
       float hang = hy * 0.5 + uTime * 0.3 + side * 3.14159;
-      float hr = 6.5 + (fract(aSeed * 29.3) - 0.5) * 1.8;
+      float hr = 6.5 + (fract(aSeed * 29.3) - 0.5) * 1.2;
       vec3 f3 = vec3(cos(hang) * hr, hy, sin(hang) * hr);
+      /* one mote in five becomes rung material: bridge the strands at
+         quantized heights, so the macro ladder reads from any angle */
+      float isRung = step(0.8, fract(aSeed * 53.1));
+      float hyq = (floor(fract(aSeed * 17.9) * 18.0) / 17.0 - 0.5) * 24.0;
+      float hangq = hyq * 0.5 + uTime * 0.3;
+      float lerpT = fract(aSeed * 7.7);
+      vec3 rungP = vec3(
+        mix(cos(hangq), -cos(hangq), lerpT) * hr,
+        hyq,
+        mix(sin(hangq), -sin(hangq), lerpT) * hr
+      );
+      f3 = mix(f3, rungP, isRung);
 
       /* F4 — the storm: a breathing vortex around the mind */
       float ang = uTime * 0.45 + aSeed * 6.28318 + length(p) * 0.3;
@@ -866,8 +881,16 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
          protein   CORKSCREW: a fast 130° sweep around the spinning helix
          finale    settle behind the storm, brain framed clear of the text */
     const dive = THREE.MathUtils.smoothstep(p, 0.02, 0.24);
+    /* the protein stage pulls back: the ladder is 3.9 tall and deserves to
+       be SEEN — the corkscrew sweeps wide around it, then closes back in */
+    const helixPull =
+      THREE.MathUtils.smoothstep(p, 0.6, 0.72) *
+      (1 - THREE.MathUtils.smoothstep(p, 0.8, 0.92));
     const radius =
-      4.4 - 3.1 * dive + 1.2 * THREE.MathUtils.smoothstep(p, 0.3, 0.9);
+      4.4 -
+      3.1 * dive +
+      1.2 * THREE.MathUtils.smoothstep(p, 0.3, 0.9) +
+      1.7 * helixPull;
     const theta =
       0.55 * THREE.MathUtils.smoothstep(p, 0.24, 0.44) +
       0.55 * THREE.MathUtils.smoothstep(p, 0.44, 0.6) +
@@ -901,17 +924,19 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     cloudMat.uniforms.uDrift.value =
       1 - 0.6 * THREE.MathUtils.smoothstep(p, 0.78, 0.96);
     cloudMat.uniforms.uWave.value = THREE.MathUtils.smoothstep(p, 0.84, 0.96);
-    cloudMat.uniforms.uSize.value =
-      baseSize *
-      (1 +
-        0.6 * THREE.MathUtils.smoothstep(p, 0.1, 0.5) +
-        0.45 * THREE.MathUtils.smoothstep(p, 0.82, 1.0));
-
-    /* the helix stage gets a showcase spin — the logo motif deserves it */
+    /* the helix stage gets a showcase spin and a size boost — the logo
+       motif deserves to burn brightest */
     const helix =
       THREE.MathUtils.smoothstep(p, 0.55, 0.7) *
       (1 - THREE.MathUtils.smoothstep(p, 0.82, 0.92));
     cloudSpin = 0.03 + 0.09 * helix;
+
+    cloudMat.uniforms.uSize.value =
+      baseSize *
+      (1 +
+        0.6 * THREE.MathUtils.smoothstep(p, 0.1, 0.5) +
+        0.35 * helix +
+        0.45 * THREE.MathUtils.smoothstep(p, 0.82, 1.0));
 
     /* probe only means something while the membrane exists */
     const probeScale = 1 - THREE.MathUtils.smoothstep(p, 0.05, 0.2);
