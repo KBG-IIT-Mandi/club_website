@@ -5,9 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    // Production source maps: no runtime cost, and stack traces from the
-    // club server point at real source. The repo is public anyway.
-    sourcemap: true,
+    // CLOSED SOURCE: dist/ is published to a public deploy repo and served
+    // publicly — a .map file would ship the entire original source with it.
+    // scripts/publishRelease.sh additionally hard-fails on any map output.
+    sourcemap: false,
   },
   server: {
     // listen on all addresses, allow access from LAN

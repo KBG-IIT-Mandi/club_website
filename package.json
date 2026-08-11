@@ -8,7 +8,10 @@
     "dev:host": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "validate:race": "node scripts/raceValidation.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

@@ -24,19 +24,25 @@ No CDN dependencies at runtime — everything ships from the same origin.
 
 ### Bundle discipline
 
-The three.js scene (`cellScene`) and the GSAP field (`Descent`) are lazy
-chunks. The main bundle stays ~77 KB gz — the hero headline and CTAs are plain
-HTML/CSS and never wait on a 3D engine. Order of arrival: text → GSAP field →
-organism, each layer enhancing the one before it.
+The three.js library, the cell scene (`cellScene`), the GSAP field
+(`Descent`) and the race (`/race`, engine + 3D scene) are lazy chunks —
+three.js itself is one shared chunk reused by both 3D experiences. The main
+bundle stays ~84 KB gz; the hero headline and CTAs are plain HTML/CSS and
+never wait on a 3D engine. Order of arrival: text → GSAP field → organism,
+each layer enhancing the one before it.
 
 ## Getting started
 
 ```bash
 npm install
-npm run dev      # local dev server with HMR
-npm run build    # production build into dist/
-npm run preview  # serve the production build locally
-npm run lint     # eslint
+npm run dev            # local dev server with HMR
+npm run build          # production build into dist/
+npm run preview        # serve the production build locally
+npm run lint           # eslint
+npm test               # vitest — engine determinism + invariant suites
+npm run test:watch     # vitest in watch mode
+npm run validate:race  # Monte Carlo validation of the race model
+                       #   (default 1000 seeded races; --n N to change)
 ```
 
 ## Structure
@@ -50,11 +56,19 @@ src/
     SpecimenCard/   projects as experiment dossiers
     Constellation/  the team as a force-directed research network
     NavBar, Footer  instrument rail + telemetry block
-  Pages/            Home, About, Team, Events, Projects, NotFound
+  Pages/            Home, About, Team, Events, Projects, Race, NotFound
+  race/engine/      the Virtual Sperm Race headless simulation (framework-free,
+                    fully deterministic; see SCIENCE.md + SOURCES.md):
+                    rng · distributions · biologyParameters (the registry) ·
+                    stages · cohorts · movement · stateMachine · scheduler ·
+                    engine (+ *.test.js vitest suites)
+  Pages/Race/       raceScene.js (three, framework-free) · Race.jsx + panels
   config/api.js     Content endpoints + stale-while-revalidate fetch cache
   lib/discipline.js tech[] → discipline map (single source)
   index.css         Design tokens — declared here ONLY
   App.css           Shared primitives (.shell, .tag, .entry, .membrane, reveals)
+scripts/
+  raceValidation.mjs  1000-seed Monte Carlo report with tolerance checks
 ```
 
 **Styling convention:** design tokens are declared in `src/index.css` and
@@ -87,7 +101,26 @@ load and finally swaps to a CSS poster, IntersectionObserver/visibility
 pausing, and a full `prefers-reduced-motion` build where the journey becomes
 stacked sections and the organism renders a single static frame.
 
-Easter egg: the Konami code mutates the palette.
+Easter egg: the Konami code mutates the palette (the race's shaders read the
+CSS variables too, so the mutation reaches the tract).
+
+### The Race (`/race`)
+
+**Virtual Sperm Race** — an educational, biologically calibrated stochastic
+simulation of the journey from deposition to fertilization. 10⁸ cells are
+carried as weighted statistical cohorts; ~240 weighted "finalists" are
+simulated individually through capacitation, hyperactivation and the
+fertilization pipeline; a three.js scene renders a stylized 3D tract. Seeded
+and fully deterministic: the same seed + configuration replays the same race
+at any frame rate, speed, or particle count. Biology Mode can honestly end
+with **no fertilization**; Arcade Mode's guaranteed finish is a labelled game
+mechanic. Every biological number lives in a single registry with source,
+confidence and distribution (`src/race/engine/biologyParameters.js`), and the
+in-app "Assumptions & sources" panel renders it verbatim.
+
+**Educational simulation — not medical or fertility advice.** The model, its
+assumptions and its limits are documented in [SCIENCE.md](SCIENCE.md); full
+citations in [SOURCES.md](SOURCES.md).
 
 ### Content
 

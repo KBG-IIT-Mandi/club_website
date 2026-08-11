@@ -69,3 +69,6 @@ Icon?
 
 # Local Netlify folder
 .netlify
+
+# Playwright MCP artifacts (screenshots, console logs)
+.playwright-mcp/

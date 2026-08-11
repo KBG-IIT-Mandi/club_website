@@ -1,10 +1,11 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import {
   BrowserRouter as Router,
   Routes,
   Route,
   Navigate,
 } from "react-router-dom";
+import { LoadingSpinner } from "./Components/Loading";
 import NavBar from "./Components/NavBar";
 import Footer from "./Components/Footer/Footer";
 import Grain from "./Components/Chrome/Grain";
@@ -18,6 +19,11 @@ import Events from "./Pages/Events/Events";
 import Projects from "./Pages/Projects/Projects";
 import NotFound from "./Pages/NotFound/NotFound";
 import "./App.css";
+
+/* The Race carries its own simulation engine + canvas renderer — a heavy,
+   self-contained chunk. Lazy like the organism: the main bundle never
+   pays for it (bundle discipline, see README). */
+const Race = lazy(() => import("./Pages/Race/Race"));
 
 export default function App() {
   // The mutation listener lives for the whole session, outside any route.
@@ -41,6 +47,14 @@ export default function App() {
             <Route path="/team" element={<Team />} />
             <Route path="/events" element={<Events />} />
             <Route path="/projects" element={<Projects />} />
+            <Route
+              path="/race"
+              element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Race />
+                </Suspense>
+              }
+            />
             {/* footer.json ships a /contact link; the contact block lives on
                 About — route it there instead of the 404. */}
             <Route path="/contact" element={<Navigate to="/about" replace />} />

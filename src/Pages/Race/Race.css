@@ -1,0 +1,466 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE RACE — /race
+   Scoped under .p-race (index.css owns all globals). Accent discipline:
+   --bio marks living cells and biological events; --data marks the
+   computational chrome — seeds, scales, game mechanics. Arcade is a
+   MECHANIC, so it reads blue, never lime.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── THE INSTRUMENT ──────────────────────────────────────────────────────── */
+
+/* The nav is fixed and opaque off-home: the instrument starts below it. */
+.p-race { padding-top: var(--nav-h); }
+
+.p-race .race-stage {
+  position: relative;
+  height: max(430px, calc(100vh - var(--nav-h) - 120px));
+  background: var(--void);
+  border-bottom: 1px solid var(--hairline);
+  overflow: hidden;
+}
+
+.p-race .race-canvas-host,
+.p-race .race-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.p-race .race-glfallback {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 38ch;
+  text-align: center;
+  border: 1px solid var(--hairline);
+  padding: var(--s-4);
+}
+
+.p-race .race-hud {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  pointer-events: none;
+}
+
+.p-race .race-hud--tl { top: var(--s-4); left: var(--gutter); }
+.p-race .race-hud--tr { top: var(--s-4); right: var(--gutter); text-align: right; align-items: flex-end; }
+.p-race .race-hud--bl { bottom: var(--s-3); left: var(--gutter); color: var(--specimen-2); font-size: 0.625rem; }
+
+.p-race .race-title {
+  font-size: var(--fs-4);
+  line-height: var(--lh-2);
+  max-width: none;
+}
+
+.p-race .race-disclaimer {
+  color: var(--specimen-2);
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--s-1);
+  max-width: 34ch;
+  text-transform: uppercase;
+}
+
+.p-race .race-arcade-badge {
+  color: var(--data);
+  border: 1px solid var(--data-deep);
+  padding: var(--s-1) var(--s-2);
+  margin-top: var(--s-1);
+}
+
+.p-race .race-clock {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-5);
+  line-height: 1;
+  color: var(--bio);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  max-width: none;
+}
+
+.p-race .race-seed-line { color: var(--specimen-2); }
+.p-race .race-seed { color: var(--data); }
+
+/* outcome plate — lands over the stage when the race resolves */
+.p-race .race-outcome {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: var(--s-6);
+  transform: translateX(-50%);
+  width: min(92%, 560px);
+  background: var(--depth-1);
+  border: 1px solid var(--hairline);
+  border-left: 2px solid var(--bio);
+  padding: var(--s-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.p-race .race-outcome__head {
+  font-weight: 900;
+  font-size: var(--fs-4);
+  line-height: var(--lh-1);
+  text-transform: uppercase;
+  letter-spacing: var(--tr-head);
+  max-width: none;
+}
+
+.p-race .race-outcome__note { max-width: none; }
+.p-race .race-outcome__note.label { color: var(--data); }
+
+.p-race .race-outcome__decisive summary { cursor: pointer; }
+
+.p-race .race-outcome__decisive ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--s-2);
+  max-height: 9rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* ── CONTROL DECK ────────────────────────────────────────────────────────── */
+
+.p-race .race-deck {
+  background: var(--depth-1);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.p-race .race-deck__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-4) var(--s-6);
+  padding-block: var(--s-4);
+}
+
+.p-race .race-deck__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.p-race .race-chip {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-00);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--specimen-2);
+  border: 1px solid var(--hairline);
+  padding: var(--s-1) var(--s-2);
+  min-height: 32px;
+  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+}
+
+.p-race .race-chip:hover { color: var(--bio); border-color: var(--bio-dim); }
+.p-race .race-chip.is-on { color: var(--void); background: var(--bio); border-color: var(--bio); }
+.p-race .race-chip--arcade:hover { color: var(--data); border-color: var(--data-deep); }
+.p-race .race-chip--arcade.is-on { color: var(--void); background: var(--data); border-color: var(--data); }
+
+.p-race .race-deck__group--ov { flex-direction: column; align-items: flex-start; gap: var(--s-2); }
+.p-race .race-deck__ovchips { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+
+.p-race .race-slider {
+  width: min(280px, 60vw);
+  accent-color: var(--bio);
+}
+
+.p-race .race-seed-input {
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  color: var(--data);
+  background: var(--void);
+  border: 1px solid var(--hairline);
+  padding: var(--s-1) var(--s-2);
+  width: 12ch;
+  min-height: 32px;
+}
+
+.p-race .race-seed-input:focus-visible { outline: 2px solid var(--data); outline-offset: 2px; }
+
+.p-race .race-deck__science { min-height: 32px; padding: var(--s-1) var(--s-3); }
+
+/* ── TELEMETRY PANELS ────────────────────────────────────────────────────── */
+
+.p-race .race-panels { padding-block: var(--s-6); }
+
+.p-race .race-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: var(--s-4);
+  border-block: 1px solid var(--hairline);
+  padding-block: var(--s-4);
+  margin-bottom: var(--s-6);
+}
+
+.p-race .race-count { display: flex; flex-direction: column; gap: 2px; }
+
+.p-race .race-count__value {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-4);
+  line-height: 1;
+  color: var(--bio);
+  font-variant-numeric: tabular-nums;
+}
+
+.p-race .race-count__value--data { color: var(--data); }
+
+.p-race .race-grid {
+  display: grid;
+  gap: var(--s-4);
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+  align-items: start;
+}
+
+.p-race .race-panel { gap: var(--s-3); }
+.p-race .race-panel__foot { border-top: 1px solid var(--hairline); padding-top: var(--s-2); }
+.p-race .race-panel__note { margin-top: calc(-1 * var(--s-2)); }
+
+/* funnel */
+.p-race .race-funnel { display: flex; flex-direction: column; gap: var(--s-2); }
+
+.p-race .race-funnel__row {
+  display: grid;
+  grid-template-columns: 9.5rem 1fr 4.5rem;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.p-race .race-funnel__label { font-size: 0.625rem; }
+
+.p-race .race-funnel__bar { height: 10px; background: var(--depth-2); overflow: hidden; }
+
+.p-race .race-funnel__fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--bio-dim), var(--bio));
+  transition: width var(--dur-2) var(--ease);
+}
+
+.p-race .race-funnel__num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  color: var(--specimen);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* event log */
+.p-race .race-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  max-height: 21rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.p-race .race-log__row {
+  display: grid;
+  grid-template-columns: 6.8rem 1fr;
+  gap: var(--s-2);
+  font-size: var(--fs-1);
+  line-height: var(--lh-3);
+  color: var(--specimen-2);
+  max-width: none;
+}
+
+.p-race .race-log__t {
+  font-family: var(--font-mono);
+  font-size: var(--fs-00);
+  color: var(--specimen-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.p-race .race-log__row--fusion .race-log__detail,
+.p-race .race-log__row--milestone .race-log__detail { color: var(--bio); }
+.p-race .race-log__row--arcade .race-log__detail { color: var(--data); }
+.p-race .race-log__row--ovulation .race-log__detail,
+.p-race .race-log__row--oocyte .race-log__detail { color: var(--specimen); }
+
+/* roster + inspector */
+.p-race .race-roster { display: flex; flex-direction: column; gap: 2px; }
+
+.p-race .race-roster__row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-2);
+  border: 1px solid transparent;
+  color: var(--specimen);
+  font-family: var(--font-mono);
+  font-size: var(--fs-1);
+  text-align: left;
+  transition: border-color var(--dur-1) var(--ease);
+}
+
+.p-race .race-roster__row:hover { border-color: var(--bio-dim); }
+.p-race .race-roster__row.is-selected { border-color: var(--bio); }
+.p-race .race-roster__row.is-ended { color: var(--specimen-2); }
+.p-race .race-roster__state { font-size: 0.625rem; }
+
+.p-race .race-inspect {
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--s-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.p-race .race-inspect__name {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--bio);
+  max-width: none;
+}
+
+.p-race .race-inspect__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--s-2) var(--s-4);
+}
+
+.p-race .race-inspect__grid dd {
+  font-size: var(--fs-1);
+  color: var(--specimen);
+}
+
+.p-race .race-inspect__why {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  border-left: 2px solid var(--bio);
+  padding-left: var(--s-3);
+  max-width: none;
+}
+
+.p-race .race-inspect__hist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 10rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* ── SCIENCE SHEET ───────────────────────────────────────────────────────── */
+
+.p-race .race-science {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-menu);
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.p-race .race-science__scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--void) 82%, transparent);
+}
+
+.p-race .race-science__sheet {
+  position: relative;
+  width: min(100%, 880px);
+  margin: var(--s-6) var(--gutter);
+  background: var(--depth-1);
+  border: 1px solid var(--hairline);
+  padding: var(--s-6);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.p-race .race-science__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+.p-race .race-science__h {
+  font-size: var(--fs-3);
+  border-top: 1px solid var(--hairline);
+  padding-top: var(--s-4);
+}
+
+.p-race .race-science__stage summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  align-items: baseline;
+  cursor: pointer;
+  padding: var(--s-2) 0;
+}
+
+.p-race .race-science__group { display: flex; flex-direction: column; gap: var(--s-2); }
+
+.p-race .race-science__tablewrap { overflow-x: auto; }
+
+.p-race .race-science__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-1);
+}
+
+.p-race .race-science__table th {
+  font-family: var(--font-mono);
+  font-size: var(--fs-00);
+  font-weight: 500;
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--specimen-2);
+  text-align: left;
+  padding: var(--s-2);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.p-race .race-science__table td {
+  vertical-align: top;
+  padding: var(--s-2);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--specimen-2);
+}
+
+.p-race .race-science__table tr.is-gameplay td { color: var(--data); }
+
+.p-race .race-science__pid {
+  display: block;
+  font-family: var(--font-mono);
+  color: var(--specimen);
+}
+
+.p-race .race-science__explain {
+  display: block;
+  max-width: 44ch;
+  font-size: var(--fs-0);
+  line-height: var(--lh-3);
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 720px) {
+  .p-race .race-stage { height: max(380px, 62vh); }
+  .p-race .race-title { font-size: var(--fs-3); }
+  .p-race .race-clock { font-size: var(--fs-4); }
+  /* Stack the HUD: clock row on top, title plate beneath it. */
+  .p-race .race-hud--tl { top: var(--s-9); max-width: 75%; }
+  .p-race .race-funnel__row { grid-template-columns: 7.5rem 1fr 4rem; }
+  .p-race .race-science__sheet { margin: 0; border: 0; }
+}
