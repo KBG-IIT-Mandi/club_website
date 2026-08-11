@@ -487,7 +487,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
   renderer.setClearColor(0x000000, 0);
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 60);
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 120);
   camera.position.set(0, 0, 4.4);
 
   const palette = readPalette();
@@ -597,13 +597,296 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
   organelles.renderOrder = 1;
   scene.add(organelles);
 
+  /* ── THE LAB — a real room around the specimen ─────────────────────────────
+     Full 3D geometry, not a backdrop: a dark laboratory with a gridded
+     floor, panelled walls with a lime service strip, and glowing specimen
+     tanks along both walls. Parallax is real; the dive scales it away. */
+
+  const roomGroup = new THREE.Group();
+  const roomShaderMats = [];
+  const roomBasicMats = [];
+
+  /* Tight room: the walls and tanks must live INSIDE the 38° frame, or the
+     lab reads as a bare grid. Back wall ~17 units out, tanks flanking. */
+  const ROOM_W = 30;
+  const ROOM_H = 12;
+  const ROOM_D = 34;
+  const FLOOR_Y = -3.4;
+
+  const FLOOR_FRAG = /* glsl */ `
+    uniform vec3 uBio;
+    uniform vec3 uData;
+    uniform float uOpacity;
+    varying vec3 vPosW;
+
+    void main() {
+      /* 2m grid, thin glowing lines */
+      vec2 g = abs(fract(vPosW.xz * 0.5) - 0.5);
+      float line = smoothstep(0.475, 0.5, max(1.0 - g.x * 2.0, 1.0 - g.y * 2.0) * 0.5 + 0.25);
+      line = smoothstep(0.46, 0.5, 0.5 - min(g.x, g.y));
+
+      float dist = length(vPosW.xz) / 20.0;
+      float fade = 1.0 - smoothstep(0.35, 1.0, dist);
+
+      /* the pool of light under the specimen */
+      float pool = exp(-dot(vPosW.xz, vPosW.xz) * 0.045);
+
+      vec3 col = uData * 0.30 * line + uBio * 0.045 * pool + vec3(0.010, 0.016, 0.028);
+      float a = (line * 0.42 + pool * 0.30 + 0.30) * fade * uOpacity;
+      gl_FragColor = vec4(col, a);
+    }
+  `;
+
+  const WALL_FRAG = /* glsl */ `
+    uniform vec3 uBio;
+    uniform vec3 uData;
+    uniform float uOpacity;
+    varying vec3 vPosW;
+
+    void main() {
+      /* panel seams: 3m vertical, 2.5m horizontal */
+      float sx = smoothstep(0.44, 0.5, 0.5 - abs(fract(vPosW.x * 0.33) - 0.5));
+      float sz = smoothstep(0.44, 0.5, 0.5 - abs(fract(vPosW.z * 0.33) - 0.5));
+      float sy = smoothstep(0.44, 0.5, 0.5 - abs(fract(vPosW.y * 0.4) - 0.5));
+      float seam = max(max(sx, sz) * 0.6, sy * 0.35);
+
+      /* the service strip — one lime band running the walls */
+      float strip = smoothstep(2.75, 2.9, vPosW.y) * (1.0 - smoothstep(3.0, 3.15, vPosW.y));
+
+      float dist = length(vPosW.xz) / 24.0;
+      float fade = 1.0 - smoothstep(0.3, 1.0, dist);
+
+      vec3 col = vec3(0.012, 0.02, 0.036) + uData * 0.10 * seam + uBio * 0.30 * strip;
+      float a = (0.5 + seam * 0.3 + strip * 0.5) * fade * uOpacity;
+      gl_FragColor = vec4(col, a);
+    }
+  `;
+
+  const ROOM_VERT = /* glsl */ `
+    varying vec3 vPosW;
+    void main() {
+      vPosW = (modelMatrix * vec4(position, 1.0)).xyz;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `;
+
+  const mkRoomMat = (frag, side = THREE.FrontSide) => {
+    const m = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uBio: { value: palette.bio.clone() },
+        uData: { value: palette.data.clone() },
+        uOpacity: { value: 1 },
+      },
+      vertexShader: ROOM_VERT,
+      fragmentShader: frag,
+      transparent: true,
+      depthWrite: false,
+      side,
+    });
+    roomShaderMats.push(m);
+    return m;
+  };
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(ROOM_W, ROOM_D),
+    mkRoomMat(FLOOR_FRAG)
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = FLOOR_Y;
+  roomGroup.add(floor);
+
+  const walls = new THREE.Mesh(
+    new THREE.BoxGeometry(ROOM_W, ROOM_H, ROOM_D),
+    mkRoomMat(WALL_FRAG, THREE.BackSide)
+  );
+  walls.position.y = FLOOR_Y + ROOM_H / 2;
+  roomGroup.add(walls);
+
+  /* specimen tanks — glass cylinders with pulsing cultures, along both walls */
+  const TANK_GLASS_FRAG = /* glsl */ `
+    uniform vec3 uData;
+    uniform float uOpacity;
+    varying vec3 vNormalW;
+    varying vec3 vPosW;
+    void main() {
+      vec3 viewDir = normalize(cameraPosition - vPosW);
+      float fres = pow(1.0 - abs(dot(viewDir, normalize(vNormalW))), 2.5);
+      gl_FragColor = vec4(uData * (0.15 + fres * 0.8), (0.05 + fres * 0.4) * uOpacity);
+    }
+  `;
+  const TANK_CORE_FRAG = /* glsl */ `
+    uniform vec3 uTint;
+    uniform float uTime;
+    uniform float uPhase;
+    uniform float uOpacity;
+    varying vec3 vNormalW;
+    varying vec3 vPosW;
+    void main() {
+      vec3 viewDir = normalize(cameraPosition - vPosW);
+      float fres = pow(1.0 - abs(dot(viewDir, normalize(vNormalW))), 1.8);
+      float pulse = 0.72 + 0.28 * sin(uTime * 1.1 + uPhase);
+      gl_FragColor = vec4(uTint * (0.35 + fres * 0.9) * pulse, (0.5 + fres * 0.4) * uOpacity);
+    }
+  `;
+  const TANK_VERT = /* glsl */ `
+    varying vec3 vNormalW;
+    varying vec3 vPosW;
+    void main() {
+      vNormalW = normalize(mat3(modelMatrix) * normal);
+      vPosW = (modelMatrix * vec4(position, 1.0)).xyz;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `;
+
+  const tankGlassGeo = new THREE.CylinderGeometry(0.7, 0.7, 3.0, 20, 1, true);
+  const tankCoreGeo = new THREE.IcosahedronGeometry(0.4, 2);
+  const tankBaseGeo = new THREE.CylinderGeometry(0.84, 0.94, 0.26, 20);
+  const tankRand = mulberry32(0x746b);
+  const TANKS = [
+    [-7, -15.5], [-7, -11], [-7, -6.5], [-7, -2],
+    [7, -15.5], [7, -11], [7, -6.5], [7, -2],
+  ];
+  TANKS.forEach(([tx, tz], ti) => {
+    const tank = new THREE.Group();
+    const phase = tankRand() * Math.PI * 2;
+    /* alternate cultures: bio lime and data blue, half and half */
+    const tintName = ti % 2 === 0 ? "bio" : "data";
+
+    const glass = new THREE.Mesh(
+      tankGlassGeo,
+      (() => {
+        const m = new THREE.ShaderMaterial({
+          uniforms: {
+            uTime: { value: 0 },
+            uData: { value: palette.data.clone() },
+            uBio: { value: palette.bio.clone() },
+            uOpacity: { value: 1 },
+          },
+          vertexShader: TANK_VERT,
+          fragmentShader: TANK_GLASS_FRAG,
+          transparent: true,
+          depthWrite: false,
+        });
+        roomShaderMats.push(m);
+        return m;
+      })()
+    );
+    glass.position.y = FLOOR_Y + 0.24 + 1.35;
+
+    const core = new THREE.Mesh(
+      tankCoreGeo,
+      (() => {
+        const m = new THREE.ShaderMaterial({
+          uniforms: {
+            uTime: { value: 0 },
+            uPhase: { value: phase },
+            uTint: {
+              value: (tintName === "bio" ? palette.bio : palette.data).clone(),
+            },
+            uBio: { value: palette.bio.clone() },
+            uData: { value: palette.data.clone() },
+            uOpacity: { value: 1 },
+          },
+          vertexShader: TANK_VERT,
+          fragmentShader: TANK_CORE_FRAG,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+        m.userData.tint = tintName; // repicked on palette mutation
+        roomShaderMats.push(m);
+        return m;
+      })()
+    );
+    core.position.y = glass.position.y;
+
+    const base = new THREE.Mesh(
+      tankBaseGeo,
+      (() => {
+        const m = new THREE.MeshBasicMaterial({
+          color: 0x0b1422,
+          transparent: true,
+        });
+        roomBasicMats.push(m);
+        return m;
+      })()
+    );
+    base.position.y = FLOOR_Y + 0.12;
+
+    tank.position.set(tx, 0, tz);
+    tank.add(glass, core, base);
+    roomGroup.add(tank);
+  });
+
+  roomGroup.renderOrder = -1;
+  roomGroup.traverse((o) => {
+    o.renderOrder = -1;
+  });
+  scene.add(roomGroup);
+
+  /* ── THE NEBULA — the living interior that replaces the room at depth ──── */
+
+  const NEBULA_FRAG = /* glsl */ `
+    uniform float uTime;
+    uniform float uProg;
+    uniform float uOpacity;
+    uniform vec3 uBio;
+    uniform vec3 uData;
+    varying vec3 vDir;
+
+    ${SNOISE}
+
+    void main() {
+      float n = snoise(vDir * 2.3 + vec3(0.0, uTime * 0.015, uTime * 0.01)) * 0.6
+              + snoise(vDir * 5.1 - vec3(uTime * 0.008, 0.0, 0.0)) * 0.4;
+      n = n * 0.5 + 0.5;
+
+      /* tissue-green atmosphere early; deep neural blue by the finale */
+      vec3 tint = mix(mix(uBio, uData, 0.4), uData, smoothstep(0.55, 0.95, uProg));
+      float glow = smoothstep(0.42, 0.95, n);
+      vec3 col = tint * glow * 0.17 * (0.7 + 0.3 * vDir.y);
+      gl_FragColor = vec4(col, uOpacity * glow * 0.5);
+    }
+  `;
+
+  const nebulaGeo = new THREE.SphereGeometry(30, 32, 24);
+  const nebulaMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uProg: { value: 0 },
+      uOpacity: { value: 0.5 },
+      uBio: { value: palette.bio.clone() },
+      uData: { value: palette.data.clone() },
+    },
+    vertexShader: /* glsl */ `
+      varying vec3 vDir;
+      void main() {
+        vDir = normalize(position);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: NEBULA_FRAG,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.BackSide,
+  });
+  const nebula = new THREE.Mesh(nebulaGeo, nebulaMat);
+  nebula.renderOrder = -2;
+  scene.add(nebula);
+
   /* ── palette mutation (Konami) ─────────────────────────────────────────── */
 
   const applyPalette = () => {
     const p = readPalette();
-    for (const mat of [membraneMat, cloudMat, organelleMat]) {
-      mat.uniforms.uBio.value.copy(p.bio);
-      mat.uniforms.uData.value.copy(p.data);
+    for (const mat of [membraneMat, cloudMat, organelleMat, nebulaMat, ...roomShaderMats]) {
+      if (mat.uniforms.uBio) mat.uniforms.uBio.value.copy(p.bio);
+      if (mat.uniforms.uData) mat.uniforms.uData.value.copy(p.data);
+      if (mat.uniforms.uTint) {
+        mat.uniforms.uTint.value.copy(
+          mat.userData.tint === "bio" ? p.bio : p.data
+        );
+      }
     }
   };
   const mutationObserver = new MutationObserver(applyPalette);
@@ -698,6 +981,20 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     /* probe only means something while the membrane exists */
     const probeScale = 1 - THREE.MathUtils.smoothstep(p, 0.05, 0.2);
     membraneMat.uniforms.uProbeStrength.value = probeState.strength * probeScale;
+
+    /* THE SHRINK — diving into the cell, the lab grows past us and blurs
+       out of relevance: the room scales up 6x and fades while the nebula
+       (the interior atmosphere of the living world) swells to replace it. */
+    const shrink = THREE.MathUtils.smoothstep(p, 0.08, 0.34);
+    const roomOpacity = 1 - shrink;
+    roomGroup.visible = roomOpacity > 0.01;
+    roomGroup.scale.setScalar(1 + shrink * 5);
+    for (const m of roomShaderMats) m.uniforms.uOpacity.value = roomOpacity;
+    for (const m of roomBasicMats) m.opacity = roomOpacity;
+
+    nebulaMat.uniforms.uProg.value = p;
+    nebulaMat.uniforms.uOpacity.value =
+      0.5 + 0.5 * THREE.MathUtils.smoothstep(p, 0.15, 0.4);
   };
 
   const applyProbe = () => {
@@ -733,6 +1030,9 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
 
     membrane.rotation.y = elapsed * 0.05;
     cloud.rotation.y += dt * cloudSpin;
+
+    nebulaMat.uniforms.uTime.value = elapsed;
+    for (const m of roomShaderMats) m.uniforms.uTime.value = elapsed;
 
     applyProbe();
     applyProgress();
@@ -822,6 +1122,12 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       running = false;
       cancelAnimationFrame(raf);
       mutationObserver.disconnect();
+      nebulaGeo.dispose();
+      nebulaMat.dispose();
+      roomGroup.traverse((o) => {
+        if (o.geometry) o.geometry.dispose();
+        if (o.material) o.material.dispose();
+      });
       membrane.geometry.dispose(); // may be the coarse swap, not membraneGeo
       membraneMat.dispose();
       cloudGeo.dispose();
