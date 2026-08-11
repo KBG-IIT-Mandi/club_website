@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 
 /**
  * cellScene — SPECIMEN 001 and the descent, in one scene graph.
@@ -486,112 +485,11 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     powerPreference: "high-performance",
   });
   renderer.setClearColor(0x000000, 0);
-  /* ACES for the HDR sky only — custom ShaderMaterials bypass tone mapping,
-     so the organism's colours are untouched. */
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 120);
   camera.position.set(0, 0, 4.4);
 
-  /* THE SKY — a real place instead of flat void: the Milky Way over Satara
-     (Poly Haven, CC0), self-hosted per the no-CDN rule. Loads async and
-     fades in; a failed fetch just leaves the void — never an error.
-     Heavy blur melts the ground lights into bokeh pools — atmosphere, not
-     photography; the tilt drops the bright horizon band below the stage
-     text line and lifts the Milky Way into frame. */
-  let envTexture = null;
-  let envFade = 0; // eased toward envTarget each frame
-  let envTarget = 0;
-  let envLoaded = false;
-  new RGBELoader().setDataType(THREE.FloatType).load(
-    "/env/night.hdr",
-    (tex) => {
-      if (disposed) {
-        tex.dispose();
-        return;
-      }
-      /* Colour-grade the sky INTO the palette: the source's sodium-amber
-         ground lights read muddy brown against lime/blue. Crushing red and
-         lifting blue turns them into cool moonlit pools — the site's own
-         world, not somebody's campsite photo. */
-      {
-        const d = tex.image.data;
-        for (let i = 0; i < d.length; i += 4) {
-          const r = d[i], g = d[i + 1], b = d[i + 2];
-          d[i] = r * 0.38 + b * 0.1;
-          d[i + 1] = g * 0.72 + b * 0.06;
-          d[i + 2] = b * 1.05 + g * 0.22;
-        }
-      }
-
-      /* Pre-blur the pixels OURSELVES instead of scene.backgroundBlurriness:
-         that path resamples through a 256px PMREM cube whose mips upscale
-         blocky at fullscreen — the "pixelated sky". Three passes of a
-         sliding-window box blur ≈ gaussian, wrapped across the 360° seam;
-         the result upsamples as clean bilinear gradients. Runs once, ~30ms,
-         inside the already idle-deferred load. */
-      {
-        const { data: d, width: w, height: h } = tex.image;
-        const R = 14;
-        const tmp = new Float32Array(d.length);
-        for (let pass = 0; pass < 3; pass++) {
-          /* horizontal, wrapped */
-          const win = R * 2 + 1;
-          for (let y = 0; y < h; y++) {
-            const row = y * w * 4;
-            for (let c = 0; c < 3; c++) {
-              let sum = 0;
-              for (let k = -R; k <= R; k++) {
-                sum += d[row + (((k + w) % w) * 4) + c];
-              }
-              for (let x = 0; x < w; x++) {
-                tmp[row + x * 4 + c] = sum / win;
-                const out = (x - R + w) % w;
-                const inn = (x + R + 1) % w;
-                sum += d[row + inn * 4 + c] - d[row + out * 4 + c];
-              }
-            }
-          }
-          /* vertical, clamped */
-          for (let x = 0; x < w; x++) {
-            for (let c = 0; c < 3; c++) {
-              let sum = 0;
-              for (let k = -R; k <= R; k++) {
-                const yy = Math.min(h - 1, Math.max(0, k));
-                sum += tmp[yy * w * 4 + x * 4 + c];
-              }
-              for (let y = 0; y < h; y++) {
-                d[y * w * 4 + x * 4 + c] = sum / win;
-                const out = Math.min(h - 1, Math.max(0, y - R));
-                const inn = Math.min(h - 1, y + R + 1);
-                sum += tmp[inn * w * 4 + x * 4 + c] - tmp[out * w * 4 + x * 4 + c];
-              }
-            }
-          }
-        }
-        tex.needsUpdate = true;
-      }
-
-      tex.mapping = THREE.EquirectangularReflectionMapping;
-      tex.magFilter = THREE.LinearFilter;
-      tex.minFilter = THREE.LinearFilter;
-      tex.generateMipmaps = false;
-      envTexture = tex;
-      scene.background = tex;
-      scene.backgroundIntensity = 0;
-      scene.backgroundRotation.x = -0.3;
-      envLoaded = true;
-      if (!running) {
-        /* static build (reduced motion): paint the sky into the held frame */
-        envFade = 1;
-        render();
-      }
-    },
-    undefined,
-    () => {}
-  );
 
   const palette = readPalette();
 
@@ -750,11 +648,131 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
   nebula.renderOrder = -2;
   scene.add(nebula);
 
+  /* ── THE FIELD — the deep-space particle sea, morphing with the journey ────
+     Thousands of ambient motes surrounding the whole descent. All motion is
+     computed in the vertex shader from a static shell — zero CPU per frame.
+     Three formations, blended by scroll progress:
+       hero      a galactic swirl, faster near the core (differential rotation)
+       mid       flowing horizontal currents — the interior sea of the body
+       finale    a spinning vortex storm around the mind
+  */
+
+  const FIELD_VERT = /* glsl */ `
+    attribute float aSeed;
+    uniform float uTime;
+    uniform float uProg;
+    uniform float uSize;
+    varying float vSeed;
+    varying float vGlow;
+
+    void main() {
+      vSeed = aSeed;
+      vec3 p = position;
+      float r = length(p);
+
+      /* F1 — the swirl: differential rotation, inner motes orbit faster */
+      float swirl = uTime * (0.015 + 5.0 / (r * r + 4.0)) + aSeed * 0.4;
+      float cs = cos(swirl), sn = sin(swirl);
+      vec3 f1 = vec3(p.x * cs - p.z * sn, p.y, p.x * sn + p.z * cs);
+
+      /* F2 — the current: motes stream sideways in layered ribbons */
+      float flow = uTime * 0.6;
+      vec3 f2 = vec3(
+        mod(p.x + flow * 2.4 + aSeed * 48.0, 48.0) - 24.0,
+        p.y * 0.3 + sin(p.z * 0.5 + flow + aSeed * 6.28) * 1.6,
+        p.z * 0.85
+      );
+
+      /* F3 — the storm: a breathing vortex around the mind */
+      float ang = uTime * 0.45 + aSeed * 6.28318 + r * 0.3;
+      float rr = 5.0 + fract(aSeed * 13.7 + uTime * 0.05) * 15.0;
+      vec3 f3 = vec3(
+        cos(ang) * rr,
+        (aSeed - 0.5) * 12.0 + sin(uTime * 0.7 + aSeed * 9.0),
+        sin(ang) * rr
+      );
+
+      float s1 = smoothstep(0.16, 0.4, uProg) * (1.0 - smoothstep(0.6, 0.82, uProg));
+      float s2 = smoothstep(0.6, 0.86, uProg);
+      vec3 pos = mix(mix(f1, f2, s1), f3, s2);
+
+      /* universal turbulence so no formation ever freezes */
+      pos.x += sin(uTime * 0.7 + aSeed * 91.0) * 0.4;
+      pos.y += cos(uTime * 0.6 + aSeed * 47.0) * 0.4;
+      pos.z += sin(uTime * 0.8 + aSeed * 23.0) * 0.4;
+
+      vGlow = 0.5 + 0.5 * sin(uTime * (0.7 + aSeed * 1.8) + aSeed * 40.0);
+
+      vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+      gl_PointSize = uSize * (0.3 + aSeed * 1.2) / max(1.0, -mv.z * 0.22);
+      gl_Position = projectionMatrix * mv;
+    }
+  `;
+
+  const FIELD_FRAG = /* glsl */ `
+    uniform vec3 uBio;
+    uniform vec3 uData;
+    uniform float uOpacity;
+    varying float vSeed;
+    varying float vGlow;
+
+    void main() {
+      vec2 d = gl_PointCoord - vec2(0.5);
+      float r2 = dot(d, d);
+      if (r2 > 0.25) discard;
+      float soft = smoothstep(0.25, 0.03, r2);
+
+      /* a data-blue sea with scattered lime motes (~one in five) */
+      float lean = step(0.8, fract(vSeed * 5.39));
+      vec3 col = mix(uData, uBio, lean);
+
+      gl_FragColor = vec4(col, soft * (0.1 + vGlow * 0.24) * uOpacity);
+    }
+  `;
+
+  const FIELD_COUNT = quality === "high" ? 7000 : 3000;
+  const fieldGeo = new THREE.BufferGeometry();
+  {
+    const fpos = new Float32Array(FIELD_COUNT * 3);
+    const fseed = new Float32Array(FIELD_COUNT);
+    const rand = mulberry32(0xf1e1d);
+    for (let i = 0; i < FIELD_COUNT; i++) {
+      let x = gauss(rand), y = gauss(rand), z = gauss(rand);
+      const l = Math.hypot(x, y, z) || 1;
+      const r = 7 + 17 * Math.pow(rand(), 0.65); // shell 7–24, biased outward
+      fpos[i * 3] = (x / l) * r;
+      fpos[i * 3 + 1] = (y / l) * r * 0.8;
+      fpos[i * 3 + 2] = (z / l) * r;
+      fseed[i] = rand();
+    }
+    fieldGeo.setAttribute("position", new THREE.BufferAttribute(fpos, 3));
+    fieldGeo.setAttribute("aSeed", new THREE.BufferAttribute(fseed, 1));
+    fieldGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 40);
+  }
+  const fieldMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: { value: 0 },
+      uProg: { value: 0 },
+      uSize: { value: quality === "high" ? 26 : 22 },
+      uOpacity: { value: 1 },
+      uBio: { value: palette.bio.clone() },
+      uData: { value: palette.data.clone() },
+    },
+    vertexShader: FIELD_VERT,
+    fragmentShader: FIELD_FRAG,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  const field = new THREE.Points(fieldGeo, fieldMat);
+  field.renderOrder = 0;
+  scene.add(field);
+
   /* ── palette mutation (Konami) ─────────────────────────────────────────── */
 
   const applyPalette = () => {
     const p = readPalette();
-    for (const mat of [membraneMat, cloudMat, organelleMat, nebulaMat]) {
+    for (const mat of [membraneMat, cloudMat, organelleMat, nebulaMat, fieldMat]) {
       mat.uniforms.uBio.value.copy(p.bio);
       mat.uniforms.uData.value.copy(p.data);
     }
@@ -856,12 +874,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     nebulaMat.uniforms.uOpacity.value =
       0.5 + 0.5 * THREE.MathUtils.smoothstep(p, 0.15, 0.4);
 
-    /* the sky breathes with the journey: fullest in the hero, receding once
-       we are inside the cell (text needs the dark), returning for the brain */
-    envTarget =
-      0.4 -
-      0.28 * THREE.MathUtils.smoothstep(p, 0.1, 0.3) +
-      0.12 * THREE.MathUtils.smoothstep(p, 0.82, 0.96);
+    fieldMat.uniforms.uProg.value = p;
   };
 
   const applyProbe = () => {
@@ -899,12 +912,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     cloud.rotation.y += dt * cloudSpin;
 
     nebulaMat.uniforms.uTime.value = elapsed;
-
-    if (envLoaded) {
-      envFade += (1 - envFade) * Math.min(1, dt * 0.8); // ~2s fade-in
-      scene.backgroundIntensity = envTarget * envFade;
-      scene.backgroundRotation.y = elapsed * 0.004; // the sky drifts, barely
-    }
+    fieldMat.uniforms.uTime.value = elapsed;
 
     applyProbe();
     applyProgress();
@@ -978,6 +986,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       if (q === "low") {
         baseSize = 9;
         cloudGeo.setDrawRange(0, Math.floor(count / 2));
+        fieldGeo.setDrawRange(0, Math.floor(FIELD_COUNT / 2));
         if (membrane.geometry === membraneGeo) {
           const coarseGeo = new THREE.SphereGeometry(1.15, 88, 60);
           membrane.geometry = coarseGeo;
@@ -986,6 +995,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       } else {
         baseSize = quality === "high" ? 11 : 9;
         cloudGeo.setDrawRange(0, count);
+        fieldGeo.setDrawRange(0, FIELD_COUNT);
       }
     },
 
@@ -996,7 +1006,8 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       mutationObserver.disconnect();
       nebulaGeo.dispose();
       nebulaMat.dispose();
-      if (envTexture) envTexture.dispose();
+      fieldGeo.dispose();
+      fieldMat.dispose();
       membrane.geometry.dispose(); // may be the coarse swap, not membraneGeo
       membraneMat.dispose();
       cloudGeo.dispose();
