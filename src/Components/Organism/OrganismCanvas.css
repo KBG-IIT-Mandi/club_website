@@ -13,6 +13,23 @@
   transition: opacity 900ms var(--ease);
 }
 
+/* Ground fog: the HDR sky's bright bokeh band lives in the lower half of
+   frame, exactly where the hero subtitle and stage text sit. This pins a
+   void gradient over the canvas's bottom third so type always lands on
+   dark, whatever the sky is doing. Above the canvas, below all text. */
+.organism::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--void) 88%, transparent) 0%,
+    color-mix(in srgb, var(--void) 45%, transparent) 22%,
+    transparent 44%
+  );
+  pointer-events: none;
+}
+
 .organism.is-live .organism__canvas {
   opacity: 1;
 }
