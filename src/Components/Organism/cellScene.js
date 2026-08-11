@@ -531,35 +531,89 @@ function buildStages(count) {
     stages.push(a);
   }
 
-  /* S5 EMBRYO — the baby: a curled fetus floating in its amniotic sac.
-     Head heavy, spine a C-curve, limb buds folded in — the classic
-     profile, unmistakable at a glance. */
+  /* S5 EMBRYO — the baby, drawn like an anatomical study rather than a
+     cloud of blobs: an egg-shaped skull with chin tucked, a face profile
+     stroke, the great C-curve of the spine, folded arm with the hand near
+     the mouth, knee drawn to the chest — the ultrasound silhouette
+     everyone recognizes. Built from thick particle strokes along curves. */
   {
     const a = new Float32Array(count * 3);
+
+    /* stroke helper: a point somewhere along a thick line */
+    const stroke = (x1, y1, x2, y2, th) => {
+      const t = rand();
+      return [
+        x1 + (x2 - x1) * t + gauss(rand) * th,
+        y1 + (y2 - y1) * t + gauss(rand) * th,
+        gauss(rand) * th * 1.6,
+      ];
+    };
+    /* quadratic bezier stroke for the spine's C */
+    const bez = (x1, y1, cx, cy, x2, y2, th) => {
+      const t = rand();
+      const u = 1 - t;
+      return [
+        u * u * x1 + 2 * u * t * cx + t * t * x2 + gauss(rand) * th,
+        u * u * y1 + 2 * u * t * cy + t * t * y2 + gauss(rand) * th,
+        gauss(rand) * th * 1.6,
+      ];
+    };
+
     for (let i = 0; i < count; i++) {
       const kind = rand();
       let x, y, z;
-      if (kind < 0.3) {
-        /* head — outsized, tucked toward the chest */
-        x = -0.32 + gauss(rand) * 0.42;
-        y = 0.52 + gauss(rand) * 0.42;
-        z = gauss(rand) * 0.34;
-      } else if (kind < 0.58) {
-        /* torso — a C-curve from nape to rump */
-        const t = rand();
-        const ang = -0.45 + t * 2.1; /* radians along the curl */
-        const cr = 0.6 - t * 0.08;
-        x = 0.12 + Math.sin(ang) * cr + gauss(rand) * 0.16;
-        y = 0.1 - (1 - Math.cos(ang)) * cr * 0.9 - t * 0.12 + gauss(rand) * 0.16;
-        z = gauss(rand) * 0.22;
-      } else if (kind < 0.72) {
-        /* limb buds — arms folded high, legs drawn up */
-        const leg = rand() < 0.5;
-        x = (leg ? -0.05 : 0.18) + gauss(rand) * 0.18;
-        y = (leg ? -0.52 : 0.08) + gauss(rand) * 0.16;
-        z = 0.12 + gauss(rand) * 0.14;
-      } else if (kind < 0.88) {
-        /* the amniotic sac — a soft ellipsoid shell around everything */
+      if (kind < 0.13) {
+        /* skull outline — a planar ring facing the lens: the head reads as
+           a drawn circle, not a fog */
+        const ang = rand() * Math.PI * 2;
+        const rr = 0.44 + (rand() - 0.5) * 0.05;
+        x = -0.18 + Math.cos(ang) * rr;
+        y = 0.62 + Math.sin(ang) * rr * 1.06;
+        z = gauss(rand) * 0.08;
+      } else if (kind < 0.22) {
+        /* skull fill — soft interior */
+        x = -0.18 + gauss(rand) * 0.4;
+        y = 0.62 + gauss(rand) * 0.42;
+        z = gauss(rand) * 0.3;
+      } else if (kind < 0.25) {
+        /* face profile — forehead, nose, chin */
+        [x, y, z] = stroke(-0.6, 0.82, -0.58, 0.36, 0.045);
+        x -= Math.sin((y - 0.36) * 3.2) * 0.07; /* the nose bump */
+      } else if (kind < 0.4) {
+        /* the spine — nape over the curved back down to the rump */
+        [x, y, z] = bez(0.24, 0.94, 0.85, 0.12, 0.3, -0.74, 0.08);
+      } else if (kind < 0.52) {
+        /* torso fill between spine and belly */
+        x = 0.14 + gauss(rand) * 0.32;
+        y = -0.04 + gauss(rand) * 0.42;
+        z = gauss(rand) * 0.28;
+      } else if (kind < 0.56) {
+        /* the front line — chin down the belly to the thigh join */
+        [x, y, z] = bez(-0.46, 0.28, -0.5, -0.2, -0.02, -0.52, 0.05);
+      } else if (kind < 0.63) {
+        /* thigh — hip toward the chest */
+        [x, y, z] = stroke(0.26, -0.56, -0.26, -0.4, 0.1);
+      } else if (kind < 0.68) {
+        /* shin — knee folded back down */
+        [x, y, z] = stroke(-0.26, -0.4, -0.02, -0.78, 0.075);
+      } else if (kind < 0.71) {
+        /* foot — tucked under the rump */
+        x = 0.07 + gauss(rand) * 0.09;
+        y = -0.84 + gauss(rand) * 0.055;
+        z = gauss(rand) * 0.07;
+      } else if (kind < 0.77) {
+        /* upper arm — shoulder to elbow */
+        [x, y, z] = stroke(0.1, 0.4, -0.16, 0.1, 0.08);
+      } else if (kind < 0.82) {
+        /* forearm — elbow up toward the face */
+        [x, y, z] = stroke(-0.16, 0.1, -0.48, 0.4, 0.065);
+      } else if (kind < 0.85) {
+        /* the hand, resting near the mouth */
+        x = -0.53 + gauss(rand) * 0.075;
+        y = 0.44 + gauss(rand) * 0.075;
+        z = 0.04 + gauss(rand) * 0.06;
+      } else if (kind < 0.96) {
+        /* amniotic sac */
         let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
         const l = Math.hypot(dx, dy, dz) || 1;
         const shell = 1.5 + (rand() - 0.5) * 0.1;
@@ -572,11 +626,11 @@ function buildStages(count) {
         y = gauss(rand) * 1.0;
         z = gauss(rand) * 0.7;
       }
-      /* profile lives in ZY: the camera looks down +X at this plateau,
-         so the curl faces the lens instead of showing edge-on */
-      a[i * 3] = z;
-      a[i * 3 + 1] = y;
-      a[i * 3 + 2] = x;
+      /* profile lives in ZY (the camera looks down +X at this plateau, so
+         the curl faces the lens), scaled up — the baby owns its frame */
+      a[i * 3] = z * 1.25;
+      a[i * 3 + 1] = y * 1.25;
+      a[i * 3 + 2] = x * 1.25;
     }
     stages.push(a);
   }
@@ -1239,9 +1293,13 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     const gametePull =
       THREE.MathUtils.smoothstep(p, 0.3, 0.36) *
       (1 - THREE.MathUtils.smoothstep(p, 0.44, 0.5));
-    /* the egg with its corona reaches r≈2, the sac r≈1.6 — both need air */
+    /* the egg with its corona reaches r≈2 and needs deep air; the baby
+       deserves a closer seat — two pulls, handing over between plateaus */
     const ovumPull =
       THREE.MathUtils.smoothstep(p, 0.44, 0.5) *
+      (1 - THREE.MathUtils.smoothstep(p, 0.54, 0.6));
+    const embryoPull =
+      THREE.MathUtils.smoothstep(p, 0.56, 0.62) *
       (1 - THREE.MathUtils.smoothstep(p, 0.66, 0.72));
     /* the bean is 2.9 long and its outer shell reaches 1.4 on X — without
        this the camera plateau sits almost inside the membrane */
@@ -1255,6 +1313,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       1.7 * helixPull +
       1.4 * gametePull +
       3.4 * ovumPull +
+      2.6 * embryoPull +
       1.9 * organellePull;
     const theta =
       0.55 * THREE.MathUtils.smoothstep(p, 0.16, 0.3) +
@@ -1310,6 +1369,13 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     membraneMat.uniforms.uProbeStrength.value = probeState.strength * probeScale;
 
     nebulaMat.uniforms.uProg.value = p;
+
+    /* the ambient sea steps back for conception — the figure owns the dark */
+    fieldMat.uniforms.uOpacity.value =
+      1 -
+      0.6 *
+        THREE.MathUtils.smoothstep(p, 0.44, 0.5) *
+        (1 - THREE.MathUtils.smoothstep(p, 0.68, 0.74));
     nebulaMat.uniforms.uOpacity.value =
       0.5 + 0.5 * THREE.MathUtils.smoothstep(p, 0.15, 0.4);
 
