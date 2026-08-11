@@ -42,7 +42,7 @@ export const STAGES = [
   },
   {
     id: "code",
-    level: "LEVEL 05 · CODE · PURE BITS",
+    level: "LEVEL 05 · NEURAL CODE · PURE SIGNAL",
     title: "AI × Biology",
     copy: "Neural cellular automata, swarm optimisation, medical imaging — life, recompiled as computation.",
     to: "/projects",

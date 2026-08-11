@@ -398,20 +398,60 @@ function buildStages(count) {
     stages.push(a);
   }
 
-  /* S4 CODE — the lattice: order out of life. Tight enough to read DENSE
-     at the finale camera distance; the signal waves carry the motion. */
+  /* S4 NEURAL — the brain. AI × Biology ends the descent as a mind made of
+     signal: two wrinkled hemispheres split by the longitudinal fissure, a
+     finely striated cerebellum at the lower rear, a tapering brainstem.
+     Baked into a 3/4 view; the cloud's idle spin slowly rotates it. */
   {
     const a = new Float32Array(count * 3);
-    const nx = 14, ny = 10, nz = 8;
-    const total = nx * ny * nz;
+    const yaw = 0.55;
+    const cy = Math.cos(yaw);
+    const sy = Math.sin(yaw);
     for (let i = 0; i < count; i++) {
-      const cell = i % total;
-      const ix = cell % nx;
-      const iy = ((cell / nx) | 0) % ny;
-      const iz = (cell / (nx * ny)) | 0;
-      a[i * 3] = (ix / (nx - 1) - 0.5) * 2.5 + (rand() - 0.5) * 0.02;
-      a[i * 3 + 1] = (iy / (ny - 1) - 0.5) * 1.8 + (rand() - 0.5) * 0.02;
-      a[i * 3 + 2] = (iz / (nz - 1) - 0.5) * 1.5 + (rand() - 0.5) * 0.02;
+      const kind = rand();
+      let x, y, z;
+      if (kind < 0.82) {
+        /* cortex shell with banded gyri wrinkles */
+        let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
+        const l = Math.hypot(dx, dy, dz) || 1;
+        dx /= l; dy /= l; dz /= l;
+        const wrinkle =
+          1 +
+          0.075 * Math.sin(6.0 * dy + 4.0 * dx) * Math.cos(5.0 * dz + 2.0 * dy) +
+          0.05 * Math.sin(11.0 * dx + 7.0 * dz);
+        const shell = 0.93 + rand() * 0.09;
+        x = dx * 0.95 * wrinkle * shell;
+        y = dy * 0.60 * wrinkle * shell;
+        z = dz * 0.80 * wrinkle * shell;
+        /* flatter underside */
+        if (y < -0.32) y = -0.32 - (Math.abs(y) - 0.32) * 0.35;
+        /* the fissure: clear the median plane along the crown */
+        if (y > 0.05 && Math.abs(x) < 0.1) {
+          x += (x >= 0 ? 1 : -1) * 0.09;
+        }
+        x += (x >= 0 ? 1 : -1) * 0.03;
+      } else if (kind < 0.95) {
+        /* cerebellum — tight horizontal folds */
+        let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
+        const l = Math.hypot(dx, dy, dz) || 1;
+        dx /= l; dy /= l; dz /= l;
+        const folds = 1 + 0.05 * Math.sin(26.0 * dy);
+        const shell = 0.9 + rand() * 0.12;
+        x = dx * 0.42 * folds * shell;
+        y = -0.48 + dy * 0.24 * folds * shell;
+        z = -0.5 + dz * 0.34 * folds * shell;
+      } else {
+        /* brainstem — tapered column angling down and forward */
+        const t = rand();
+        const rr = (1 - t * 0.55) * 0.11;
+        const ang = rand() * Math.PI * 2;
+        x = Math.cos(ang) * rr;
+        y = -0.4 - t * 0.45;
+        z = -0.16 + t * 0.26 + Math.sin(ang) * rr;
+      }
+      a[i * 3] = x * cy + z * sy;
+      a[i * 3 + 1] = y;
+      a[i * 3 + 2] = -x * sy + z * cy;
     }
     stages.push(a);
   }
@@ -618,10 +658,13 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
        The lateral arc gives every stage its own viewing angle; the finale
        sits closer so the lattice fills the frame instead of thinning out. */
     const dive = THREE.MathUtils.smoothstep(p, 0.02, 0.24);
-    camera.position.z = 4.4 - 3.1 * dive + 1.1 * THREE.MathUtils.smoothstep(p, 0.3, 1.0);
-    camera.position.x = 0.32 * Math.sin(p * Math.PI * 2.0);
+    camera.position.z = 4.4 - 3.1 * dive + 1.2 * THREE.MathUtils.smoothstep(p, 0.3, 1.0);
+    /* finale pan: camera and look-target shift together, so the brain sits
+       right-of-centre (clear of the stage text) while spinning in place */
+    const pan = -0.52 * THREE.MathUtils.smoothstep(p, 0.84, 0.96);
+    camera.position.x = 0.32 * Math.sin(p * Math.PI * 2.0) + pan;
     camera.position.y = -0.15 * Math.sin(p * Math.PI);
-    camera.lookAt(0, 0, 0);
+    camera.lookAt(pan, 0, 0);
 
     /* membrane: opaque cell wall in the hero, gone once we are inside */
     membraneMat.uniforms.uOpacity.value = 1 - THREE.MathUtils.smoothstep(p, 0.08, 0.26);
