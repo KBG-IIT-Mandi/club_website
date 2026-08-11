@@ -45,6 +45,46 @@ function gauss(rand) {
   return (rand() + rand() + rand()) / 1.5 - 1;
 }
 
+/* ── THE FLUOROPHORE PANEL — nine real emission colours ─────────────────────
+   The particles are stained like an actual multi-channel confocal image:
+   each maps to a fluorophore biologists genuinely image with, ordered by
+   emission wavelength. Cool channels (DAPI→GFP) dominate, warm reporters
+   (mOrange→mCherry) appear sparsely — the balance of real micrographs.
+     DAPI 461nm · CFP 476nm · AmCyan 490nm · EGFP 507nm · YFP 527nm ·
+     mVenus 528nm · mOrange 562nm · tdTomato 581nm · mCherry 610nm */
+const FLUOROPHORES = [
+  0x4e5fff, // DAPI — nuclear blue
+  0x38c8ff, // CFP — cyan
+  0x2ee8d8, // AmCyan — teal
+  0x3cff6e, // EGFP — the green
+  0xa8ff2e, // YFP — yellow-green (the site's own lime)
+  0xd6ff2e, // mVenus — bright chartreuse
+  0xffc12e, // mOrange — amber
+  0xff7a3c, // tdTomato — orange
+  0xff4557, // mCherry — red
+];
+
+/* Chained per-particle channel pick, weighted cool-heavy. */
+const PAL_PICK_GLSL = /* glsl */ `
+  vec3 palPick(float seed) {
+    float t = fract(seed * 9.73);
+    vec3 c = uPal[0];
+    c = mix(c, uPal[1], step(0.16, t));
+    c = mix(c, uPal[2], step(0.30, t));
+    c = mix(c, uPal[3], step(0.44, t));
+    c = mix(c, uPal[4], step(0.62, t));
+    c = mix(c, uPal[5], step(0.78, t));
+    c = mix(c, uPal[6], step(0.87, t));
+    c = mix(c, uPal[7], step(0.93, t));
+    c = mix(c, uPal[8], step(0.975, t));
+    return c;
+  }
+`;
+
+const makePalUniform = () => ({
+  value: FLUOROPHORES.map((h) => new THREE.Color(h)),
+});
+
 /* ── GLSL: 3D simplex noise (Ashima / Stefan Gustavson, public domain) ───── */
 
 const SNOISE = /* glsl */ `
@@ -238,6 +278,7 @@ const CLOUD_VERT = /* glsl */ `
 const CLOUD_FRAG = /* glsl */ `
   uniform vec3 uBio;
   uniform vec3 uData;
+  uniform vec3 uPal[9];
   uniform float uDataMix;
   uniform float uOpacity;
 
@@ -245,16 +286,18 @@ const CLOUD_FRAG = /* glsl */ `
   varying float vTwinkle;
   varying float vWave;
 
+  ${PAL_PICK_GLSL}
+
   void main() {
     vec2 d = gl_PointCoord - vec2(0.5);
     float r2 = dot(d, d);
     if (r2 > 0.25) discard;
     float soft = smoothstep(0.25, 0.02, r2);
 
-    /* each particle leans bio or data by seed; the stage pulls the whole
-       cloud toward data as we approach CODE */
-    float lean = smoothstep(0.35, 0.65, fract(vSeed * 7.13));
-    vec3 col = mix(uBio, uData, clamp(lean * 0.5 + uDataMix, 0.0, 1.0));
+    /* each particle carries its own fluorophore channel; the finale still
+       pulls the whole culture toward computational blue */
+    vec3 col = palPick(vSeed);
+    col = mix(col, uData, uDataMix * 0.7);
 
     /* the wavefront brightens the lattice and flashes LIME at its crest:
        the biological signal running through the code — the thesis, lit */
@@ -548,6 +591,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       uDrift: { value: 1 },
       uBio: { value: palette.bio.clone() },
       uData: { value: palette.data.clone() },
+      uPal: makePalUniform(),
       uDataMix: { value: 0 },
       uWave: { value: 0 },
       uOpacity: { value: 1 },
@@ -760,9 +804,12 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
   const FIELD_FRAG = /* glsl */ `
     uniform vec3 uBio;
     uniform vec3 uData;
+    uniform vec3 uPal[9];
     uniform float uOpacity;
     varying float vSeed;
     varying float vGlow;
+
+    ${PAL_PICK_GLSL}
 
     void main() {
       vec2 d = gl_PointCoord - vec2(0.5);
@@ -770,9 +817,9 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       if (r2 > 0.25) discard;
       float soft = smoothstep(0.25, 0.03, r2);
 
-      /* a data-blue sea with scattered lime motes (~one in five) */
-      float lean = step(0.8, fract(vSeed * 5.39));
-      vec3 col = mix(uData, uBio, lean);
+      /* the ambient sea carries the same nine-channel stain, leaned cool:
+         distant tissue reads blue-teal, warm reporters glint through rarely */
+      vec3 col = mix(palPick(vSeed), uData, 0.35);
 
       gl_FragColor = vec4(col, soft * (0.1 + vGlow * 0.24) * uOpacity);
     }
@@ -805,6 +852,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       uOpacity: { value: 1 },
       uBio: { value: palette.bio.clone() },
       uData: { value: palette.data.clone() },
+      uPal: makePalUniform(),
     },
     vertexShader: FIELD_VERT,
     fragmentShader: FIELD_FRAG,
