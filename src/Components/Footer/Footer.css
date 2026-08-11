@@ -48,6 +48,12 @@
   color: var(--bio);
 }
 
+/* The sign-off — the last line of the lab log. A breath of separation
+   from the live rows; --fs-00 / --specimen-2 come from .foot__row. */
+.foot__row--end {
+  margin-top: var(--s-4);
+}
+
 /* ── SMALL PRINT ─────────────────────────────────────────────────────────── */
 
 .foot__small {

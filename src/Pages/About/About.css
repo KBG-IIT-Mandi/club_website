@@ -30,19 +30,69 @@
   gap: var(--s-4);
 }
 
+/* ── GHOST NUMERALS — the field-journal's section index ──────────────────── */
+
+/* Every journal section carries its number as a huge display-register
+   watermark at its top-left: Archivo 900 ghosted by mixing --ivory-2 toward
+   transparent, so the article reads as a numbered field-journal. The sequence
+   is real — render order over the sections the JSON actually ships
+   (About.jsx) — and aria-hidden: it indexes document order, nothing more.
+   isolation scopes the z-index:-1 layering, so the numeral paints above the
+   ivory ground but under every line of ink. Watermarks do not move: the
+   ghost is static by design and reduced motion has nothing to kill. */
+.p-about .about-mission,
+.p-about .about-prose,
+.p-about .section-head {
+  position: relative;
+  isolation: isolate;
+}
+
+.p-about .about-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  font-weight: 900;
+  font-size: var(--fs-display);
+  line-height: var(--lh-0);
+  letter-spacing: var(--tr-display);
+  color: color-mix(in srgb, var(--ivory-2) 70%, transparent);
+  /* Section numerals hang up into their .section's own padding-block: at
+     every viewport the lift stays inside that padding (--s-8, --s-10 wide vs
+     a lift that peaks near 70px), so a numeral never crosses the previous
+     section's copy. The -0.04em nudge is optical left-alignment of the
+     numeral's bearing with the ink margin. */
+  transform: translate(-0.04em, -62%);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Mission and prose carry no .section padding above them — their numerals
+   layer BEHIND the opening lines instead of hanging free, lifted only enough
+   to break the block's top edge into the margin above. */
+.p-about .about-mission .about-ghost,
+.p-about .about-prose .about-ghost {
+  transform: translate(-0.04em, -0.15em);
+}
+
 /* ── MISSION — the 200-weight pull-quote ─────────────────────────────────── */
 
 /* Archivo variable spans 100–900; 200 is a real cut, not faux-light. Balanced
    rag, tight leading, a measure short enough to read as a quotation rather
-   than a paragraph. */
+   than a paragraph. The 2px --bio rule on its left edge is the ivory page's
+   ONE lime accent: the mission is the single live thing on the journal page,
+   and the measure tightens a step so the quote hangs off the rule as one
+   column instead of drifting away from it. */
 .p-about .about-mission {
   margin-top: var(--s-7);
+  border-left: 2px solid var(--bio);
+  padding-left: var(--s-5);
   font-weight: 200;
   font-size: clamp(1.65rem, 1.1rem + 2.75vw, 3.4rem);
   line-height: 1.25;
   letter-spacing: -0.01em;
   color: var(--ink);
-  max-width: 30ch;
+  max-width: 28ch;
   text-wrap: balance;
 }
 

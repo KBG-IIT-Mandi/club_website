@@ -14,6 +14,15 @@ const MEMBRANES = [
   "membrane membrane--4",
 ];
 
+/* The leading four digits of the raw date string, or null. This is the ONLY
+   reading the log ever does of a date — the string itself still renders
+   verbatim on the tag. "2026" and "2025-11-20" both yield their year;
+   anything else yields nothing and simply carries no marker. */
+const yearOf = (date) => {
+  const m = /^(\d{4})/.exec(String(date ?? "").trim());
+  return m ? m[1] : null;
+};
+
 export default function Events() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -81,10 +90,33 @@ export default function Events() {
     },
   ];
 
+  /* Year markers on the freezer's spine: walking down past[] IN JSON ORDER,
+     a marker lands wherever the leading year of the raw date changes. This is
+     real sequence information read off the club's own strings — the list is
+     never re-sorted to manufacture it, and a row whose date has no leading
+     year contributes nothing. Upcoming rows carry no markers: the live
+     section is a queue, not an archive. */
+  const yearMarks = (() => {
+    let prev = null;
+    return groups[1].items.map((event) => {
+      const year = yearOf(event.date);
+      if (!year || year === prev) return null;
+      prev = year;
+      return year;
+    });
+  })();
+
   /* date is a RAW STRING in mixed formats ("2026", "2025-11-20").
      Rendered verbatim on the tag — never parsed, never reformatted. */
-  const renderSample = (event, i, live, key) => (
+  const renderSample = (event, i, live, key, yearMark) => (
     <li className="sample row" style={{ "--i": i % 4 }} key={`${key}-${i}`}>
+      {/* Sits ON the spine (aria-hidden: the full raw date is already on the
+          sample tag — this is a visual index, not new information). */}
+      {yearMark && (
+        <span className="sample__year" aria-hidden="true">
+          {yearMark}
+        </span>
+      )}
       <div className="sample__specimen">
         <p className={live ? "tag tag--live" : "tag"}>
           {live ? "SAMPLE" : "ARCHIVED"}
@@ -132,9 +164,16 @@ export default function Events() {
                 </div>
 
                 {/* Display order is JSON order. past[] is not chronologically
-                    sorted in the source and we do not reorder the club's data. */}
-                <ol className="sample-list">
-                  {items.map((event, i) => renderSample(event, i, live, key))}
+                    sorted in the source and we do not reorder the club's data.
+                    The --live modifier turns the spine's nodes bio. */}
+                <ol
+                  className={
+                    live ? "sample-list sample-list--live" : "sample-list"
+                  }
+                >
+                  {items.map((event, i) =>
+                    renderSample(event, i, live, key, live ? null : yearMarks[i])
+                  )}
                 </ol>
               </section>
             )

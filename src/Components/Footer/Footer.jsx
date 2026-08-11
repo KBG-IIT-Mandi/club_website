@@ -74,6 +74,10 @@ const Footer = () => {
               LAST SIGNAL <span className="foot__signal">{signal}</span>
             </p>
           )}
+          {/* The lab log signs off the way it opened — SPECIMEN 001. */}
+          <p className="foot__row foot__row--end">
+            SPECIMEN 001 · TRANSMISSION ENDS
+          </p>
         </div>
 
         <div className="foot__small">

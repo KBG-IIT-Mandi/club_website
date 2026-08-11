@@ -57,6 +57,22 @@ const About = () => {
   const whatWeDo = Array.isArray(data.whatWeDo) ? data.whatWeDo : []
   const socials = Array.isArray(contact?.socials) ? contact.socials : []
 
+  /* GHOST NUMERALS — the article reads as a numbered field-journal. The
+     sequence walks the journal's sections in render order, counting only the
+     ones the JSON actually ships: a missing field never leaves a hole in the
+     numbering. This is real sequence information (document order), not
+     decoration — and it renders aria-hidden because it indexes structure the
+     reader already has. */
+  let ghostCount = 0
+  const ghost = (present) => (present ? pad2(++ghostCount) : null)
+  const num = {
+    mission: ghost(Boolean(data.mission)),
+    prose: ghost(Boolean(data.history || data.aboutLong)),
+    features: ghost(features.length > 0),
+    whatWeDo: ghost(whatWeDo.length > 0),
+    contact: ghost(Boolean(contact)),
+  }
+
   return (
     <div className="p-about world-journal" ref={pageRef}>
       <div className="shell">
@@ -69,12 +85,16 @@ const About = () => {
         {/* ── MISSION — the pull-quote. 200 against the 900 masthead: the
                journal's whole typographic argument in one spread. ────────── */}
         {data.mission && (
-          <p className="about-mission band">{data.mission}</p>
+          <p className="about-mission band">
+            <span className="about-ghost" aria-hidden="true">{num.mission}</span>
+            {data.mission}
+          </p>
         )}
 
         {/* ── THE LONG READ — history, then the full account ───────────── */}
         {(data.history || data.aboutLong) && (
           <div className="about-prose band">
+            <span className="about-ghost" aria-hidden="true">{num.prose}</span>
             {data.history && <p>{data.history}</p>}
             {data.aboutLong && <p>{data.aboutLong}</p>}
           </div>
@@ -84,6 +104,7 @@ const About = () => {
         {features.length > 0 && (
           <section className="section about-features">
             <div className="section-head band">
+              <span className="about-ghost" aria-hidden="true">{num.features}</span>
               <h2>Features</h2>
               <div className="rule" aria-hidden="true" />
             </div>
@@ -105,6 +126,7 @@ const About = () => {
         {whatWeDo.length > 0 && (
           <section className="section about-do">
             <div className="section-head band">
+              <span className="about-ghost" aria-hidden="true">{num.whatWeDo}</span>
               <h2>What we do</h2>
               <div className="rule" aria-hidden="true" />
             </div>
@@ -122,6 +144,7 @@ const About = () => {
         {contact && (
           <section className="section about-contact">
             <div className="section-head band">
+              <span className="about-ghost" aria-hidden="true">{num.contact}</span>
               <h2>Contact</h2>
               <div className="rule" aria-hidden="true" />
             </div>

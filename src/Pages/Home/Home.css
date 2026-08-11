@@ -104,6 +104,53 @@
   .p-home .hero-cue { display: none; }
 }
 
+/* ── THE STRAIN — the thesis in continuous culture ───────────────────────────
+   Full-bleed marquee between the descent and the journal. The hero thesis
+   restated as an etched outline drifting on a 40s clock — a strain kept in
+   log phase, never a shout. Track = two identical copies; -50% of the track
+   is exactly one copy, so the loop wraps seamlessly. Transform-only. */
+
+.p-home .home-strain {
+  overflow: hidden;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  padding-block: var(--s-7);
+}
+
+.p-home .home-strain__track {
+  display: flex;
+  width: max-content;
+  animation: strain-drift 40s linear infinite;
+  /* one persistent compositor animation — the hint is earned here */
+  will-change: transform;
+}
+
+.p-home .home-strain__line {
+  flex: none;
+  white-space: nowrap;
+  font-weight: 900;
+  font-size: var(--fs-display);
+  line-height: var(--lh-0);
+  letter-spacing: var(--tr-display);
+  text-transform: uppercase;
+  /* solid quiet fallback where text-stroke is unsupported */
+  color: var(--specimen-2);
+}
+
+/* Etched glass: transparent fill, bio-strain stroke. Guarded so engines
+   without text-stroke never render an invisible strip. */
+@supports (-webkit-text-stroke: 1px currentcolor) {
+  .p-home .home-strain__line {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--bio-dim);
+  }
+}
+
+@keyframes strain-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
 /* ── THE JOURNAL ─────────────────────────────────────────────────────────── */
 
 .p-home .home-journal__plate {
@@ -163,6 +210,42 @@
 
 /* ── LIVE EXPERIMENTS ────────────────────────────────────────────────────── */
 
+/* The card owns the hover transform; the .row WRAPPER owns the reveal
+   transform (see Home.jsx). z-index: 0 opens a stacking context so the
+   ghost numeral can sit behind normal-flow content without falling
+   behind the card's own background. */
+.p-home .home-lab__card {
+  position: relative;
+  z-index: 0;
+  overflow: hidden;
+  height: 100%;
+  transition:
+    border-color var(--dur-2) var(--ease),
+    transform var(--dur-2) var(--ease-out);
+}
+
+.p-home .home-lab__card:hover,
+.p-home .home-lab__card:focus-within {
+  border-color: var(--bio-dim);
+  transform: translateY(calc(-1 * var(--s-1)));
+}
+
+/* The ghosted specimen numeral — identity watermarked into the plate.
+   --depth-2 on --depth-1: a shade above the ground, never competing. */
+.p-home .home-lab__ghost {
+  position: absolute;
+  z-index: -1;
+  top: var(--s-1);
+  right: var(--s-3);
+  font-weight: 900;
+  font-size: var(--fs-display-2);
+  line-height: var(--lh-0);
+  letter-spacing: var(--tr-display);
+  color: var(--depth-2);
+  pointer-events: none;
+  user-select: none;
+}
+
 .p-home .home-lab__more {
   margin-top: var(--s-6);
   max-width: none;
@@ -197,6 +280,30 @@
 .p-home .home-tray__link:hover {
   color: var(--bio);
   transform: translateX(var(--s-3));
+}
+
+/* The node dot — this sample is alive. Same 5px / 2.4s breath as the nav
+   status dot: one organism, one pulse. Reduced motion freezes it at full
+   opacity — a lit node, the designed rest state. */
+.p-home .home-tray__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex: none;
+}
+
+.p-home .home-tray__node {
+  flex: none;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--bio);
+  animation: tray-node-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes tray-node-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.25; }
 }
 
 .p-home .home-tray__title {
@@ -243,6 +350,22 @@
   66%      { border-radius: 52% 48% 60% 40% / 42% 55% 45% 58%; }
 }
 
+/* The daughter cell — half scale, data-strain wall, overlapping the
+   mother's lower-left edge. Same morph run BACKWARDS on a slower clock:
+   counter-phase, never in sync — the culture is dividing. Bottom-anchored
+   so it can never escape the membrane band. Reduced motion freezes both
+   cells at the token membrane radius. */
+.p-home .home-join__blob--data {
+  right: 22%;
+  top: auto;
+  bottom: 10%;
+  width: clamp(90px, 13vw, 170px);
+  height: clamp(90px, 13vw, 170px);
+  transform: none;
+  border-color: var(--data-deep);
+  animation: join-morph 22s ease-in-out infinite reverse;
+}
+
 .p-home .home-join__copy {
   color: var(--specimen-2);
   max-width: 40ch;
@@ -251,4 +374,5 @@
 @media (prefers-reduced-motion: reduce) {
   .p-home .hero-cue__arrow { animation: none; }
   .p-home .home-join__blob { animation: none; }
+  .p-home .home-tray__node { animation: none; }
 }

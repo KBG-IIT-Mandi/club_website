@@ -140,6 +140,107 @@
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
 }
 
+/* THE CARD — rises 4px to the focal plane under attention. The lift rides the
+   `translate` property so the .row reveal keeps sole ownership of `transform`;
+   the transition list replays the row stagger verbatim for opacity/transform
+   (same duration, ease and --i delay) and adds the undelayed lift plus the
+   border shift that .row's own transition was clobbering. Specificity (0,4,0)
+   beats every row rule regardless of bundle order. */
+.constellation__grid .entry.constellation__member {
+  translate: 0 0;
+  transition:
+    opacity var(--dur-2) var(--ease-out) calc(var(--i, 0) * 60ms),
+    transform var(--dur-2) var(--ease-out) calc(var(--i, 0) * 60ms),
+    translate var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease);
+}
+
+.constellation__grid .entry.constellation__member:hover,
+.constellation__grid .entry.constellation__member:focus-within {
+  translate: 0 calc(-1 * var(--s-1));
+  border-color: var(--bio-dim);
+}
+
+/* ── LIVING PORTRAITS — the membrane breathes at rest ────────────────────────
+   Each portrait idles between its own silhouette (--morph-a) and the next
+   variant's (--morph-b), one leg every 12s, phase-shifted by the card's own
+   --i so the roster never breathes in sync. Border-radius is paint-only (no
+   layout), and at this scale one slow morph per card is idle-cheap. Under
+   observation the breath holds still while the photo itself rounds toward a
+   cleaner blob (the img's own 50% mask intersecting the membrane), scales
+   1.05 and comes into full colour — dormant vs alive. Reduced motion kills
+   the animation and every transition: the photo rests at its variant's own
+   static silhouette, already the designed state. */
+
+@keyframes constellation-breathe {
+  from { border-radius: var(--morph-a); }
+  to   { border-radius: var(--morph-b); }
+}
+
 .constellation__member .constellation__photo {
+  --morph-a: var(--radius-membrane);
+  --morph-b: 45% 55% 48% 52% / 58% 44% 56% 42%;
   margin-bottom: var(--s-2);
+  animation: constellation-breathe 12s var(--ease) calc(var(--i, 0) * -1.5s) infinite alternate;
+}
+
+.constellation__member .membrane--2 {
+  --morph-a: 45% 55% 48% 52% / 58% 44% 56% 42%;
+  --morph-b: 52% 48% 60% 40% / 42% 55% 45% 58%;
+}
+
+.constellation__member .membrane--3 {
+  --morph-a: 52% 48% 60% 40% / 42% 55% 45% 58%;
+  --morph-b: 40% 60% 44% 56% / 55% 45% 58% 42%;
+}
+
+.constellation__member .membrane--4 {
+  --morph-a: 40% 60% 44% 56% / 55% 45% 58% 42%;
+  --morph-b: var(--radius-membrane);
+}
+
+.constellation__member .constellation__photo img {
+  filter: grayscale(0.7);
+  transition:
+    filter var(--dur-2) var(--ease-out),
+    transform var(--dur-3) var(--ease-out),
+    border-radius var(--dur-3) var(--ease-out);
+}
+
+.constellation__grid .entry.constellation__member:hover .constellation__photo,
+.constellation__grid .entry.constellation__member:focus-within .constellation__photo {
+  animation-play-state: paused;
+}
+
+.constellation__grid .entry.constellation__member:hover .constellation__photo img,
+.constellation__grid .entry.constellation__member:focus-within .constellation__photo img {
+  filter: grayscale(0);
+  transform: scale(1.05);
+  border-radius: 50%;
+}
+
+/* ── ROLE TAG — the roster reads as a specimen registry ──────────────────── */
+
+.constellation__role {
+  align-self: flex-start;
+}
+
+/* ── DORMANT CHANNELS — roster social links rest reduced and 4px low, rising
+   into full opacity when their card is observed. Focus-within covers keyboard
+   arrival; 0.65 over --depth-1 keeps the mono register above 4.5:1. ───────── */
+
+.constellation__member .constellation__link {
+  opacity: 0.65;
+  transform: translateY(var(--s-1));
+  transition:
+    opacity var(--dur-2) var(--ease-out),
+    transform var(--dur-2) var(--ease-out),
+    color var(--dur-1) var(--ease),
+    text-decoration-color var(--dur-1) var(--ease);
+}
+
+.constellation__grid .entry.constellation__member:hover .constellation__link,
+.constellation__grid .entry.constellation__member:focus-within .constellation__link {
+  opacity: 1;
+  transform: translateY(0);
 }

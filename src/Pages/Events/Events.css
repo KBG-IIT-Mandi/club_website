@@ -9,6 +9,13 @@
    mask — the only rounded thing on the site — and an ivory journal block
    carrying the title and description. Lab ground, journal copy: the two
    worlds meet on every row.
+
+   The log hangs off a timeline SPINE: one vertical hairline down the left
+   rail with a node where each sample attaches — bio and softly pulsing while
+   the sample is live, hairline once it is in the freezer. Spine and nodes are
+   pseudo-elements: zero DOM, invisible to the accessibility tree. Where the
+   year changes walking down past[], a mono year label sits on the spine —
+   real sequence read from the club's own date strings (Events.jsx).
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── PAGE ────────────────────────────────────────────────────────────────── */
@@ -29,12 +36,29 @@
   .p-events .events-head { padding-top: var(--s-9); }
 }
 
-/* ── SAMPLE LIST ─────────────────────────────────────────────────────────── */
+/* ── SAMPLE LIST — hung off the timeline spine ───────────────────────────── */
 
+/* --spine-gap is the left rail the spine lives in; every offset below derives
+   from it so the rail resizes as one piece. Scoped here, never in :root. */
 .p-events .sample-list {
+  --spine-gap: var(--s-6);
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--s-7);
+  padding-left: var(--spine-gap);
+}
+
+/* THE SPINE. One vertical hairline down the rail — the log's time axis.
+   A pseudo-element: no DOM, nothing for a screen reader to trip on. */
+.p-events .sample-list::before {
+  content: "";
+  position: absolute;
+  left: 3px; /* centred under the 7px nodes */
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--hairline);
 }
 
 /* index.css caps every bare `li` at var(--measure) for prose. A sample is a
@@ -45,9 +69,76 @@
 }
 
 .p-events .sample {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--s-4);
+}
+
+/* THE NODE — where this sample attaches to the spine, vertically centred on
+   its specimen tag. Frozen samples sit at hairline; examining the row (hover
+   anywhere on it) brightens the node: the log lights up where you read. */
+.p-events .sample::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--spine-gap));
+  top: var(--s-3);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%; /* a culture, not an instrument — round like the 404 dish */
+  background: var(--hairline);
+  transition: background-color var(--dur-1) var(--ease);
+}
+
+.p-events .sample:hover::before {
+  background: var(--specimen-2);
+}
+
+/* Live nodes are ALIVE: bio, breathing at a slow multiple of the motion
+   scale. Opacity only — compositor-safe — and the resting state is full
+   brightness, so the reduced-motion kill leaves a lit node, never a dim one. */
+.p-events .sample-list--live .sample::before {
+  background: var(--bio);
+  animation: p-events-node-pulse calc(var(--dur-3) * 5) var(--ease) infinite;
+}
+
+/* Hover holds the pulse at full and rings the node — examined, steady. */
+.p-events .sample-list--live .sample:hover::before {
+  animation: none;
+  box-shadow: 0 0 0 2px var(--bio-dim);
+}
+
+@keyframes p-events-node-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+/* index.css kills all animation under reduced motion; restated locally so
+   this file survives that block being edited. The node rests at full. */
+@media (prefers-reduced-motion: reduce) {
+  .p-events .sample-list--live .sample::before { animation: none; }
+}
+
+/* ── YEAR MARKERS — the freezer's index, sitting on the spine ────────────── */
+
+/* Rendered only where the leading year of the raw date changes (Events.jsx).
+   The --void ground interrupts the hairline so the year reads as a station
+   on the axis, not a label floating near it. It lives in the inter-row gap
+   (--s-7) and is aria-hidden — the full date is already on the sample tag. */
+.p-events .sample__year {
+  position: absolute;
+  left: calc(-1 * var(--spine-gap) + 3.5px);
+  top: calc(-1 * var(--s-5));
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: var(--fs-00);
+  line-height: 1;
+  letter-spacing: var(--tr-label);
+  color: var(--specimen-2);
+  background: var(--void);
+  padding: var(--s-1) var(--s-2);
+  user-select: none;
 }
 
 /* ── THE SPECIMEN — tag + membrane dish ──────────────────────────────────── */
@@ -68,6 +159,37 @@
   width: clamp(180px, 48vw, 260px);
   aspect-ratio: 1;
   background: var(--depth-2);
+  transition: border-radius var(--dur-3) var(--ease-out);
+}
+
+.p-events .sample__dish img {
+  transition: transform var(--dur-3) var(--ease-out);
+}
+
+/* POSTER LIFE — the sample stirs when examined. Hovering the row swells the
+   poster 1.04 inside its mask while the membrane relaxes into the NEXT
+   sibling silhouette (1→2→3→4→1, radii verbatim from App.css — membranes
+   declare their own radii by design). Radius is paint, not layout: the box
+   never moves, so nothing around it reflows. Under reduced motion the states
+   snap; both end states are designed states. */
+.p-events .sample:hover .sample__dish img {
+  transform: scale(1.04);
+}
+
+.p-events .sample:hover .sample__dish.membrane {
+  border-radius: 45% 55% 48% 52% / 58% 44% 56% 42%;
+}
+
+.p-events .sample:hover .sample__dish.membrane--2 {
+  border-radius: 52% 48% 60% 40% / 42% 55% 45% 58%;
+}
+
+.p-events .sample:hover .sample__dish.membrane--3 {
+  border-radius: 40% 60% 44% 56% / 55% 45% 58% 42%;
+}
+
+.p-events .sample:hover .sample__dish.membrane--4 {
+  border-radius: var(--radius-membrane);
 }
 
 /* ── THE IVORY BODY — the journal block beside the poster ────────────────── */

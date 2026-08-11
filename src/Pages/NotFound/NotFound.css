@@ -3,10 +3,13 @@
    Scoped under .p-404. Tokens from index.css, primitives from App.css
    (.shell/.label/.display/.btn-primary). No :root, no html, no body, no *.
 
-   The page is an empty petri dish: two concentric CSS rings on the void, one
-   small bio-lime culture drifting inside — the only thing alive on a page
-   about absence. Under reduced motion the culture simply rests where the
-   base transform puts it; the drift is never load-bearing.
+   The page is an empty petri dish: two concentric CSS rings on the void and
+   two small cultures drifting inside — a bio-lime one and a smaller
+   data-blue one, the club's two threads, the only things alive on a page
+   about absence. Their periods (16s and 11s) share no factor, so the pair
+   realigns only every 176s: the dish never visibly repeats — inhabited, not
+   looping. Under reduced motion each culture simply rests where its base
+   transform puts it; the drift is never load-bearing.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .p-404__inner {
@@ -67,10 +70,40 @@
   100% { transform: translate(-34px, 10px); }
 }
 
+/* The second, smaller culture — data-blue, on its own 11s path. A pseudo-
+   element on the dish (which is already aria-hidden): zero DOM. Same
+   contract as the bio culture: the base transform IS the resting position,
+   so the reduced-motion kill leaves it settled off-centre, never stacked on
+   the lime dot. */
+.p-404__dish::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: var(--data);
+  transform: translate(24px, -20px);
+  animation: petri-drift-2 11s ease-in-out infinite;
+}
+
+/* Also within ±38px — inside the inner rim at the 150px dish — and shaped
+   counter to the lime path so the two never read as tethered. */
+@keyframes petri-drift-2 {
+  0%   { transform: translate(24px, -20px); }
+  28%  { transform: translate(-28px, -10px); }
+  52%  { transform: translate(-14px, 30px); }
+  78%  { transform: translate(32px, 16px); }
+  100% { transform: translate(24px, -20px); }
+}
+
 /* index.css already kills all animation globally under reduced motion; this
    restates the intent locally so the file survives that block being edited. */
 @media (prefers-reduced-motion: reduce) {
-  .p-404__dot { animation: none; }
+  .p-404__dot,
+  .p-404__dish::after { animation: none; }
 }
 
 /* ── COPY ────────────────────────────────────────────────────────────────── */

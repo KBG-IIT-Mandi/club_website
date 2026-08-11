@@ -6,3 +6,24 @@
 .p-team {
   padding-top: var(--nav-h);
 }
+
+/* ── STATS STRIP — the live census under the lead. Tokens are computed from
+   the same JSON that builds the constellation; the closing token is the one
+   alive claim on the strip. ─────────────────────────────────────────────── */
+
+.p-team .team-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: var(--s-3);
+  row-gap: var(--s-1);
+  max-width: none;
+}
+
+/* Interpuncts are drawn, not typed — a conditional middle token (projects may
+   arrive late or not at all) never leaves a stranded separator. */
+.p-team .team-stats .label + .label::before {
+  content: "·";
+  color: var(--specimen-2);
+  margin-right: var(--s-3);
+}

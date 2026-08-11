@@ -70,6 +70,21 @@ export default function Team() {
               Every researcher, project and discipline is a node in one living
               network. Hover a star to see what it touches.
             </p>
+            {members.length > 0 && (
+              <p className="team-stats">
+                <span className="label">
+                  {members.length}{" "}
+                  {members.length === 1 ? "RESEARCHER" : "RESEARCHERS"}
+                </span>
+                {projects.length > 0 && (
+                  <span className="label">
+                    {projects.length} ACTIVE{" "}
+                    {projects.length === 1 ? "PROJECT" : "PROJECTS"}
+                  </span>
+                )}
+                <span className="label label--live">ONE ORGANISM</span>
+              </p>
+            )}
           </div>
 
           <Constellation members={members} projects={projects} />

@@ -7,13 +7,33 @@
   padding-top: var(--nav-h);
 }
 
+/* ── STATS STRIP — the archive counted at render time, never invented ─────
+   N EXPERIMENTS · N DISCIPLINES · ARCHIVE OPEN. One mono line under the
+   lead; the separators are aria-hidden glyphs and simply inherit the label
+   ink. Only the final token is alive (.label--live in the markup). */
+
+.p-projects .archive-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-2) var(--s-3);
+}
+
+/* ── FILTER CHIPS — each discipline with its live specimen count ────────── */
+
 .p-projects .archive-filter {
   margin-bottom: var(--s-6);
 }
 
 .p-projects .archive-filter__chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
   cursor: pointer;
-  transition: color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
+  transition:
+    color var(--dur-1) var(--ease),
+    border-color var(--dur-1) var(--ease),
+    background-color var(--dur-1) var(--ease);
 }
 
 .p-projects .archive-filter__chip:hover {
@@ -21,9 +41,22 @@
   border-color: var(--bio-dim);
 }
 
+/* The count is the chip's datum — one step brighter than its label. */
+.p-projects .archive-filter__count {
+  color: var(--specimen);
+}
+
+/* Active — the alive selection: bio fill, void text, the .btn-primary pact.
+   Declared after :hover at equal specificity so the fill wins under the
+   pointer too. */
 .p-projects .archive-filter__chip.is-active {
-  color: var(--bio);
+  background: var(--bio);
   border-color: var(--bio);
+  color: var(--void);
+}
+
+.p-projects .archive-filter__chip.is-active .archive-filter__count {
+  color: var(--void);
 }
 
 .p-projects .archive-list {

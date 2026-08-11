@@ -562,7 +562,15 @@ function MemberGrid({ members }) {
               )}
             </div>
 
-            {m.role && <p className="label">{m.role}</p>}
+            {m.role && (
+              <p
+                className={`tag constellation__role${
+                  /coordinator|mentor/i.test(m.role) ? " tag--live" : ""
+                }`}
+              >
+                {m.role}
+              </p>
+            )}
             {m.name && <h3>{m.name}</h3>}
             {m.bio && <p className="caption">{m.bio}</p>}
 

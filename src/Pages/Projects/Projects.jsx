@@ -11,8 +11,16 @@ import { disciplineFor } from "../../lib/discipline";
    PROJECTS — THE ARCHIVE.
    Every project is a specimen dossier (SpecimenCard). The filter row is
    DERIVED from the live data: only disciplines that actually occur become
-   chips, so an empty category can never render an empty archive.
+   chips — each carrying its live count — so an empty category can never
+   render an empty archive. The stats strip under the lead is the same data
+   summed: N EXPERIMENTS · N DISCIPLINES · ARCHIVE OPEN. Nothing is invented;
+   every numeral on this page is counted from projects.json at render time.
+
+   Numerals are zero-padded to two digits (07, not 7) — the archive's fixed
+   telemetry register, and it sidesteps prose pluralisation in mono labels.
    ═══════════════════════════════════════════════════════════════════════════ */
+
+const pad2 = (n) => String(n).padStart(2, "0");
 
 const Projects = () => {
   const [data, setData] = useState(null);
@@ -45,7 +53,11 @@ const Projects = () => {
     };
   }, [attempt]);
 
-  const pageRef = useDrawOnScroll(!!data);
+  /* Changing-signature reveal: rows unmounted by a filter re-mount undrawn,
+     so the signature carries the filter — each change re-arms the observer
+     and the returning dossiers stagger back in instead of stranding at
+     opacity 0. Falsy until the archive arrives, exactly as before. */
+  const pageRef = useDrawOnScroll(data ? `archive-${filter}` : false);
 
   const projects = useMemo(
     () => (Array.isArray(data?.projects) ? data.projects.filter(Boolean) : []),
@@ -53,15 +65,18 @@ const Projects = () => {
   );
 
   /* Chips: ALL + each discipline present in the live data, in first-seen
-     order. Indices are preserved from the ARCHIVE order — EXPERIMENT numbers
-     never renumber when a filter narrows the view. */
+     order, each with its specimen count. Indices are preserved from the
+     ARCHIVE order — EXPERIMENT numbers never renumber when a filter narrows
+     the view. */
   const disciplines = useMemo(() => {
     const seen = new Map();
     projects.forEach((p) => {
       const d = disciplineFor(p.tech);
-      if (!seen.has(d.id)) seen.set(d.id, d.label);
+      const entry = seen.get(d.id);
+      if (entry) entry.count += 1;
+      else seen.set(d.id, { label: d.label, count: 1 });
     });
-    return Array.from(seen, ([id, label]) => ({ id, label }));
+    return Array.from(seen, ([id, { label, count }]) => ({ id, label, count }));
   }, [projects]);
 
   const visible = useMemo(
@@ -96,6 +111,15 @@ const Projects = () => {
               Every project is a running experiment. Open a dossier to read the
               full record.
             </p>
+            {projects.length > 0 && (
+              <p className="label archive-stats">
+                <span>{pad2(projects.length)} EXPERIMENTS</span>
+                <span className="archive-stats__sep" aria-hidden="true">·</span>
+                <span>{pad2(disciplines.length)} DISCIPLINES</span>
+                <span className="archive-stats__sep" aria-hidden="true">·</span>
+                <span className="label--live">ARCHIVE OPEN</span>
+              </p>
+            )}
           </div>
 
           {disciplines.length > 1 && (
@@ -111,7 +135,8 @@ const Projects = () => {
                 onClick={() => setFilter("all")}
                 data-cursor="explore"
               >
-                ALL ({projects.length})
+                ALL
+                <span className="archive-filter__count">{pad2(projects.length)}</span>
               </button>
               {disciplines.map((d) => (
                 <button
@@ -123,17 +148,19 @@ const Projects = () => {
                   data-cursor="explore"
                 >
                   {d.label}
+                  <span className="archive-filter__count">{pad2(d.count)}</span>
                 </button>
               ))}
             </div>
           )}
 
           <div className="archive-list">
-            {visible.map(({ project, index }) => (
+            {visible.map(({ project, index }, order) => (
               <SpecimenCard
                 key={project.name || index}
                 project={project}
                 index={index}
+                order={order}
                 expanded={openIndex === index}
                 onToggle={() => setOpenIndex((cur) => (cur === index ? -1 : index))}
               />

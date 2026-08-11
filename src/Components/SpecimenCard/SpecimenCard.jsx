@@ -23,7 +23,17 @@ import { disciplineFor } from "../../lib/discipline";
    Disclosure pattern: <h2><button aria-expanded aria-controls>…</button></h2>
    toggling a case-study drawer. The drawer stays in the DOM (grid 0fr→1fr
    height animation) and is `inert` while closed so its links leave the tab
-   order and the accessibility tree.
+   order and the accessibility tree. When it opens, the body content lands in
+   three delayed steps — summary, stack, links — pure transition-delay.
+
+   The GHOST NUMERAL is the same EXPERIMENT index rendered enormous behind
+   the dossier — the vault's shelf mark, aria-hidden, clipped by its own
+   inset:0 wrapper (not the card, whose overflow must stay visible so focus
+   rings survive).
+
+   `index` is the ARCHIVE position (names the experiment, never renumbers);
+   `order` is the position in the currently visible list (drives the .row
+   stagger, so a filtered view still cascades 0·1·2 with no dead gaps).
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── deterministic PRNG — same name, same microscopy, every visit ────────── */
@@ -129,7 +139,7 @@ const MEMBRANES = ["membrane", "membrane membrane--2", "membrane membrane--3", "
 
 const LIVE_STATUS = /^(active|live|ongoing|running)$/i;
 
-const SpecimenCard = ({ project, index = 0, expanded = false, onToggle }) => {
+const SpecimenCard = ({ project, index = 0, order = index, expanded = false, onToggle }) => {
   const p = project || {};
   const uid = useId();
   const drawerId = `${uid}-drawer`;
@@ -174,8 +184,11 @@ const SpecimenCard = ({ project, index = 0, expanded = false, onToggle }) => {
   return (
     <article
       className={`specimen row${expanded ? " is-open" : ""}`}
-      style={{ "--i": index }}
+      style={{ "--i": order }}
     >
+      <span className="specimen__ghost" aria-hidden="true">
+        <span className="specimen__ghost-no">{String(index + 1).padStart(2, "0")}</span>
+      </span>
       <h2 className="specimen__h">
         <button
           type="button"

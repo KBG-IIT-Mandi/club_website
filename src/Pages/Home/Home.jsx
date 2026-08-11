@@ -30,6 +30,12 @@ const useTelemetry = () => {
   return activity;
 };
 
+/* The strain line — the thesis in continuous culture. NBSP around the
+   interpuncts so the seam between the two marquee copies spaces exactly
+   like the interior separators. */
+const STRAIN_LINE =
+  'LIFE IS NOW AN ENGINEERING MEDIUM · BIOLOGY, BUT BUILDABLE · ';
+
 /* ── the hero overlay — pure HTML/CSS, paints before the three chunk ─────── */
 
 const Hero = ({ home }) => {
@@ -138,6 +144,18 @@ const Home = () => {
         <SpecimenField hero={heroContent} />
       </Suspense>
 
+      {/* ── THE STRAIN — the thesis in continuous culture ──────────────── */}
+      {/* Etched restatement of the hero thesis, drifting like a strain kept
+          in log phase. Decorative repetition: hidden from readers. The two
+          identical tracks make the wrap seamless; reduced motion freezes the
+          first copy fully readable at the left edge. */}
+      <div className="home-strain world-lab band" aria-hidden="true">
+        <div className="home-strain__track">
+          <span className="home-strain__line">{STRAIN_LINE}</span>
+          <span className="home-strain__line">{STRAIN_LINE}</span>
+        </div>
+      </div>
+
       {/* ── THE JOURNAL — ivory editorial band ─────────────────────────── */}
       {/* The error panel is a LAB surface (dark ground, lime rail): rendered
           inside .world-journal its text would inherit journal ink and land at
@@ -184,19 +202,28 @@ const Home = () => {
               <h2>Current specimens</h2>
             </div>
             <div className="entry-grid">
+              {/* The reveal transform lives on the .row wrapper; the hover
+                  lift lives on the card. Same property, two owners — they
+                  must not share one element or one transition overrides
+                  the other's stagger. */}
               {teaser.map((project, i) => (
-                <article key={project.name || i} className="entry row" style={{ '--i': i }}>
-                  <p className="label">EXPERIMENT {String(i + 1).padStart(2, '0')}</p>
-                  {project.name && <h3>{project.name}</h3>}
-                  {project.summary && <p className="caption">{project.summary}</p>}
-                  {Array.isArray(project.tech) && project.tech.length > 0 && (
-                    <div className="tag-row entry-foot">
-                      {project.tech.slice(0, 3).map((t, ti) => (
-                        <span key={ti} className="tag">{t}</span>
-                      ))}
-                    </div>
-                  )}
-                </article>
+                <div key={project.name || i} className="row" style={{ '--i': i }}>
+                  <article className="entry home-lab__card">
+                    <span className="home-lab__ghost" aria-hidden="true">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                    <p className="label">EXPERIMENT {String(i + 1).padStart(2, '0')}</p>
+                    {project.name && <h3>{project.name}</h3>}
+                    {project.summary && <p className="caption">{project.summary}</p>}
+                    {Array.isArray(project.tech) && project.tech.length > 0 && (
+                      <div className="tag-row entry-foot">
+                        {project.tech.slice(0, 3).map((t, ti) => (
+                          <span key={ti} className="tag">{t}</span>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                </div>
               ))}
             </div>
             <p className="home-lab__more">
@@ -220,7 +247,10 @@ const Home = () => {
               {upcoming.map((event, i) => (
                 <li key={event.title || i} className="home-tray__item row" style={{ '--i': i }}>
                   <Link to="/events" className="home-tray__link" data-cursor="open">
-                    <span className="tag tag--live">SAMPLE {event.date || '—'}</span>
+                    <span className="home-tray__meta">
+                      <span className="home-tray__node" aria-hidden="true" />
+                      <span className="tag tag--live">SAMPLE {event.date || '—'}</span>
+                    </span>
                     <span className="home-tray__title">{event.title}</span>
                   </Link>
                 </li>
@@ -234,6 +264,9 @@ const Home = () => {
       <section className="section world-lab home-join">
         <div className="shell home-join__inner band">
           <div className="home-join__blob" aria-hidden="true" />
+          {/* The daughter cell — smaller, data-strain wall, counter-phase.
+              The culture is dividing. */}
+          <div className="home-join__blob home-join__blob--data" aria-hidden="true" />
           <h2 className="display-2">Grow with us</h2>
           <p className="home-join__copy">
             The lab takes new researchers every semester. Bring biology,

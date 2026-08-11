@@ -20,8 +20,8 @@ const NotFound = () => {
 
         <h1 className="display">Specimen not found</h1>
 
-        {/* The empty petri dish. Pure CSS: two concentric rings and one small
-            drifting culture — static under reduced motion. Decorative only. */}
+        {/* The empty petri dish. Pure CSS: two concentric rings and two small
+            drifting cultures — static under reduced motion. Decorative only. */}
         <div className="p-404__dish" aria-hidden="true">
           <span className="p-404__dot" />
         </div>
