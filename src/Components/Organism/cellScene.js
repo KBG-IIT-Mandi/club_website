@@ -524,13 +524,63 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
           d[i + 1] = g * 0.72 + b * 0.06;
           d[i + 2] = b * 1.05 + g * 0.22;
         }
+      }
+
+      /* Pre-blur the pixels OURSELVES instead of scene.backgroundBlurriness:
+         that path resamples through a 256px PMREM cube whose mips upscale
+         blocky at fullscreen — the "pixelated sky". Three passes of a
+         sliding-window box blur ≈ gaussian, wrapped across the 360° seam;
+         the result upsamples as clean bilinear gradients. Runs once, ~30ms,
+         inside the already idle-deferred load. */
+      {
+        const { data: d, width: w, height: h } = tex.image;
+        const R = 14;
+        const tmp = new Float32Array(d.length);
+        for (let pass = 0; pass < 3; pass++) {
+          /* horizontal, wrapped */
+          const win = R * 2 + 1;
+          for (let y = 0; y < h; y++) {
+            const row = y * w * 4;
+            for (let c = 0; c < 3; c++) {
+              let sum = 0;
+              for (let k = -R; k <= R; k++) {
+                sum += d[row + (((k + w) % w) * 4) + c];
+              }
+              for (let x = 0; x < w; x++) {
+                tmp[row + x * 4 + c] = sum / win;
+                const out = (x - R + w) % w;
+                const inn = (x + R + 1) % w;
+                sum += d[row + inn * 4 + c] - d[row + out * 4 + c];
+              }
+            }
+          }
+          /* vertical, clamped */
+          for (let x = 0; x < w; x++) {
+            for (let c = 0; c < 3; c++) {
+              let sum = 0;
+              for (let k = -R; k <= R; k++) {
+                const yy = Math.min(h - 1, Math.max(0, k));
+                sum += tmp[yy * w * 4 + x * 4 + c];
+              }
+              for (let y = 0; y < h; y++) {
+                d[y * w * 4 + x * 4 + c] = sum / win;
+                const out = Math.min(h - 1, Math.max(0, y - R));
+                const inn = Math.min(h - 1, y + R + 1);
+                sum += tmp[inn * w * 4 + x * 4 + c] - tmp[out * w * 4 + x * 4 + c];
+              }
+            }
+          }
+        }
         tex.needsUpdate = true;
       }
+
       tex.mapping = THREE.EquirectangularReflectionMapping;
+      tex.magFilter = THREE.LinearFilter;
+      tex.minFilter = THREE.LinearFilter;
+      tex.generateMipmaps = false;
       envTexture = tex;
       scene.background = tex;
       scene.backgroundIntensity = 0;
-      scene.backgroundBlurriness = 0.12;
       scene.backgroundRotation.x = -0.3;
       envLoaded = true;
       if (!running) {
