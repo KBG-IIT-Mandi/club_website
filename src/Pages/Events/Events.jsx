@@ -133,7 +133,7 @@ export default function Events() {
       </div>
 
       {(event.title || event.description) && (
-        <div className="sample__body world-journal">
+        <div className="sample__body">
           {event.title && <h3 className="sample__title">{event.title}</h3>}
           {event.description && (
             <p className="sample__desc">{event.description}</p>

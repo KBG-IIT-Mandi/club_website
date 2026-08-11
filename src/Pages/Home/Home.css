@@ -162,7 +162,7 @@
   flex-direction: column;
   gap: var(--s-4);
   padding-block: var(--s-6);
-  border-top: 1px solid var(--ivory-2);
+  border-top: 1px solid var(--hairline);
 }
 
 .p-home .home-journal__article:first-child {
@@ -170,15 +170,17 @@
   padding-top: 0;
 }
 
+/* plasma heads: .grad-text owns the fill; width shrinks to the text so
+   the gradient spans the words, not the column */
 .p-home .home-journal__head {
-  color: var(--ink);
+  width: fit-content;
 }
 
 .p-home .home-journal__copy {
   font-size: var(--fs-3);
   line-height: var(--lh-4);
   font-weight: 300;
-  color: var(--ink);
+  color: var(--specimen);
   max-width: 58ch;
 }
 
@@ -191,7 +193,7 @@
 .p-home .tick-list li {
   position: relative;
   padding-left: var(--s-5);
-  color: var(--ink-2);
+  color: var(--specimen-2);
 }
 
 .p-home .tick-list li::before {
@@ -201,12 +203,8 @@
   top: 0.62em;
   width: 10px;
   height: 1px;
-  background: var(--ink-2);
+  background: var(--bio-dim);
 }
-
-/* lab-world tick list variant */
-.p-home .world-lab .tick-list li { color: var(--specimen-2); }
-.p-home .world-lab .tick-list li::before { background: var(--bio-dim); }
 
 /* ── LIVE EXPERIMENTS ────────────────────────────────────────────────────── */
 

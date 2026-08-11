@@ -100,7 +100,6 @@ main {
 /* COMPUTATIONAL label — data, code, models. */
 .label--data { color: var(--data); }
 
-.world-journal .label { color: var(--ink-2); }
 
 /* Meta / date field. Renders raw strings verbatim — never reformatted. */
 .meta {
@@ -122,7 +121,6 @@ main {
   max-width: var(--measure);
 }
 
-.world-journal .lead { color: var(--ink-2); }
 
 .caption {
   font-weight: 400;
@@ -132,7 +130,6 @@ main {
   max-width: var(--measure);
 }
 
-.world-journal .caption { color: var(--ink-2); }
 
 /* The enormous register. Never from JSON — brand lines only. */
 .display {
@@ -164,7 +161,6 @@ main {
   background: linear-gradient(90deg, var(--bio) 0%, var(--bio-dim) 45%, var(--hairline) 100%);
 }
 
-.world-journal .rule { background: var(--ivory-2); }
 
 /* ── ENTRY — the flat lab panel. Square: instruments are square. ─────────── */
 
@@ -242,10 +238,6 @@ main {
   border-color: var(--bio-dim);
 }
 
-.world-journal .tag {
-  color: var(--ink-2);
-  border-color: var(--ink-2);
-}
 
 /* ── BUTTONS ─────────────────────────────────────────────────────────────── */
 
@@ -296,15 +288,7 @@ main {
 
 .btn-ghost:active { transform: translateY(1px); }
 
-.world-journal .btn-ghost {
-  color: var(--ink);
-  border-color: var(--ink-2);
-}
 
-.world-journal .btn-ghost:hover {
-  border-color: var(--ink);
-  color: var(--ink);
-}
 
 .btn-primary[disabled],
 .btn-ghost[disabled] {

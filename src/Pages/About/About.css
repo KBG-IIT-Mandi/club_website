@@ -4,11 +4,10 @@
    (.shell/.section/.section-head/.label/.rule/.display-2/.btn-ghost/
    .band/.row). This file consumes both and declares neither.
 
-   The full ivory editorial world: .world-journal sits on the page root, so
-   the ink/ivory palette, journal links and journal selection all come from
-   index.css. No new typeface anywhere — the typographic contrast is Archivo's
-   weight extremes: the 900 masthead against the 200 mission pull-quote, with
-   tiny mono margin-notes as the scientific-paper register.
+   The journal, re-cut for the lab: same editorial bones — 900 masthead
+   against the 200 mission pull-quote, mono margin-notes — but on the void,
+   with the masthead and pull-quote filled by the plasma gradient. No new
+   typeface anywhere; the paper is gone, the paper's typography stays.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── PAGE ────────────────────────────────────────────────────────────────── */
@@ -33,12 +32,12 @@
 /* ── GHOST NUMERALS — the field-journal's section index ──────────────────── */
 
 /* Every journal section carries its number as a huge display-register
-   watermark at its top-left: Archivo 900 ghosted by mixing --ivory-2 toward
-   transparent, so the article reads as a numbered field-journal. The sequence
+   watermark at its top-left: Archivo 900 a shade above the void ground,
+   so the article reads as a numbered field-journal. The sequence
    is real — render order over the sections the JSON actually ships
    (About.jsx) — and aria-hidden: it indexes document order, nothing more.
    isolation scopes the z-index:-1 layering, so the numeral paints above the
-   ivory ground but under every line of ink. Watermarks do not move: the
+   void ground but under every line of copy. Watermarks do not move: the
    ghost is static by design and reduced motion has nothing to kill. */
 .p-about .about-mission,
 .p-about .about-prose,
@@ -56,7 +55,7 @@
   font-size: var(--fs-display);
   line-height: var(--lh-0);
   letter-spacing: var(--tr-display);
-  color: color-mix(in srgb, var(--ivory-2) 70%, transparent);
+  color: color-mix(in srgb, var(--depth-2) 85%, var(--specimen-2));
   /* Section numerals hang up into their .section's own padding-block: at
      every viewport the lift stays inside that padding (--s-8, --s-10 wide vs
      a lift that peaks near 70px), so a numeral never crosses the previous
@@ -79,7 +78,7 @@
 
 /* Archivo variable spans 100–900; 200 is a real cut, not faux-light. Balanced
    rag, tight leading, a measure short enough to read as a quotation rather
-   than a paragraph. The 2px --bio rule on its left edge is the ivory page's
+   than a paragraph. The 2px --bio rule on its left edge is the page's
    ONE lime accent: the mission is the single live thing on the journal page,
    and the measure tightens a step so the quote hangs off the rule as one
    column instead of drifting away from it. */
@@ -91,7 +90,7 @@
   font-size: clamp(1.65rem, 1.1rem + 2.75vw, 3.4rem);
   line-height: 1.25;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: var(--specimen);
   max-width: 28ch;
   text-wrap: balance;
 }
@@ -110,7 +109,7 @@
 .p-about .about-prose p {
   font-size: 1.125rem;
   line-height: 1.7;
-  color: var(--ink);
+  color: var(--specimen);
   max-width: var(--measure);
 }
 
@@ -131,11 +130,11 @@
   grid-template-columns: 1fr;
   gap: var(--s-2) var(--s-6);
   padding-block: var(--s-5);
-  border-top: 1px solid var(--ivory-2);
+  border-top: 1px solid var(--hairline);
 }
 
 .p-about .feature:last-child {
-  border-bottom: 1px solid var(--ivory-2);
+  border-bottom: 1px solid var(--hairline);
 }
 
 /* The margin-note. .label already sets mono/uppercase/ink-2 in the journal. */
@@ -159,7 +158,7 @@
 }
 
 .p-about .feature__desc {
-  color: var(--ink-2);
+  color: var(--specimen-2);
   max-width: var(--measure);
 }
 
@@ -185,7 +184,7 @@
 .p-about .tick-list li {
   position: relative;
   padding-left: var(--s-5);
-  color: var(--ink);
+  color: var(--specimen);
   max-width: var(--measure);
 }
 
@@ -196,7 +195,7 @@
   top: 0.68em;
   width: 10px;
   height: 1px;
-  background: var(--ink-2);
+  background: var(--bio-dim);
 }
 
 @media (min-width: 640px) {
@@ -243,7 +242,7 @@
   font-size: var(--fs-1);
   line-height: var(--lh-3);
   letter-spacing: 0.04em;
-  color: var(--ink-2);
+  color: var(--specimen-2);
   max-width: none;
 }
 
@@ -256,11 +255,11 @@
 
 .p-about .about-socials > li {
   max-width: none;
-  border-top: 1px solid var(--ivory-2);
+  border-top: 1px solid var(--hairline);
 }
 
 .p-about .about-socials > li:last-child {
-  border-bottom: 1px solid var(--ivory-2);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .p-about .about-social {
@@ -275,26 +274,26 @@
   letter-spacing: var(--tr-label);
   text-transform: uppercase;
   text-decoration: none;
-  color: var(--ink);
+  color: var(--specimen);
 }
 
 /* The label keeps a permanent underline: the row is a link, and that is
    never a colour-only distinction. Hover only deepens it. */
 .p-about .about-social__label {
   text-decoration: underline;
-  text-decoration-color: var(--ink-2);
+  text-decoration-color: var(--bio-dim);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
   transition: text-decoration-color var(--dur-1) var(--ease);
 }
 
 .p-about .about-social:hover .about-social__label {
-  text-decoration-color: var(--ink);
+  text-decoration-color: var(--bio);
 }
 
 /* Handles are data — verbatim case, no tracking theatre. */
 .p-about .about-social__handle {
-  color: var(--ink-2);
+  color: var(--specimen-2);
   text-transform: none;
   letter-spacing: 0.04em;
 }

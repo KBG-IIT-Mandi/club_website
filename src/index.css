@@ -4,9 +4,9 @@
    Page stylesheets scope under .p-home / .p-about / .p-team / .p-events /
    .p-projects and never touch a global selector.
 
-   Two worlds:
-     .world-lab      near-black cinematic laboratory (immersive, telemetry)
-     .world-journal  warm ivory editorial (readable, long-form)
+   One world, two registers:
+     .world-lab   near-black cinematic laboratory (everything lives here)
+     .grad-text   the plasma headline — display type filled bio→data
 
    Two accents, roles FIXED and EXCLUSIVE — they encode the club's thesis:
      --bio   acid bio-lime  = biological / alive / active   (GFP fluorescence)
@@ -51,12 +51,6 @@
   /* LAB TEXT */
   --specimen:   #E8F4FF;  /* lab body copy. 16:1 on --void. */
   --specimen-2: #8CA3C3;  /* lab captions/secondary. 7.5:1. */
-
-  /* THE JOURNAL — warm ivory editorial world. */
-  --ivory:   #F2EFE6;
-  --ivory-2: #E7E2D3;
-  --ink:     #141609;     /* 15.8:1 on --ivory */
-  --ink-2:   #5C5F4C;     /* 6.1:1 on --ivory */
 
   /* RADIUS — instruments are square; only LIFE is organic. Membrane blobs
      declare their own radii in component CSS. Nothing else rounds. */
@@ -286,31 +280,20 @@ a:hover {
   color: var(--specimen);
 }
 
-.world-journal {
-  background-color: var(--ivory);
-  color: var(--ink);
+/* THE PLASMA HEADLINE — the trendy register: display type filled with the
+   living gradient, bio pouring into data. Fallback engines keep specimen. */
+.grad-text {
+  color: var(--specimen);
 }
 
-.world-journal h1,
-.world-journal h2,
-.world-journal h3,
-.world-journal h4,
-.world-journal h5,
-.world-journal h6 { color: var(--ink); }
-
-.world-journal a {
-  color: var(--ink);
-  text-decoration-color: var(--ink-2);
-}
-
-.world-journal a:hover {
-  color: var(--ink);
-  text-decoration-color: var(--ink);
-}
-
-.world-journal ::selection {
-  background: var(--ink);
-  color: var(--ivory);
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .grad-text {
+    background-image: linear-gradient(100deg, var(--bio) 0%, #2ee8d8 45%, var(--data) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
 }
 
 /* ── FOCUS — global. No exceptions. Custom cursor never suppresses this. ─── */
@@ -319,10 +302,6 @@ a:hover {
   outline: 2px solid var(--data);
   outline-offset: 3px;
   border-radius: 0;
-}
-
-.world-journal :focus-visible {
-  outline-color: var(--ink);
 }
 
 /* ── REDUCED MOTION — one block, global ──────────────────────────────────── */

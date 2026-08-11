@@ -6,7 +6,7 @@
 
    Each event is a laboratory sample: a mono specimen tag (SAMPLE = still
    live, ARCHIVED = in the freezer), the poster held in an organic membrane
-   mask — the only rounded thing on the site — and an ivory journal block
+   mask — the only rounded thing on the site — and a dark record panel
    carrying the title and description. Lab ground, journal copy: the two
    worlds meet on every row.
 
@@ -192,11 +192,12 @@
   border-radius: var(--radius-membrane);
 }
 
-/* ── THE IVORY BODY — the journal block beside the poster ────────────────── */
+/* ── THE RECORD PANEL — dark glass beside the poster ─────────────────────── */
 
-/* .world-journal (index.css) supplies the ivory ground, ink headings and
-   journal selection. min-width: 0 lets the block shrink inside the wide-row
-   flex instead of forcing horizontal scroll at 375px. */
+/* The paper is gone: the record sits on a translucent depth panel with a
+   hairline frame — the same instrument glass as the rest of the lab.
+   min-width: 0 lets the block shrink inside the wide-row flex instead of
+   forcing horizontal scroll at 375px. */
 .p-events .sample__body {
   flex: 1 1 auto;
   min-width: 0;
@@ -204,6 +205,13 @@
   flex-direction: column;
   gap: var(--s-3);
   padding: var(--s-5);
+  background: color-mix(in srgb, var(--depth-1) 88%, transparent);
+  border: 1px solid var(--hairline);
+  transition: border-color var(--dur-2) var(--ease);
+}
+
+.p-events .sample:hover .sample__body {
+  border-color: var(--bio-dim);
 }
 
 .p-events .sample__title {
@@ -213,7 +221,7 @@
 .p-events .sample__desc {
   font-size: var(--fs-2);
   line-height: var(--lh-4);
-  color: var(--ink);
+  color: var(--specimen-2);
   max-width: var(--measure);
 }
 

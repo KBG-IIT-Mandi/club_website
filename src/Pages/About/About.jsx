@@ -74,12 +74,12 @@ const About = () => {
   }
 
   return (
-    <div className="p-about world-journal" ref={pageRef}>
+    <div className="p-about world-lab" ref={pageRef}>
       <div className="shell">
         {/* ── THE MASTHEAD ─────────────────────────────────────────────── */}
         <header className="about-head band">
-          <p className="label">The journal</p>
-          {data.title && <h1 className="display-2 about-title">{data.title}</h1>}
+          <p className="label label--live">THE JOURNAL</p>
+          {data.title && <h1 className="display-2 about-title grad-text">{data.title}</h1>}
         </header>
 
         {/* ── MISSION — the pull-quote. 200 against the 900 masthead: the

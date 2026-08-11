@@ -156,10 +156,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* ── THE JOURNAL — ivory editorial band ─────────────────────────── */}
-      {/* The error panel is a LAB surface (dark ground, lime rail): rendered
-          inside .world-journal its text would inherit journal ink and land at
-          ~1-3:1 contrast. It lives on lab ground, outside the ivory band. */}
+      {/* ── THE FIELD JOURNAL — editorial band, lab-dark with plasma heads ── */}
       {homeError && (
         <section className="section world-lab">
           <ErrorState
@@ -169,7 +166,7 @@ const Home = () => {
         </section>
       )}
       {sections.length > 0 && (
-        <section className="section world-journal home-journal">
+        <section className="section world-lab home-journal">
           <div className="shell">
             {/* The nameplate every world carries — THE ARCHIVE, THE
                 CONSTELLATION, THE SAMPLE LOG — the journal gets its own. */}
@@ -177,7 +174,7 @@ const Home = () => {
             {sections.map((section, i) => (
               <article key={section.title || i} className="home-journal__article band">
                 {section.title && (
-                  <h2 className="home-journal__head display-2">{section.title}</h2>
+                  <h2 className="home-journal__head display-2 grad-text">{section.title}</h2>
                 )}
                 {section.copy && <p className="home-journal__copy">{section.copy}</p>}
                 {Array.isArray(section.bullets) && section.bullets.length > 0 && (
@@ -259,6 +256,28 @@ const Home = () => {
           </div>
         </section>
       )}
+
+      {/* ── THE RACE — the interactive specimen (static teaser; the sim
+             itself is a lazy chunk behind /race) ──────────────────────── */}
+      <section className="section world-lab home-race">
+        <div className="shell band">
+          <div className="section-head">
+            <p className="label label--live">SPECIMEN RACE · 10⁸ : 1</p>
+            <h2>Virtual sperm race</h2>
+          </div>
+          <p className="caption">
+            180 million start. One may finish — or none. A seeded stochastic
+            simulation of the first journey every human almost didn't make:
+            mucus gates, contraction waves, the reservoir wait, capacitation
+            roulette. Educational simulation — not medical advice.
+          </p>
+          <p className="home-lab__more">
+            <Link className="btn-ghost" to="/race" data-cursor="explore">
+              Run the race
+            </Link>
+          </p>
+        </div>
+      </section>
 
       {/* ── JOIN MEMBRANE ──────────────────────────────────────────────── */}
       <section className="section world-lab home-join">
