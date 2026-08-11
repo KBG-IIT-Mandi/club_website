@@ -926,6 +926,58 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
   nebula.renderOrder = -2;
   scene.add(nebula);
 
+  /* ── THE ZINC SPARK — the fertilization halo ─────────────────────────────
+     Real fertilization releases a burst of zinc that literally flashes;
+     ours is a camera-facing bloom around the ovum with shockwave rings
+     rolling outward, alive only through the fusion window. */
+  const HALO_VERT = /* glsl */ `
+    varying vec2 vUv;
+    void main() {
+      /* billboard: anchor at the origin in view space, spread the quad */
+      vec4 mv = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+      mv.xy += position.xy * 8.5;
+      vUv = position.xy;
+      gl_Position = projectionMatrix * mv;
+    }
+  `;
+  const HALO_FRAG = /* glsl */ `
+    uniform float uTime;
+    uniform float uFuse;
+    varying vec2 vUv;
+    void main() {
+      float r = length(vUv) * 2.0;
+
+      /* the core bloom — follicular gold, hot centre */
+      float core = exp(-r * r * 7.0);
+
+      /* two shockwave rings rolling outward, fading as they travel */
+      float w1 = fract(uTime * 0.4);
+      float ring1 = smoothstep(0.055, 0.0, abs(r - w1)) * (1.0 - w1);
+      float w2 = fract(uTime * 0.4 + 0.5);
+      float ring2 = smoothstep(0.055, 0.0, abs(r - w2)) * (1.0 - w2);
+
+      vec3 gold = vec3(1.0, 0.78, 0.38);
+      vec3 spark = vec3(1.0, 0.96, 0.88);
+      vec3 col = gold * core * 0.9 + spark * (ring1 + ring2) * 0.85;
+      float a = (core * 0.55 + (ring1 + ring2) * 0.5) * uFuse;
+      gl_FragColor = vec4(col, a);
+    }
+  `;
+  const haloGeo = new THREE.PlaneGeometry(1, 1);
+  const haloMat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uFuse: { value: 0 } },
+    vertexShader: HALO_VERT,
+    fragmentShader: HALO_FRAG,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+    blending: THREE.AdditiveBlending,
+  });
+  const halo = new THREE.Mesh(haloGeo, haloMat);
+  halo.renderOrder = 4;
+  halo.visible = false;
+  scene.add(halo);
+
   /* ── THE FIELD — the deep-space particle sea, morphing with the journey ────
      Thousands of ambient motes surrounding the whole descent. All motion is
      computed in the vertex shader from a static shell — zero CPU per frame.
@@ -1164,6 +1216,13 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       THREE.MathUtils.smoothstep(p, 0.3, 0.36) *
       (1 - THREE.MathUtils.smoothstep(p, 0.46, 0.52));
 
+    /* the zinc spark flares as contact completes and dies before division */
+    const fuse =
+      THREE.MathUtils.smoothstep(p, 0.455, 0.485) *
+      (1 - THREE.MathUtils.smoothstep(p, 0.555, 0.615));
+    haloMat.uniforms.uFuse.value = fuse;
+    halo.visible = fuse > 0.01;
+
     /* THE CAMERA RIG — the journey is a flight, not a push.
        The camera rides an orbit whose angle accumulates with depth:
          dive      straight through the membrane
@@ -1293,6 +1352,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
 
     nebulaMat.uniforms.uTime.value = elapsed;
     fieldMat.uniforms.uTime.value = elapsed;
+    haloMat.uniforms.uTime.value = elapsed;
 
     applyProbe();
     applyProgress();
@@ -1386,6 +1446,8 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       mutationObserver.disconnect();
       nebulaGeo.dispose();
       nebulaMat.dispose();
+      haloGeo.dispose();
+      haloMat.dispose();
       fieldGeo.dispose();
       fieldMat.dispose();
       membrane.geometry.dispose(); // may be the coarse swap, not membraneGeo
