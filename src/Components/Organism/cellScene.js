@@ -409,36 +409,43 @@ function buildStages(count) {
     stages.push(a);
   }
 
-  /* S3 PROTEIN — the double helix. The logo motif, alive.
-     Crisp strands (tight jitter), three full turns, and 24 evenly spaced
-     base-pair rungs bridging them — a real ladder, not a hint of one. */
+  /* S3 PROTEIN — the double helix, built like actual B-DNA:
+       · the two backbones sit ~120° apart (GROOVE), which is what carves
+         the real molecule's MAJOR and MINOR grooves — not the cartoon 180°
+       · ~10 base pairs per turn (30 rungs over 3 turns), the true B-form rise
+       · each rung is a DENSE straight bar: particles quantized evenly along
+         the strand-to-strand chord with near-zero jitter, so every base
+         pair reads as a solid line, not a scatter of dots */
   {
     const a = new Float32Array(count * 3);
     const turns = 3.0;
     const height = 3.9;
     const R = 0.62;
-    const RUNGS = 24;
+    const RUNGS = 30;
+    const GROOVE = 2.1; /* rad ≈ 120° between backbones */
     for (let i = 0; i < count; i++) {
       const kind = rand();
       const t = rand();
       const y = (t - 0.5) * height;
       const ang = t * turns * Math.PI * 2;
-      if (kind < 0.38) {
-        a[i * 3] = Math.cos(ang) * R + gauss(rand) * 0.018;
+      if (kind < 0.33) {
+        a[i * 3] = Math.cos(ang) * R + gauss(rand) * 0.016;
         a[i * 3 + 1] = y;
-        a[i * 3 + 2] = Math.sin(ang) * R + gauss(rand) * 0.018;
-      } else if (kind < 0.76) {
-        a[i * 3] = -Math.cos(ang) * R + gauss(rand) * 0.018;
+        a[i * 3 + 2] = Math.sin(ang) * R + gauss(rand) * 0.016;
+      } else if (kind < 0.66) {
+        a[i * 3] = Math.cos(ang + GROOVE) * R + gauss(rand) * 0.016;
         a[i * 3 + 1] = y;
-        a[i * 3 + 2] = -Math.sin(ang) * R + gauss(rand) * 0.018;
+        a[i * 3 + 2] = Math.sin(ang + GROOVE) * R + gauss(rand) * 0.016;
       } else {
-        /* rungs — evenly spaced base pairs; s runs strand-to-strand */
-        const s = rand() * 2 - 1;
+        /* base pairs: straight chords bridging the two backbones */
         const yq = ((rand() * RUNGS | 0) / (RUNGS - 1) - 0.5) * height;
         const aq = (yq / height + 0.5) * turns * Math.PI * 2;
-        a[i * 3] = Math.cos(aq) * R * s + gauss(rand) * 0.012;
-        a[i * 3 + 1] = yq + gauss(rand) * 0.012;
-        a[i * 3 + 2] = Math.sin(aq) * R * s + gauss(rand) * 0.012;
+        const s = Math.floor(rand() * 44) / 43; /* 44 even slots per rung */
+        const ax = Math.cos(aq) * R, az = Math.sin(aq) * R;
+        const bx = Math.cos(aq + GROOVE) * R, bz = Math.sin(aq + GROOVE) * R;
+        a[i * 3] = ax + (bx - ax) * s + gauss(rand) * 0.006;
+        a[i * 3 + 1] = yq + gauss(rand) * 0.006;
+        a[i * 3 + 2] = az + (bz - az) * s + gauss(rand) * 0.006;
       }
     }
     stages.push(a);
@@ -745,19 +752,20 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
          a giant double helix wrapping the small one — with base-pair rungs */
       float side = step(0.5, fract(aSeed * 3.77));
       float hy = (fract(aSeed * 17.9) - 0.5) * 24.0;
-      float hang = hy * 0.5 + uTime * 0.3 + side * 3.14159;
+      /* 2.1 rad backbone offset — the same B-DNA grooves as the small helix */
+      float hang = hy * 0.5 + uTime * 0.3 + side * 2.1;
       float hr = 6.5 + (fract(aSeed * 29.3) - 0.5) * 1.2;
       vec3 f3 = vec3(cos(hang) * hr, hy, sin(hang) * hr);
-      /* one mote in five becomes rung material: bridge the strands at
+      /* one mote in four becomes rung material: dense straight chords at
          quantized heights, so the macro ladder reads from any angle */
-      float isRung = step(0.8, fract(aSeed * 53.1));
+      float isRung = step(0.75, fract(aSeed * 53.1));
       float hyq = (floor(fract(aSeed * 17.9) * 18.0) / 17.0 - 0.5) * 24.0;
       float hangq = hyq * 0.5 + uTime * 0.3;
-      float lerpT = fract(aSeed * 7.7);
+      float lerpT = floor(fract(aSeed * 7.7) * 30.0) / 29.0;
       vec3 rungP = vec3(
-        mix(cos(hangq), -cos(hangq), lerpT) * hr,
+        mix(cos(hangq), cos(hangq + 2.1), lerpT) * hr,
         hyq,
-        mix(sin(hangq), -sin(hangq), lerpT) * hr
+        mix(sin(hangq), sin(hangq + 2.1), lerpT) * hr
       );
       f3 = mix(f3, rungP, isRung);
 
