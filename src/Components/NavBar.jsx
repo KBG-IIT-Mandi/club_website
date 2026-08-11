@@ -112,11 +112,11 @@ const NavBar = () => {
     <>
       <nav className={`nav ${scrolled ? 'is-scrolled' : ''}`}>
         <div className="shell nav__inner">
-          {/* Brand: the mark is alive at the top of the page (membrane blob,
-              breathing) and hardens into a square instrument once you scroll.
-              Life -> instrument, in one border-radius transition. */}
+          {/* Brand: the real mark — shield, helix and gear. */}
           <Link to="/" className="nav__brand" onClick={closeMenu}>
-            <span className="nav__mark" aria-hidden="true" />
+            <span className="nav__mark" aria-hidden="true">
+              <img src="/kbg.svg" alt="" width="30" height="30" />
+            </span>
             <span className="nav__brand-text">
               {data.brand && <span className="nav__brand-name">{data.brand}</span>}
               {data.tagline && (

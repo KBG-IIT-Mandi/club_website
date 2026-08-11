@@ -1,5 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import NavBar from "./Components/NavBar";
 import Footer from "./Components/Footer/Footer";
 import Grain from "./Components/Chrome/Grain";
@@ -36,6 +41,9 @@ export default function App() {
             <Route path="/team" element={<Team />} />
             <Route path="/events" element={<Events />} />
             <Route path="/projects" element={<Projects />} />
+            {/* footer.json ships a /contact link; the contact block lives on
+                About — route it there instead of the 404. */}
+            <Route path="/contact" element={<Navigate to="/about" replace />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </FocusShift>
