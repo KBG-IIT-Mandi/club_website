@@ -11,7 +11,8 @@ import * as THREE from "three";
  *                     membrane swells toward the cursor probe
  *   progress 0 → 1    the descent — the camera pushes THROUGH the membrane
  *                     and the interior particle cloud morphs through five
- *                     stages: organism → tissue → cell → protein → code.
+ *                     stages: organism → tissue → cell → gamete →
+ *                     mitochondrion → protein → code.
  *                     The protein stage is a double helix: the club's logo
  *                     motif, returned as a life-form instead of a background.
  *
@@ -242,6 +243,7 @@ const CLOUD_VERT = /* glsl */ `
   uniform float uSize;
   uniform float uDrift;
   uniform float uWave;
+  uniform float uSwim;
 
   varying float vSeed;
   varying float vTwinkle;
@@ -251,6 +253,15 @@ const CLOUD_VERT = /* glsl */ `
     vSeed = aSeed;
 
     vec3 pos = mix(aPosA, aPosB, uStageMix);
+
+    /* THE SWIM — during the gamete band a travelling wave runs down the
+       flagellum (amplitude grows tailward from the neck at x = -0.55),
+       and the head recoils slightly in counterphase: real flagellar
+       propulsion, not a wiggle. */
+    float tailness = smoothstep(-0.7, 2.4, pos.x);
+    pos.y += uSwim * sin(pos.x * 3.1 - uTime * 5.5) * tailness * 0.16;
+    pos.z += uSwim * sin(pos.x * 2.3 - uTime * 5.5 + 1.3) * tailness * 0.05;
+    pos.y -= uSwim * (1.0 - tailness) * sin(uTime * 5.5) * 0.02;
 
     /* morph energy: turbulence peaks mid-transition, so a stage change
        reads as a burst of activity, not a linear slide between layouts */
@@ -409,7 +420,99 @@ function buildStages(count) {
     stages.push(a);
   }
 
-  /* S3 PROTEIN — the double helix, built like actual B-DNA:
+  /* S3 GAMETE — the spermatozoon, anatomically proportioned: flattened
+     ellipsoid head, mitochondria-packed midpiece, and a long tapering
+     flagellum baked with a gentle S-curve (the swim wave itself is added
+     in the vertex shader during the gamete band, so the cell SWIMS). */
+  {
+    const a = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      const kind = rand();
+      let x, y, z;
+      if (kind < 0.2) {
+        /* head — flattened oval */
+        x = -1.5 + gauss(rand) * 0.3;
+        y = gauss(rand) * 0.22;
+        z = gauss(rand) * 0.13;
+      } else if (kind < 0.34) {
+        /* midpiece — the mitochondrial sheath, denser ring packing */
+        const t = rand();
+        const ang = rand() * Math.PI * 2;
+        const r = 0.085 + (rand() - 0.5) * 0.02;
+        x = -1.16 + t * 0.61;
+        y = Math.cos(ang) * r;
+        z = Math.sin(ang) * r;
+      } else if (kind < 0.92) {
+        /* flagellum — tapering, with a frozen S-wave the shader animates */
+        const t = rand();
+        x = -0.55 + t * 3.15;
+        const taper = 0.05 * (1 - t) + 0.008;
+        y = 0.18 * Math.sin((x + 0.55) * 2.2) + gauss(rand) * taper;
+        z = gauss(rand) * taper;
+      } else {
+        /* seminal plasma scatter */
+        x = (rand() - 0.5) * 4.5;
+        y = gauss(rand) * 0.8;
+        z = gauss(rand) * 0.8;
+      }
+      a[i * 3] = x - 0.4; /* recenter: head/tail mass balances the frame */
+      a[i * 3 + 1] = y;
+      a[i * 3 + 2] = z;
+    }
+    stages.push(a);
+  }
+
+  /* S4 ORGANELLE — the mitochondrion: bent outer membrane (the bean),
+     inner membrane, and ~9 wavy cristae shelves packed across the matrix —
+     the fold pattern every textbook section shows. */
+  {
+    const a = new Float32Array(count * 3);
+    const bend = (x) => 0.16 * Math.sin(x * 1.1);
+    for (let i = 0; i < count; i++) {
+      const kind = rand();
+      let x, y, z;
+      if (kind < 0.3) {
+        /* outer membrane shell */
+        let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
+        const l = Math.hypot(dx, dy, dz) || 1;
+        const shell = 0.96 + rand() * 0.07;
+        x = (dx / l) * 1.42 * shell;
+        y = (dy / l) * 0.6 * shell + bend(x);
+        z = (dz / l) * 0.6 * shell;
+      } else if (kind < 0.45) {
+        /* inner membrane, just beneath */
+        let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
+        const l = Math.hypot(dx, dy, dz) || 1;
+        x = (dx / l) * 1.22;
+        y = (dy / l) * 0.5 + bend(x);
+        z = (dz / l) * 0.5;
+      } else if (kind < 0.9) {
+        /* cristae — nine folded shelves across the long axis */
+        const shelf = (rand() * 9) | 0;
+        const sx = -1.12 + shelf * 0.28;
+        const ang = rand() * Math.PI * 2;
+        const rr = Math.sqrt(rand());
+        const ry = Math.cos(ang) * rr * 0.42;
+        const rz = Math.sin(ang) * rr * 0.42;
+        x = sx + 0.09 * Math.sin(ry * 9.0) + gauss(rand) * 0.015;
+        y = ry + bend(sx);
+        z = rz;
+      } else {
+        /* matrix scatter */
+        x = (rand() - 0.5) * 2.4;
+        y = gauss(rand) * 0.4 + bend(x);
+        z = gauss(rand) * 0.4;
+      }
+      /* bake with the long axis on Z: the camera's plateau azimuth looks
+         mostly down +X, so the bean presents its profile */
+      a[i * 3] = z;
+      a[i * 3 + 1] = y;
+      a[i * 3 + 2] = x;
+    }
+    stages.push(a);
+  }
+
+  /* S5 PROTEIN — the double helix, built like actual B-DNA:
        · the two backbones sit ~120° apart (GROOVE), which is what carves
          the real molecule's MAJOR and MINOR grooves — not the cartoon 180°
        · ~10 base pairs per turn (30 rungs over 3 turns), the true B-form rise
@@ -451,7 +554,7 @@ function buildStages(count) {
     stages.push(a);
   }
 
-  /* S4 NEURAL — the brain. AI × Biology ends the descent as a mind made of
+  /* S6 NEURAL — the brain. AI × Biology ends the descent as a mind made of
      signal: two wrinkled hemispheres split by the longitudinal fissure, a
      finely striated cerebellum at the lower rear, a tapering brainstem.
      Baked into a 3/4 view; the cloud's idle spin slowly rotates it. */
@@ -601,6 +704,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       uPal: makePalUniform(),
       uDataMix: { value: 0 },
       uWave: { value: 0 },
+      uSwim: { value: 0 },
       uOpacity: { value: 1 },
     },
     vertexShader: CLOUD_VERT,
@@ -670,7 +774,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       n = n * 0.5 + 0.5;
 
       /* tissue-green atmosphere early; deep neural blue by the finale */
-      vec3 tint = mix(mix(uBio, uData, 0.4), uData, smoothstep(0.55, 0.95, uProg));
+      vec3 tint = mix(mix(uBio, uData, 0.4), uData, smoothstep(0.75, 0.97, uProg));
       float glow = smoothstep(0.42, 0.95, n);
       vec3 col = tint * glow * 0.17 * (0.7 + 0.3 * vDir.y);
       gl_FragColor = vec4(col, uOpacity * glow * 0.5);
@@ -779,10 +883,10 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       );
 
       /* five formations, four scroll-driven morphs */
-      float w1 = smoothstep(0.14, 0.3, uProg);
-      float w2 = smoothstep(0.38, 0.52, uProg);
-      float w3 = smoothstep(0.58, 0.72, uProg);
-      float w4 = smoothstep(0.82, 0.92, uProg);
+      float w1 = smoothstep(0.12, 0.26, uProg);
+      float w2 = smoothstep(0.34, 0.48, uProg);
+      float w3 = smoothstep(0.68, 0.8, uProg);
+      float w4 = smoothstep(0.86, 0.94, uProg);
       vec3 pos = mix(f0, f1, w1);
       pos = mix(pos, f2, w2);
       pos = mix(pos, f3, w3);
@@ -922,12 +1026,20 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
   const applyProgress = () => {
     const p = progress;
 
-    /* four transitions across five stages */
-    const f = Math.min(3.999, p * 4);
-    const seg = Math.min(3, Math.floor(f));
+    /* six transitions across seven stages:
+       organism · tissue · cell · gamete · mitochondrion · helix · brain */
+    const SEGS = 6;
+    const f = Math.min(SEGS - 0.001, p * SEGS);
+    const seg = Math.min(SEGS - 1, Math.floor(f));
     uploadStagePair(seg, seg + 1);
     const local = f - seg;
     cloudMat.uniforms.uStageMix.value = THREE.MathUtils.smoothstep(local, 0.12, 0.88);
+
+    /* the swim runs only while the gamete owns the frame (stage 3 of 0-6:
+       pure at p = 0.5, faded across its neighbours) */
+    cloudMat.uniforms.uSwim.value =
+      THREE.MathUtils.smoothstep(p, 0.4, 0.47) *
+      (1 - THREE.MathUtils.smoothstep(p, 0.55, 0.62));
 
     /* THE CAMERA RIG — the journey is a flight, not a push.
        The camera rides an orbit whose angle accumulates with depth:
@@ -940,27 +1052,38 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     /* the protein stage pulls back: the ladder is 3.9 tall and deserves to
        be SEEN — the corkscrew sweeps wide around it, then closes back in */
     const helixPull =
-      THREE.MathUtils.smoothstep(p, 0.6, 0.72) *
-      (1 - THREE.MathUtils.smoothstep(p, 0.8, 0.92));
+      THREE.MathUtils.smoothstep(p, 0.72, 0.8) *
+      (1 - THREE.MathUtils.smoothstep(p, 0.88, 0.96));
+    const gametePull =
+      THREE.MathUtils.smoothstep(p, 0.4, 0.47) *
+      (1 - THREE.MathUtils.smoothstep(p, 0.55, 0.62));
+    /* the bean is 2.9 long and its outer shell reaches 1.4 on X — without
+       this the camera plateau sits almost inside the membrane */
+    const organellePull =
+      THREE.MathUtils.smoothstep(p, 0.55, 0.62) *
+      (1 - THREE.MathUtils.smoothstep(p, 0.68, 0.75));
     const radius =
       4.4 -
       3.1 * dive +
       1.2 * THREE.MathUtils.smoothstep(p, 0.3, 0.9) +
-      1.7 * helixPull;
+      1.7 * helixPull +
+      1.4 * gametePull +
+      1.9 * organellePull;
     const theta =
-      0.55 * THREE.MathUtils.smoothstep(p, 0.24, 0.44) +
-      0.55 * THREE.MathUtils.smoothstep(p, 0.44, 0.6) +
-      2.2 * THREE.MathUtils.smoothstep(p, 0.6, 0.82);
+      0.55 * THREE.MathUtils.smoothstep(p, 0.18, 0.34) +
+      0.55 * THREE.MathUtils.smoothstep(p, 0.34, 0.55) +
+      0.5 * THREE.MathUtils.smoothstep(p, 0.55, 0.7) +
+      2.2 * THREE.MathUtils.smoothstep(p, 0.72, 0.88);
     /* look-target pan flips with the camera's side so the brain always lands
        screen-right, clear of the stage text */
     const lookX =
-      -0.52 * THREE.MathUtils.smoothstep(p, 0.84, 0.96) * Math.cos(theta);
+      -0.52 * THREE.MathUtils.smoothstep(p, 0.9, 0.98) * Math.cos(theta);
     camera.position.x = Math.sin(theta) * radius + lookX;
     camera.position.z = Math.cos(theta) * radius;
     camera.position.y =
       -0.15 * Math.sin(p * Math.PI) +
-      0.6 * THREE.MathUtils.smoothstep(p, 0.44, 0.6) *
-        (1 - THREE.MathUtils.smoothstep(p, 0.72, 0.86));
+      0.6 * THREE.MathUtils.smoothstep(p, 0.36, 0.5) *
+        (1 - THREE.MathUtils.smoothstep(p, 0.62, 0.76));
     camera.lookAt(lookX, 0, 0);
 
     /* membrane: opaque cell wall in the hero, gone once we are inside */
@@ -976,15 +1099,15 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     /* cloud: nucleus in the hero; the subject afterwards. Drift never dies
        fully (a frozen finale reads as a bug) and the points GROW into the
        ending instead of thinning out of it. */
-    cloudMat.uniforms.uDataMix.value = THREE.MathUtils.smoothstep(p, 0.72, 0.95);
+    cloudMat.uniforms.uDataMix.value = THREE.MathUtils.smoothstep(p, 0.88, 0.98);
     cloudMat.uniforms.uDrift.value =
-      1 - 0.6 * THREE.MathUtils.smoothstep(p, 0.78, 0.96);
-    cloudMat.uniforms.uWave.value = THREE.MathUtils.smoothstep(p, 0.84, 0.96);
+      1 - 0.6 * THREE.MathUtils.smoothstep(p, 0.9, 0.98);
+    cloudMat.uniforms.uWave.value = THREE.MathUtils.smoothstep(p, 0.9, 0.98);
     /* the helix stage gets a showcase spin and a size boost — the logo
        motif deserves to burn brightest */
     const helix =
-      THREE.MathUtils.smoothstep(p, 0.55, 0.7) *
-      (1 - THREE.MathUtils.smoothstep(p, 0.82, 0.92));
+      THREE.MathUtils.smoothstep(p, 0.72, 0.8) *
+      (1 - THREE.MathUtils.smoothstep(p, 0.86, 0.94));
     cloudSpin = 0.03 + 0.09 * helix;
 
     cloudMat.uniforms.uSize.value =
@@ -992,7 +1115,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       (1 +
         0.6 * THREE.MathUtils.smoothstep(p, 0.1, 0.5) +
         0.35 * helix +
-        0.45 * THREE.MathUtils.smoothstep(p, 0.82, 1.0));
+        0.45 * THREE.MathUtils.smoothstep(p, 0.9, 1.0));
 
     /* probe only means something while the membrane exists */
     const probeScale = 1 - THREE.MathUtils.smoothstep(p, 0.05, 0.2);

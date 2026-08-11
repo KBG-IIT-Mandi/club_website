@@ -5,9 +5,9 @@
 
 .specimen-field {
   position: relative;
-  /* 780vh: each of the five stages gets a real plateau. Shorter fields made
-     the journey feel rushed and the morphs blink past. */
-  height: 780vh;
+  /* 1060vh: each of the SEVEN stages gets a real plateau. Shorter fields
+     made the journey feel rushed and the morphs blink past. */
+  height: 1060vh;
   background: var(--void);
 }
 

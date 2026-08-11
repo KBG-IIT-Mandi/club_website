@@ -96,7 +96,7 @@ export default function SpecimenField({ hero }) {
       <h2 className="descent-stage__title display-2">{stage.title}</h2>
       <p className="descent-stage__copy">{stage.copy}</p>
       <Link className="descent-stage__link" to={stage.to} data-cursor="explore">
-        SEE THE WORK
+        {stage.linkLabel || "SEE THE WORK"}
       </Link>
     </div>
   );
