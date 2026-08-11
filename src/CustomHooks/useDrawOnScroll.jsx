@@ -3,7 +3,12 @@ import { useLayoutEffect, useRef } from "react";
 /* ═══════════════════════════════════════════════════════════════════════════
    THE ONLY REVEAL SYSTEM.
 
-   One IntersectionObserver adds .is-drawn; the CSS transitions in App.css do
+   One IntersectionObserver stamps [data-drawn]; the CSS transitions in App.css
+   do the rest. AN ATTRIBUTE, NOT A CLASS, on purpose: React re-renders rewrite
+   className whenever the JSX class string changes (e.g. a card gaining
+   "is-open"), silently wiping any imperatively-added class — which left every
+   re-rendered .row stranded at opacity 0. React's diffing never touches
+   attributes it did not render, so [data-drawn] survives every re-render.
    the rest. No rAF, no scroll hijack, no animation library.
 
    ── WHY THIS IS A HOOK AND NOT FIVE COPIES ──────────────────────────────────
@@ -17,7 +22,7 @@ import { useLayoutEffect, useRef } from "react";
    A `.band`'s resting state is `clip-path: inset(0 100% 0 0)`, and an element's
    OWN clip-path shrinks the rect IntersectionObserver measures. A clipped band
    therefore reports intersectionRatio 0 no matter how much of it is on screen.
-   Any `threshold > 0` can never be met, `.is-drawn` is never added, and the clip
+   Any `threshold > 0` can never be met, `[data-drawn]` is never stamped, and the clip
    never lifts: the reveal's resting state prevents the observer that would undo
    it. The band is hidden by the exact property that stops it being unhidden.
 
@@ -59,7 +64,7 @@ export default function useDrawOnScroll(ready) {
     const targets = Array.from(root.querySelectorAll(".band, .row"));
     if (!targets.length) return undefined;
 
-    const draw = (el) => el.classList.add("is-drawn");
+    const draw = (el) => el.setAttribute("data-drawn", "");
 
     if (typeof IntersectionObserver === "undefined") {
       targets.forEach(draw);

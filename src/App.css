@@ -324,7 +324,7 @@ main {
 .band { transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out); }
 
 [data-draw-ready] .band { opacity: 0; transform: translateY(14px); }
-[data-draw-ready] .band.is-drawn { opacity: 1; transform: none; }
+[data-draw-ready] .band[data-drawn] { opacity: 1; transform: none; }
 
 .row {
   transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
@@ -332,13 +332,13 @@ main {
 }
 
 [data-draw-ready] .row { opacity: 0; transform: translateY(10px); }
-[data-draw-ready] .row.is-drawn { opacity: 1; transform: none; }
+[data-draw-ready] .row[data-drawn] { opacity: 1; transform: none; }
 
 @media (prefers-reduced-motion: reduce) {
   [data-draw-ready] .band,
-  [data-draw-ready] .band.is-drawn { opacity: 1; transform: none; }
+  [data-draw-ready] .band[data-drawn] { opacity: 1; transform: none; }
   [data-draw-ready] .row,
-  [data-draw-ready] .row.is-drawn { opacity: 1; transform: none; }
+  [data-draw-ready] .row[data-drawn] { opacity: 1; transform: none; }
 }
 
 /* ── LOADING — a pulse drawn in, not a spinner ───────────────────────────── */
