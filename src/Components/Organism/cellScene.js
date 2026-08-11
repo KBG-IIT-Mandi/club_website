@@ -291,6 +291,7 @@ const CLOUD_FRAG = /* glsl */ `
   uniform vec3 uData;
   uniform vec3 uPal[9];
   uniform float uDataMix;
+  uniform float uStageF;
   uniform float uOpacity;
 
   varying float vSeed;
@@ -308,6 +309,24 @@ const CLOUD_FRAG = /* glsl */ `
     /* each particle carries its own fluorophore channel; the finale still
        pulls the whole culture toward computational blue */
     vec3 col = palPick(vSeed);
+
+    /* THE COLOUR MORPH — each life-form wears its own truth, cross-fading
+       on the same clock as the shape (triangular weights peak on each
+       stage's plateau). Per-particle brightness keeps the cloud alive:
+         gamete   pale seminal white — sperm are white
+         ovum     warm follicular gold
+         embryo   soft vital rose
+         organelle MitoTracker orange-red, the stain's own colour */
+    float bright = 0.7 + 0.6 * fract(vSeed * 5.31);
+    float wSperm = max(0.0, 1.0 - abs(uStageF - 3.0));
+    float wOvum  = max(0.0, 1.0 - abs(uStageF - 4.0));
+    float wEmb   = max(0.0, 1.0 - abs(uStageF - 5.0));
+    float wMito  = max(0.0, 1.0 - abs(uStageF - 6.0));
+    col = mix(col, vec3(0.93, 0.96, 1.0) * bright, wSperm * 0.9);
+    col = mix(col, vec3(1.0, 0.72, 0.32) * bright, wOvum * 0.8);
+    col = mix(col, vec3(1.0, 0.6, 0.52) * bright, wEmb * 0.75);
+    col = mix(col, vec3(1.0, 0.42, 0.18) * bright, wMito * 0.8);
+
     col = mix(col, uData, uDataMix * 0.7);
 
     /* the wavefront brightens the lattice and flashes LIME at its crest:
@@ -803,6 +822,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       uData: { value: palette.data.clone() },
       uPal: makePalUniform(),
       uDataMix: { value: 0 },
+      uStageF: { value: 0 },
       uWave: { value: 0 },
       uSwim: { value: 0 },
       uOpacity: { value: 1 },
@@ -1134,6 +1154,9 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     uploadStagePair(seg, seg + 1);
     const local = f - seg;
     cloudMat.uniforms.uStageMix.value = THREE.MathUtils.smoothstep(local, 0.12, 0.88);
+    /* the colour morph rides the same continuous clock as the shapes */
+    cloudMat.uniforms.uStageF.value =
+      seg + THREE.MathUtils.smoothstep(local, 0.12, 0.88);
 
     /* the swim runs only while the gamete owns the frame (stage 3 of 0-6:
        pure at p = 0.5, faded across its neighbours) */
