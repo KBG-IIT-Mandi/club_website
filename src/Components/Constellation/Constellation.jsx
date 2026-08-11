@@ -547,7 +547,9 @@ function MemberGrid({ members }) {
         );
 
         return (
-          <article className="entry constellation__member row" style={{ "--i": i }} key={m.name || i}>
+          // No .row here: the Team page's GSAP cascade owns roster entrances
+          // (teamMotion.js); --i stays for the breathe phase offset.
+          <article className="entry constellation__member" style={{ "--i": i }} key={m.name || i}>
             <div className={`membrane${MEMBRANE_VARIANTS[i % 4]} constellation__photo`}>
               {m.image && !broken.has(i) && (
                 <img

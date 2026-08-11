@@ -7,6 +7,28 @@
   padding-top: var(--nav-h);
 }
 
+/* ── THE CHOREOGRAPHY GATE ───────────────────────────────────────────────────
+   Armed before first paint when GSAP motion is coming (never under reduced
+   motion). teamMotion.js takes ownership with gsap.set and drops the
+   attribute; a safety timeout drops it if the chunk never lands. Without
+   the attribute this block is inert and the page renders complete. */
+
+.p-team[data-team-motion] .team-eyebrow,
+.p-team[data-team-motion] h1,
+.p-team[data-team-motion] .team-lead,
+.p-team[data-team-motion] .team-stats .label,
+.p-team[data-team-motion] .constellation__legend,
+.p-team[data-team-motion] .constellation__stage,
+.p-team[data-team-motion] .constellation__member {
+  visibility: hidden;
+}
+
+/* count-up numerals: plain inherited weight/colour, no <b> emphasis */
+.p-team .team-stats__num {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── STATS STRIP — the live census under the lead. Tokens are computed from
    the same JSON that builds the constellation; the closing token is the one
    alive claim on the strip. ─────────────────────────────────────────────── */
