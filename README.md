@@ -43,6 +43,10 @@ npm test               # vitest — engine determinism + invariant suites
 npm run test:watch     # vitest in watch mode
 npm run validate:race  # Monte Carlo validation of the race model
                        #   (default 1000 seeded races; --n N to change)
+npm run release        # build (no sourcemaps) and push dist-only artifacts
+                       #   to the public deploy repo (club_website-deploy)
+npm run deploy         # build and ship dist/ straight to the club server
+                       #   (SSH access required; see deploy.sh)
 ```
 
 ## Structure

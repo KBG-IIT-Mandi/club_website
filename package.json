@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "validate:race": "node scripts/raceValidation.mjs"
+    "validate:race": "node scripts/raceValidation.mjs",
+    "release": "./scripts/publishRelease.sh",
+    "deploy": "./deploy.sh"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
