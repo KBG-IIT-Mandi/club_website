@@ -668,40 +668,73 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     void main() {
       vSeed = aSeed;
       vec3 p = position;
-      float r = length(p);
 
-      /* F1 — the swirl: differential rotation, inner motes orbit faster */
-      float swirl = uTime * (0.015 + 5.0 / (r * r + 4.0)) + aSeed * 0.4;
-      float cs = cos(swirl), sn = sin(swirl);
-      vec3 f1 = vec3(p.x * cs - p.z * sn, p.y, p.x * sn + p.z * cs);
+      /* F0 — plankton rise: layered motes drifting slowly upward, wrapping */
+      vec3 f0 = p;
+      f0.y = mod(p.y + uTime * 0.45 + aSeed * 20.0, 20.0) - 10.0;
+      f0.x += sin(uTime * 0.2 + p.y * 0.3 + aSeed * 6.28) * 0.8;
+      f0.z += cos(uTime * 0.18 + p.x * 0.2) * 0.8;
 
-      /* F2 — the current: motes stream sideways in layered ribbons */
+      /* F1 — the current: motes stream sideways in layered ribbons */
       float flow = uTime * 0.6;
-      vec3 f2 = vec3(
+      vec3 f1 = vec3(
         mod(p.x + flow * 2.4 + aSeed * 48.0, 48.0) - 24.0,
         p.y * 0.3 + sin(p.z * 0.5 + flow + aSeed * 6.28) * 1.6,
         p.z * 0.85
       );
 
-      /* F3 — the storm: a breathing vortex around the mind */
-      float ang = uTime * 0.45 + aSeed * 6.28318 + r * 0.3;
+      /* F2 — orbitals: four tilted electron shells around the cell */
+      float shell = floor(fract(aSeed * 7.31) * 4.0);
+      float orad = 4.2 + shell * 2.6 + (fract(aSeed * 91.7) - 0.5) * 1.4;
+      float oang = uTime * (0.5 - shell * 0.09) + aSeed * 6.28318;
+      float tilt = shell * 0.55 - 0.8;
+      vec3 f2 = vec3(
+        cos(oang) * orad,
+        sin(oang) * orad * sin(tilt),
+        sin(oang) * orad * cos(tilt) * 0.5
+      );
+
+      /* F3 — the macro helix: the whole sky becomes the club's logo motif,
+         a giant double helix wrapping the small one */
+      float side = step(0.5, fract(aSeed * 3.77));
+      float hy = (fract(aSeed * 17.9) - 0.5) * 24.0;
+      float hang = hy * 0.5 + uTime * 0.3 + side * 3.14159;
+      float hr = 6.5 + (fract(aSeed * 29.3) - 0.5) * 1.8;
+      vec3 f3 = vec3(cos(hang) * hr, hy, sin(hang) * hr);
+
+      /* F4 — the storm: a breathing vortex around the mind */
+      float ang = uTime * 0.45 + aSeed * 6.28318 + length(p) * 0.3;
       float rr = 5.0 + fract(aSeed * 13.7 + uTime * 0.05) * 15.0;
-      vec3 f3 = vec3(
+      vec3 f4 = vec3(
         cos(ang) * rr,
         (aSeed - 0.5) * 12.0 + sin(uTime * 0.7 + aSeed * 9.0),
         sin(ang) * rr
       );
 
-      float s1 = smoothstep(0.16, 0.4, uProg) * (1.0 - smoothstep(0.6, 0.82, uProg));
-      float s2 = smoothstep(0.6, 0.86, uProg);
-      vec3 pos = mix(mix(f1, f2, s1), f3, s2);
+      /* five formations, four scroll-driven morphs */
+      float w1 = smoothstep(0.14, 0.3, uProg);
+      float w2 = smoothstep(0.38, 0.52, uProg);
+      float w3 = smoothstep(0.58, 0.72, uProg);
+      float w4 = smoothstep(0.82, 0.92, uProg);
+      vec3 pos = mix(f0, f1, w1);
+      pos = mix(pos, f2, w2);
+      pos = mix(pos, f3, w3);
+      pos = mix(pos, f4, w4);
+
+      /* morph energy: every transition detonates a turbulence burst */
+      float energy = w1 * (1.0 - w1) + w2 * (1.0 - w2) + w3 * (1.0 - w3) + w4 * (1.0 - w4);
+      pos += vec3(
+        sin(uTime * 2.1 + aSeed * 91.0),
+        cos(uTime * 2.3 + aSeed * 57.0),
+        sin(uTime * 1.9 + aSeed * 23.0)
+      ) * energy * 2.4;
 
       /* universal turbulence so no formation ever freezes */
       pos.x += sin(uTime * 0.7 + aSeed * 91.0) * 0.4;
       pos.y += cos(uTime * 0.6 + aSeed * 47.0) * 0.4;
       pos.z += sin(uTime * 0.8 + aSeed * 23.0) * 0.4;
 
-      vGlow = 0.5 + 0.5 * sin(uTime * (0.7 + aSeed * 1.8) + aSeed * 40.0);
+      vGlow = 0.5 + 0.5 * sin(uTime * (0.7 + aSeed * 1.8) + aSeed * 40.0) + energy * 1.3;
 
       vec4 mv = modelViewMatrix * vec4(pos, 1.0);
       gl_PointSize = uSize * (0.3 + aSeed * 1.2) / max(1.0, -mv.z * 0.22);
@@ -825,17 +858,31 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     const local = f - seg;
     cloudMat.uniforms.uStageMix.value = THREE.MathUtils.smoothstep(local, 0.12, 0.88);
 
-    /* the dive: through the membrane by p≈0.22, then drift among the stages.
-       The lateral arc gives every stage its own viewing angle; the finale
-       sits closer so the lattice fills the frame instead of thinning out. */
+    /* THE CAMERA RIG — the journey is a flight, not a push.
+       The camera rides an orbit whose angle accumulates with depth:
+         dive      straight through the membrane
+         tissue    swing wide to the side — the world streams past
+         cell      keep swinging, rise above the orbitals, look down
+         protein   CORKSCREW: a fast 130° sweep around the spinning helix
+         finale    settle behind the storm, brain framed clear of the text */
     const dive = THREE.MathUtils.smoothstep(p, 0.02, 0.24);
-    camera.position.z = 4.4 - 3.1 * dive + 1.2 * THREE.MathUtils.smoothstep(p, 0.3, 1.0);
-    /* finale pan: camera and look-target shift together, so the brain sits
-       right-of-centre (clear of the stage text) while spinning in place */
-    const pan = -0.52 * THREE.MathUtils.smoothstep(p, 0.84, 0.96);
-    camera.position.x = 0.32 * Math.sin(p * Math.PI * 2.0) + pan;
-    camera.position.y = -0.15 * Math.sin(p * Math.PI);
-    camera.lookAt(pan, 0, 0);
+    const radius =
+      4.4 - 3.1 * dive + 1.2 * THREE.MathUtils.smoothstep(p, 0.3, 0.9);
+    const theta =
+      0.55 * THREE.MathUtils.smoothstep(p, 0.24, 0.44) +
+      0.55 * THREE.MathUtils.smoothstep(p, 0.44, 0.6) +
+      2.2 * THREE.MathUtils.smoothstep(p, 0.6, 0.82);
+    /* look-target pan flips with the camera's side so the brain always lands
+       screen-right, clear of the stage text */
+    const lookX =
+      -0.52 * THREE.MathUtils.smoothstep(p, 0.84, 0.96) * Math.cos(theta);
+    camera.position.x = Math.sin(theta) * radius + lookX;
+    camera.position.z = Math.cos(theta) * radius;
+    camera.position.y =
+      -0.15 * Math.sin(p * Math.PI) +
+      0.6 * THREE.MathUtils.smoothstep(p, 0.44, 0.6) *
+        (1 - THREE.MathUtils.smoothstep(p, 0.72, 0.86));
+    camera.lookAt(lookX, 0, 0);
 
     /* membrane: opaque cell wall in the hero, gone once we are inside */
     membraneMat.uniforms.uOpacity.value = 1 - THREE.MathUtils.smoothstep(p, 0.08, 0.26);
