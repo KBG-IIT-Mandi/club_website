@@ -505,12 +505,26 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
   let envFade = 0; // eased toward envTarget each frame
   let envTarget = 0;
   let envLoaded = false;
-  new RGBELoader().load(
+  new RGBELoader().setDataType(THREE.FloatType).load(
     "/env/night.hdr",
     (tex) => {
       if (disposed) {
         tex.dispose();
         return;
+      }
+      /* Colour-grade the sky INTO the palette: the source's sodium-amber
+         ground lights read muddy brown against lime/blue. Crushing red and
+         lifting blue turns them into cool moonlit pools — the site's own
+         world, not somebody's campsite photo. */
+      {
+        const d = tex.image.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const r = d[i], g = d[i + 1], b = d[i + 2];
+          d[i] = r * 0.38 + b * 0.1;
+          d[i + 1] = g * 0.72 + b * 0.06;
+          d[i + 2] = b * 1.05 + g * 0.22;
+        }
+        tex.needsUpdate = true;
       }
       tex.mapping = THREE.EquirectangularReflectionMapping;
       envTexture = tex;
@@ -795,9 +809,9 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     /* the sky breathes with the journey: fullest in the hero, receding once
        we are inside the cell (text needs the dark), returning for the brain */
     envTarget =
-      0.34 -
-      0.24 * THREE.MathUtils.smoothstep(p, 0.1, 0.3) +
-      0.1 * THREE.MathUtils.smoothstep(p, 0.82, 0.96);
+      0.4 -
+      0.28 * THREE.MathUtils.smoothstep(p, 0.1, 0.3) +
+      0.12 * THREE.MathUtils.smoothstep(p, 0.82, 0.96);
   };
 
   const applyProbe = () => {
