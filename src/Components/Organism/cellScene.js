@@ -201,24 +201,36 @@ const CLOUD_VERT = /* glsl */ `
   uniform float uStageMix;
   uniform float uSize;
   uniform float uDrift;
+  uniform float uWave;
 
   varying float vSeed;
   varying float vTwinkle;
+  varying float vWave;
 
   void main() {
     vSeed = aSeed;
 
     vec3 pos = mix(aPosA, aPosB, uStageMix);
 
+    /* morph energy: turbulence peaks mid-transition, so a stage change
+       reads as a burst of activity, not a linear slide between layouts */
+    float energy = uStageMix * (1.0 - uStageMix) * 4.0;
+    pos.x += sin(uTime * 1.7 + aSeed * 91.0) * 0.11 * energy;
+    pos.y += cos(uTime * 1.9 + aSeed * 57.0) * 0.11 * energy;
+    pos.z += sin(uTime * 1.5 + aSeed * 23.0) * 0.11 * energy;
+
     /* small autonomous drift — alive, not frozen */
-    pos.x += sin(uTime * 0.6 + aSeed * 43.0) * 0.02 * uDrift;
-    pos.y += cos(uTime * 0.5 + aSeed * 91.0) * 0.02 * uDrift;
-    pos.z += sin(uTime * 0.7 + aSeed * 17.0) * 0.02 * uDrift;
+    pos.x += sin(uTime * 0.6 + aSeed * 43.0) * 0.022 * uDrift;
+    pos.y += cos(uTime * 0.5 + aSeed * 91.0) * 0.022 * uDrift;
+    pos.z += sin(uTime * 0.7 + aSeed * 17.0) * 0.022 * uDrift;
+
+    /* THE SIGNAL — diagonal brightness waves sweeping the code lattice */
+    vWave = uWave * (0.5 + 0.5 * sin(uTime * 2.6 - (pos.x + pos.y * 0.8 + pos.z * 0.6) * 2.4));
 
     vTwinkle = 0.72 + 0.28 * sin(uTime * (1.2 + aSeed) + aSeed * 6.28);
 
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-    gl_PointSize = uSize * (0.6 + aSeed * 0.8) / max(0.5, -mv.z);
+    gl_PointSize = uSize * (0.6 + aSeed * 0.8) * (1.0 + vWave * 0.4) / max(0.5, -mv.z);
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -231,6 +243,7 @@ const CLOUD_FRAG = /* glsl */ `
 
   varying float vSeed;
   varying float vTwinkle;
+  varying float vWave;
 
   void main() {
     vec2 d = gl_PointCoord - vec2(0.5);
@@ -243,7 +256,12 @@ const CLOUD_FRAG = /* glsl */ `
     float lean = smoothstep(0.35, 0.65, fract(vSeed * 7.13));
     vec3 col = mix(uBio, uData, clamp(lean * 0.5 + uDataMix, 0.0, 1.0));
 
-    gl_FragColor = vec4(col, soft * vTwinkle * uOpacity);
+    /* the wavefront brightens the lattice and flashes LIME at its crest:
+       the biological signal running through the code — the thesis, lit */
+    col *= 1.0 + vWave * 1.5;
+    col = mix(col, uBio, smoothstep(0.72, 0.98, vWave));
+
+    gl_FragColor = vec4(col, soft * vTwinkle * uOpacity * (0.85 + vWave * 0.5));
   }
 `;
 
@@ -380,7 +398,8 @@ function buildStages(count) {
     stages.push(a);
   }
 
-  /* S4 CODE — the lattice: order out of life */
+  /* S4 CODE — the lattice: order out of life. Tight enough to read DENSE
+     at the finale camera distance; the signal waves carry the motion. */
   {
     const a = new Float32Array(count * 3);
     const nx = 14, ny = 10, nz = 8;
@@ -390,9 +409,9 @@ function buildStages(count) {
       const ix = cell % nx;
       const iy = ((cell / nx) | 0) % ny;
       const iz = (cell / (nx * ny)) | 0;
-      a[i * 3] = (ix / (nx - 1) - 0.5) * 3.0 + (rand() - 0.5) * 0.02;
-      a[i * 3 + 1] = (iy / (ny - 1) - 0.5) * 2.1 + (rand() - 0.5) * 0.02;
-      a[i * 3 + 2] = (iz / (nz - 1) - 0.5) * 1.6 + (rand() - 0.5) * 0.02;
+      a[i * 3] = (ix / (nx - 1) - 0.5) * 2.5 + (rand() - 0.5) * 0.02;
+      a[i * 3 + 1] = (iy / (ny - 1) - 0.5) * 1.8 + (rand() - 0.5) * 0.02;
+      a[i * 3 + 2] = (iz / (nz - 1) - 0.5) * 1.5 + (rand() - 0.5) * 0.02;
     }
     stages.push(a);
   }
@@ -486,6 +505,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       uBio: { value: palette.bio.clone() },
       uData: { value: palette.data.clone() },
       uDataMix: { value: 0 },
+      uWave: { value: 0 },
       uOpacity: { value: 1 },
     },
     vertexShader: CLOUD_VERT,
@@ -556,6 +576,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
 
   let progress = 0;
   let baseSize = quality === "high" ? 11 : 9;
+  let cloudSpin = 0.03; // rad/s — applyProgress raises it for the helix showcase
   let stagePair = [0, 1]; // which stage arrays live in aPosA / aPosB
   const probeTarget = { x: 0, y: 0, strength: 0 };
   const probeState = { x: 0, y: 0, strength: 0 };
@@ -593,9 +614,12 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     const local = f - seg;
     cloudMat.uniforms.uStageMix.value = THREE.MathUtils.smoothstep(local, 0.12, 0.88);
 
-    /* the dive: through the membrane by p≈0.22, then drift among the stages */
+    /* the dive: through the membrane by p≈0.22, then drift among the stages.
+       The lateral arc gives every stage its own viewing angle; the finale
+       sits closer so the lattice fills the frame instead of thinning out. */
     const dive = THREE.MathUtils.smoothstep(p, 0.02, 0.24);
-    camera.position.z = 4.4 - 3.1 * dive + 1.5 * THREE.MathUtils.smoothstep(p, 0.3, 1.0);
+    camera.position.z = 4.4 - 3.1 * dive + 1.1 * THREE.MathUtils.smoothstep(p, 0.3, 1.0);
+    camera.position.x = 0.32 * Math.sin(p * Math.PI * 2.0);
     camera.position.y = -0.15 * Math.sin(p * Math.PI);
     camera.lookAt(0, 0, 0);
 
@@ -609,11 +633,24 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     organelleMat.uniforms.uOpacity.value = membraneMat.uniforms.uOpacity.value;
     organelles.visible = membrane.visible;
 
-    /* cloud: nucleus in the hero; the subject afterwards */
+    /* cloud: nucleus in the hero; the subject afterwards. Drift never dies
+       fully (a frozen finale reads as a bug) and the points GROW into the
+       ending instead of thinning out of it. */
     cloudMat.uniforms.uDataMix.value = THREE.MathUtils.smoothstep(p, 0.72, 0.95);
-    cloudMat.uniforms.uDrift.value = 1 - THREE.MathUtils.smoothstep(p, 0.78, 0.96);
+    cloudMat.uniforms.uDrift.value =
+      1 - 0.6 * THREE.MathUtils.smoothstep(p, 0.78, 0.96);
+    cloudMat.uniforms.uWave.value = THREE.MathUtils.smoothstep(p, 0.84, 0.96);
     cloudMat.uniforms.uSize.value =
-      baseSize * (1 + 0.6 * THREE.MathUtils.smoothstep(p, 0.1, 0.5));
+      baseSize *
+      (1 +
+        0.6 * THREE.MathUtils.smoothstep(p, 0.1, 0.5) +
+        0.45 * THREE.MathUtils.smoothstep(p, 0.82, 1.0));
+
+    /* the helix stage gets a showcase spin — the logo motif deserves it */
+    const helix =
+      THREE.MathUtils.smoothstep(p, 0.55, 0.7) *
+      (1 - THREE.MathUtils.smoothstep(p, 0.82, 0.92));
+    cloudSpin = 0.03 + 0.09 * helix;
 
     /* probe only means something while the membrane exists */
     const probeScale = 1 - THREE.MathUtils.smoothstep(p, 0.05, 0.2);
@@ -652,7 +689,7 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     organelleMat.uniforms.uTime.value = elapsed;
 
     membrane.rotation.y = elapsed * 0.05;
-    cloud.rotation.y = elapsed * 0.03;
+    cloud.rotation.y += dt * cloudSpin;
 
     applyProbe();
     applyProgress();

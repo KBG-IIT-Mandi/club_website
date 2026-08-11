@@ -46,6 +46,9 @@ export const STAGES = [
     title: "AI × Biology",
     copy: "Neural cellular automata, swarm optimisation, medical imaging — life, recompiled as computation.",
     to: "/projects",
-    band: [0.9, 1.0],
+    band: [0.87, 1.0],
+    /* The finale never fades out — it rides the unpin with the signal waves
+       still running. An ending that dissolves to empty dots reads as broken. */
+    hold: true,
   },
 ];

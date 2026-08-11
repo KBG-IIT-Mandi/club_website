@@ -64,7 +64,8 @@ export default function SpecimenField({ hero }) {
         0.015
       );
 
-      /* each stage surfaces inside its band, then yields */
+      /* each stage surfaces inside its band, then yields — except a `hold`
+         stage (the finale), which stays lit and rides out with the unpin */
       STAGES.forEach((stage) => {
         const el = `.descent-stage[data-stage="${stage.id}"]`;
         const [a, b] = stage.band;
@@ -75,7 +76,9 @@ export default function SpecimenField({ hero }) {
           { autoAlpha: 1, y: 0, duration: fade },
           a
         );
-        tl.to(el, { autoAlpha: 0, y: -34, duration: fade }, b - fade);
+        if (!stage.hold) {
+          tl.to(el, { autoAlpha: 0, y: -34, duration: fade }, b - fade);
+        }
       });
     },
     { scope: fieldRef, dependencies: [reduced] }

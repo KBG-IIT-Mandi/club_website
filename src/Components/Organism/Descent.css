@@ -5,7 +5,9 @@
 
 .specimen-field {
   position: relative;
-  height: 600vh;
+  /* 780vh: each of the five stages gets a real plateau. Shorter fields made
+     the journey feel rushed and the morphs blink past. */
+  height: 780vh;
   background: var(--void);
 }
 
@@ -60,6 +62,27 @@
   gap: var(--s-4);
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
+  /* Own stacking context: the ::before scrim's z-index:-1 must sit behind
+     the TEXT but in front of the canvas — without isolation it would fall
+     behind the canvas inside the sticky viewport's context and vanish. */
+  isolation: isolate;
+}
+
+/* Scrim: the particle field gets dense at the finale — the text sits on a
+   soft pool of void so it survives any luminosity behind it. Rides the
+   stage's own autoAlpha, so it enters and exits with the words. */
+.descent-stage::before {
+  content: "";
+  position: absolute;
+  inset: -3rem -30% -3rem -3rem;
+  background: radial-gradient(
+    ellipse 90% 100% at 20% 60%,
+    color-mix(in srgb, var(--void) 86%, transparent) 0%,
+    color-mix(in srgb, var(--void) 55%, transparent) 55%,
+    transparent 78%
+  );
+  z-index: -1;
   pointer-events: none;
 }
 
