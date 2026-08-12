@@ -1121,6 +1121,12 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
     const next = chooseShot(snapshot, finalists);
     if (next !== shot) shot = next;
 
+    /* Portrait phones: the frame is tall and narrow — every shot pulls back
+       and widens a touch so the subject breathes instead of cropping. */
+    const portrait = camera.aspect < 0.9;
+    const distMul = portrait ? 1.4 : 1;
+    const fovAdd = portrait ? 4 : 0;
+
     let T = { t: 0.45, ang: rig.ang, dist: overviewDist, up: 1.5, look: 0, focusMix: 1, fov: 46, ease: 1.4 };
     posAt(rig.t + 0.02, 0, 0, focusPoint);
 
@@ -1211,6 +1217,9 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
         return;
       }
     }
+
+    T.dist *= distMul;
+    T.fov += fovAdd;
 
     const k = reducedMotion ? 1 : Math.min(1, dt * T.ease);
     rig.t += (T.t - rig.t) * k;

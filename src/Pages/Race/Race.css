@@ -455,12 +455,80 @@
 
 /* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
 
+/* The honesty line surfaces in the panels only when the HUD copy hides. */
+.p-race .race-scale-note { display: none; }
+
 @media (max-width: 720px) {
-  .p-race .race-stage { height: max(380px, 62vh); }
-  .p-race .race-title { font-size: var(--fs-3); }
-  .p-race .race-clock { font-size: var(--fs-4); }
-  /* Stack the HUD: clock row on top, title plate beneath it. */
-  .p-race .race-hud--tl { top: var(--s-9); max-width: 75%; }
+  /* THE PINNED INSTRUMENT — the film holds the top of the screen (like a
+     pinned video player); the deck and telemetry scroll beneath it and
+     read in the space below. The stage ground is opaque --void, so nothing
+     ghosts through. */
+  .p-race .race-stage {
+    position: sticky;
+    top: var(--nav-h);
+    height: max(340px, 52vh);
+    z-index: 2;
+  }
+
+  .p-race .race-deck,
+  .p-race .race-panels {
+    position: relative;
+    z-index: 0;
+  }
+
+  .p-race .race-deck { border-top: 1px solid var(--hairline); }
+  .p-race .race-panels { background: var(--void); }
+
+  /* DECLUTTER THE HUD — the film keeps only a clock and one quiet plate.
+     The page title carries the name; the seed lives in the deck. */
+  .p-race .race-title { display: none; }
+  .p-race .race-seed-line { display: none; }
+  .p-race .race-hud--bl { display: none; }
+  .p-race .race-scale-note {
+    display: block;
+    color: var(--specimen-2);
+    font-size: 0.625rem;
+    margin-bottom: var(--s-4);
+  }
+
+  .p-race .race-hud--tl { top: var(--s-3); max-width: 52%; gap: 2px; }
+  .p-race .race-hud--tr { top: var(--s-3); }
+  .p-race .race-clock-caption { display: none; }
+  .p-race .race-hud--tl .label,
+  .p-race .race-disclaimer {
+    font-size: 0.5625rem;
+    letter-spacing: 0.08em;
+  }
+  .p-race .race-disclaimer { border-top: 0; padding-top: 0; max-width: 24ch; }
+  .p-race .race-clock { font-size: var(--fs-3); }
+  .p-race .race-hud--tr .label { font-size: 0.5625rem; }
+  .p-race .race-arcade-badge { font-size: 0.5625rem; padding: 2px var(--s-1); }
+
+  /* The outcome arrives as a bottom sheet, never over the HUD. */
+  .p-race .race-outcome {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: none;
+    width: 100%;
+    max-height: 46%;
+    overflow-y: auto;
+    border-left: 0;
+    border-top: 2px solid var(--bio);
+    padding: var(--s-4);
+  }
+  .p-race .race-outcome__head { font-size: var(--fs-3); }
+
   .p-race .race-funnel__row { grid-template-columns: 7.5rem 1fr 4rem; }
   .p-race .race-science__sheet { margin: 0; border: 0; }
+}
+
+/* Short viewports (landscape phones): a pinned film would swallow the whole
+   screen and strand the content beneath it — unpin (relative, NOT static:
+   the HUD positions against the stage) and go full-height. */
+@media (max-height: 520px) {
+  .p-race .race-stage {
+    position: relative;
+    height: calc(100vh - var(--nav-h));
+  }
 }

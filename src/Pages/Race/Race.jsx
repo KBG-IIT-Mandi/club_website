@@ -266,7 +266,8 @@ export default function Race() {
             {formatBioClock(s?.tBio ?? 0)}
           </p>
           <p className="label">
-            BIOLOGICAL TIME {reduced ? '· MANUAL' : `· ${SPEED_STEPS[speedIdx]}× ${running ? '· RUNNING' : '· HELD'}`}
+            <span className="race-clock-caption">BIOLOGICAL TIME </span>
+            {reduced ? '· MANUAL' : `· ${SPEED_STEPS[speedIdx]}× ${running ? '· RUNNING' : '· HELD'}`}
           </p>
           <p className="label race-seed-line">
             SEED <span className="race-seed">{String(seed >>> 0).padStart(10, '0')}</span>
@@ -301,6 +302,11 @@ export default function Race() {
       {/* ── TELEMETRY ─────────────────────────────────────────────────── */}
       <section className="section race-panels">
         <div className="shell">
+          {/* On phones the in-canvas scale note hides to declutter the film;
+              the honesty line lives here instead. */}
+          <p className="label race-scale-note" aria-hidden="true">
+            DISPLAY NOT TO SCALE — RADII LOG-SCALED · TRUE LENGTHS IN MM
+          </p>
           <CountsStrip snapshot={s} />
           <div className="race-grid">
             <FunnelPanel snapshot={s} />
