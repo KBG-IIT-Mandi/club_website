@@ -248,6 +248,7 @@ const CLOUD_VERT = /* glsl */ `
   varying float vSeed;
   varying float vTwinkle;
   varying float vWave;
+  varying vec3 vShapePos;
 
   void main() {
     vSeed = aSeed;
@@ -275,6 +276,11 @@ const CLOUD_VERT = /* glsl */ `
     pos.y += cos(uTime * 0.5 + aSeed * 91.0) * 0.022 * uDrift;
     pos.z += sin(uTime * 0.7 + aSeed * 17.0) * 0.022 * uDrift;
 
+    /* Preserve the morphed model-space position for stage-specific staining
+       in the fragment shader. In fusion this separates the pale sperm from
+       the warm ovum even though both occupy one particle cloud. */
+    vShapePos = pos;
+
     /* THE SIGNAL — diagonal brightness waves sweeping the code lattice */
     vWave = uWave * (0.5 + 0.5 * sin(uTime * 2.6 - (pos.x + pos.y * 0.8 + pos.z * 0.6) * 2.4));
 
@@ -297,6 +303,7 @@ const CLOUD_FRAG = /* glsl */ `
   varying float vSeed;
   varying float vTwinkle;
   varying float vWave;
+  varying vec3 vShapePos;
 
   ${PAL_PICK_GLSL}
 
@@ -326,6 +333,12 @@ const CLOUD_FRAG = /* glsl */ `
     col = mix(col, vec3(1.0, 0.72, 0.32) * bright, wOvum * 0.8);
     col = mix(col, vec3(1.0, 0.6, 0.52) * bright, wEmb * 0.75);
     col = mix(col, vec3(1.0, 0.42, 0.18) * bright, wMito * 0.8);
+
+    /* The fertilizing sperm occupies the west side of S4 (x < -1.15).
+       Restore its cool-white stain after the ovum's gold pass so the two
+       biological actors remain legible as separate forms during contact. */
+    float fusedSperm = wOvum * (1.0 - smoothstep(-1.18, -0.98, vShapePos.x));
+    col = mix(col, vec3(0.9, 0.96, 1.0) * bright, fusedSperm * 0.96);
 
     col = mix(col, uData, uDataMix * 0.7);
 
@@ -490,12 +503,16 @@ function buildStages(count) {
     for (let i = 0; i < count; i++) {
       const kind = rand();
       let x, y, z;
-      if (kind < 0.42) {
-        /* ooplasm — the great cell, dense */
-        x = gauss(rand) * 0.78;
-        y = gauss(rand) * 0.78;
-        z = gauss(rand) * 0.78;
-      } else if (kind < 0.58) {
+      if (kind < 0.38) {
+        /* Ooplasm — a true filled sphere. The former gaussian cloud leaked
+           through its own zona and made the egg read fuzzy at phone scale. */
+        let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
+        const l = Math.hypot(dx, dy, dz) || 1;
+        const rr = Math.cbrt(rand()) * 1.16;
+        x = (dx / l) * rr;
+        y = (dy / l) * rr;
+        z = (dz / l) * rr;
+      } else if (kind < 0.56) {
         /* zona pellucida — the glycoprotein shell */
         let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
         const l = Math.hypot(dx, dy, dz) || 1;
@@ -503,7 +520,7 @@ function buildStages(count) {
         x = (dx / l) * shell;
         y = (dy / l) * shell;
         z = (dz / l) * shell;
-      } else if (kind < 0.76) {
+      } else if (kind < 0.72) {
         /* corona radiata — follicle cells clinging outside in clumps */
         let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
         const l = Math.hypot(dx, dy, dz) || 1;
@@ -512,14 +529,15 @@ function buildStages(count) {
         y = (dy / l) * rr + gauss(rand) * 0.1;
         z = (dz / l) * rr + gauss(rand) * 0.1;
       } else if (kind < 0.82) {
-        /* the winner's head, fused through the zona at the west pole */
-        x = -1.28 + gauss(rand) * 0.14;
-        y = 0.22 + gauss(rand) * 0.1;
+        /* The winner's head, half through the zona at the west pole. A
+           larger, flattened ellipsoid stays readable after the phone pull. */
+        x = -1.48 + gauss(rand) * 0.18;
+        y = 0.22 + gauss(rand) * 0.12;
         z = gauss(rand) * 0.08;
       } else {
         /* its tail, still outside, going slack */
         const t = rand();
-        x = -1.4 - t * 2.3;
+        x = -1.58 - t * 2.5;
         const taper = 0.045 * (1 - t) + 0.008;
         y = 0.22 + 0.3 * Math.sin(t * 5.2) * t + gauss(rand) * taper;
         z = gauss(rand) * taper;
@@ -804,7 +822,10 @@ function readPalette() {
 
 /* ── the scene ───────────────────────────────────────────────────────────── */
 
-const COUNTS = { high: 4200, low: 2000 };
+/* The fusion stage now resolves a real ooplasm, zona, corona and attached
+   sperm. The modest high-tier increase keeps each structure continuous after
+   the phone camera pulls back; the FPS ladder can still shed to low. */
+const COUNTS = { high: 5600, low: 2400 };
 
 export function createCellScene(canvas, { quality = "high" } = {}) {
   const renderer = new THREE.WebGLRenderer({
@@ -1010,10 +1031,16 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       float w2 = fract(uTime * 0.4 + 0.5);
       float ring2 = smoothstep(0.055, 0.0, abs(r - w2)) * (1.0 - w2);
 
+      /* A fine cortical ring stays locked to the zona while the broad zinc
+         waves travel. The micro-pulse adds structure without another mesh. */
+      float cortex = exp(-pow((r - 0.47) / 0.026, 2.0));
+      cortex *= 0.78 + 0.22 * sin(r * 42.0 - uTime * 2.8);
+
       vec3 gold = vec3(1.0, 0.78, 0.38);
       vec3 spark = vec3(1.0, 0.96, 0.88);
-      vec3 col = gold * core * 0.9 + spark * (ring1 + ring2) * 0.85;
-      float a = (core * 0.55 + (ring1 + ring2) * 0.5) * uFuse;
+      vec3 col = gold * (core * 0.9 + cortex * 0.36)
+               + spark * (ring1 + ring2) * 0.85;
+      float a = (core * 0.5 + cortex * 0.2 + (ring1 + ring2) * 0.46) * uFuse;
       gl_FragColor = vec4(col, a);
     }
   `;
@@ -1220,6 +1247,10 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
   /* ── state ─────────────────────────────────────────────────────────────── */
 
   let progress = 0;
+  /* Set from the actual canvas box in resize(), not user-agent sniffing.
+     This keeps the alternate composition strictly on portrait phone layouts
+     and lets rotation/responsive previews switch rigs without remounting. */
+  let phonePortrait = false;
   let baseSize = quality === "high" ? 11 : 9;
   let cloudSpin = 0.03; // rad/s — applyProgress raises it for the helix showcase
   let stagePair = [0, 1]; // which stage arrays live in aPosA / aPosB
@@ -1306,6 +1337,37 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     const organellePull =
       THREE.MathUtils.smoothstep(p, 0.68, 0.73) *
       (1 - THREE.MathUtils.smoothstep(p, 0.79, 0.84));
+    /* THE PORTRAIT RIG — phones are not small desktops. A portrait frame
+       has a fraction of the horizontal FOV, so every WIDE subject (the
+       swimmer, the egg, the bean, the ladder, the mind) gets extra dolly
+       proportional to how narrow the frame actually is; the whole journey
+       aims lower so subjects ride the UPPER half, above the caption; and
+       the finale pan tightens so the brain never exits the narrow frame.
+       p01 = 0 on landscape, →1 as the viewport reaches 2:1 portrait. */
+    const p01 = THREE.MathUtils.clamp(1 / camera.aspect - 1, 0, 1.4) / 1.4;
+    const finaleW = THREE.MathUtils.smoothstep(p, 0.9, 0.97);
+    const portraitDolly =
+      p01 *
+      (0.4 * THREE.MathUtils.smoothstep(p, 0.24, 0.4) +
+        1.0 * gametePull +
+        1.5 * ovumPull +
+        0.9 * embryoPull +
+        1.2 * organellePull +
+        1.8 * helixPull +
+        1.6 * finaleW);
+
+    /* THE PHONE HERO — the desktop camera crops the membrane in a narrow
+       portrait frustum. Pull the opening shot back and give it a wider lens,
+       then hand control back to the descent rig as we pass through the cell. */
+    const heroHold = 1 - THREE.MathUtils.smoothstep(p, 0.08, 0.28);
+    const phoneHeroDolly = phonePortrait ? 1.4 * heroHold : 0;
+    /* The two widest phone subjects need their own measured framing. At the
+       gamete plateau the sperm spans ≈4.1 world units; at fusion the corona
+       and trailing sperm together span ≈6.1. These pulls keep both endpoints
+       inside the narrow horizontal FOV with a small safety margin. */
+    const phoneGameteDolly = phonePortrait ? 4.8 * gametePull : 0;
+    const phoneFusionDolly = phonePortrait ? 5.5 * ovumPull : 0;
+
     const radius =
       4.4 -
       3.1 * dive +
@@ -1314,7 +1376,11 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       1.4 * gametePull +
       3.4 * ovumPull +
       2.6 * embryoPull +
-      1.9 * organellePull;
+      1.9 * organellePull +
+      portraitDolly +
+      phoneHeroDolly +
+      phoneGameteDolly +
+      phoneFusionDolly;
     const theta =
       0.55 * THREE.MathUtils.smoothstep(p, 0.16, 0.3) +
       0.55 * THREE.MathUtils.smoothstep(p, 0.3, 0.46) +
@@ -1322,16 +1388,32 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       0.4 * THREE.MathUtils.smoothstep(p, 0.66, 0.78) +
       2.2 * THREE.MathUtils.smoothstep(p, 0.8, 0.92);
     /* look-target pan flips with the camera's side so the brain always lands
-       screen-right, clear of the stage text */
+       screen-right, clear of the stage text — tightened on portrait */
+    const phoneFusionPan = phonePortrait ? -0.34 * ovumPull : 0;
     const lookX =
-      -0.52 * THREE.MathUtils.smoothstep(p, 0.93, 0.985) * Math.cos(theta);
+      -0.52 * (1 - 0.6 * p01) *
+      THREE.MathUtils.smoothstep(p, 0.93, 0.985) * Math.cos(theta) +
+      phoneFusionPan;
+    /* portrait aims below centre once inside: subjects ride the upper half
+       while the caption owns the bottom. Zero in the hero — the cell stays
+       centred behind the thesis. */
+    const lookY = -0.55 * p01 * THREE.MathUtils.smoothstep(p, 0.06, 0.2);
     camera.position.x = Math.sin(theta) * radius + lookX;
     camera.position.z = Math.cos(theta) * radius;
     camera.position.y =
+      lookY +
       -0.15 * Math.sin(p * Math.PI) +
       0.6 * THREE.MathUtils.smoothstep(p, 0.3, 0.42) *
         (1 - THREE.MathUtils.smoothstep(p, 0.52, 0.64));
-    camera.lookAt(lookX, 0, 0);
+    camera.lookAt(lookX, lookY, 0);
+    /* A subtle clockwise roll gives the phone composition a diagonal axis.
+       It is strongest in the hero and relaxes during the dive, but never
+       affects tablet/desktop framing. rotateZ is applied after lookAt so it
+       rolls around the camera's own optical axis. */
+    if (phonePortrait) {
+      const rollEase = 1 - 0.45 * THREE.MathUtils.smoothstep(p, 0.08, 0.3);
+      camera.rotateZ(THREE.MathUtils.degToRad(-11) * rollEase);
+    }
 
     /* membrane: opaque cell wall in the hero, gone once we are inside */
     membraneMat.uniforms.uOpacity.value = 1 - THREE.MathUtils.smoothstep(p, 0.08, 0.26);
@@ -1362,7 +1444,8 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       (1 +
         0.6 * THREE.MathUtils.smoothstep(p, 0.1, 0.5) +
         0.35 * helix +
-        0.45 * THREE.MathUtils.smoothstep(p, 0.93, 1.0));
+        0.45 * THREE.MathUtils.smoothstep(p, 0.93, 1.0) +
+        (phonePortrait ? 0.45 * gametePull + 1.0 * ovumPull : 0));
 
     /* probe only means something while the membrane exists */
     const probeScale = 1 - THREE.MathUtils.smoothstep(p, 0.05, 0.2);
@@ -1457,6 +1540,8 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     resize(w, h, dpr) {
       renderer.setPixelRatio(dpr);
       renderer.setSize(w, h, false);
+      phonePortrait = w <= 640 && h > w;
+      camera.fov = phonePortrait ? 48 : 38;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     },
