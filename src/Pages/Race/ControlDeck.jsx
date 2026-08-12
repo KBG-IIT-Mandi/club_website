@@ -14,7 +14,7 @@ export default function ControlDeck({
     <section className="race-deck" aria-label="Simulation controls">
       <div className="shell race-deck__inner">
         {/* transport */}
-        <div className="race-deck__group" role="group" aria-label="Transport">
+        <div className="race-deck__group race-deck__group--transport" role="group" aria-label="Transport">
           {reduced ? (
             <>
               <button type="button" className="btn-primary" onClick={actions.advanceHour} disabled={!!outcome}>
@@ -56,7 +56,7 @@ export default function ControlDeck({
 
         {/* speed */}
         {!reduced && (
-          <div className="race-deck__group" role="group" aria-label="Time scale">
+          <div className="race-deck__group race-deck__group--time" role="group" aria-label="Time scale">
             <span className="label">TIME ×</span>
             {speeds.map((sp, i) => (
               <button
@@ -73,7 +73,7 @@ export default function ControlDeck({
         )}
 
         {/* camera */}
-        <div className="race-deck__group" role="group" aria-label="Camera">
+        <div className="race-deck__group race-deck__group--camera" role="group" aria-label="Camera">
           <span className="label">CAMERA</span>
           <button
             type="button"
@@ -96,7 +96,8 @@ export default function ControlDeck({
         </div>
 
         {/* mode */}
-        <div className="race-deck__group" role="group" aria-label="Mode">
+        <div className="race-deck__group race-deck__group--mode" role="group" aria-label="Mode">
+          <span className="label">MODE</span>
           <button
             type="button"
             className={`race-chip ${mode === 'biology' ? 'is-on' : ''}`}
@@ -117,7 +118,7 @@ export default function ControlDeck({
         </div>
 
         {/* sample presets */}
-        <div className="race-deck__group" role="group" aria-label="Semen profile preset">
+        <div className="race-deck__group race-deck__group--sample" role="group" aria-label="Semen profile preset">
           <span className="label">SAMPLE</span>
           {presets.map((p) => (
             <button
@@ -164,7 +165,7 @@ export default function ControlDeck({
         </div>
 
         {/* seed entry + science */}
-        <div className="race-deck__group" role="group" aria-label="Seed">
+        <div className="race-deck__group race-deck__group--seed" role="group" aria-label="Seed">
           <label className="label" htmlFor="seed-input">SEED</label>
           <input
             id="seed-input"

@@ -521,6 +521,57 @@
 
   .p-race .race-funnel__row { grid-template-columns: 7.5rem 1fr 4rem; }
   .p-race .race-science__sheet { margin: 0; border: 0; }
+
+  /* ── THE DECK, ORGANIZED — labelled sections, aligned grids ─────────── */
+
+  .p-race .race-deck__inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--s-5);
+    padding-block: var(--s-5);
+  }
+
+  .p-race .race-deck__group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--s-2);
+    align-items: stretch;
+  }
+
+  /* every section announces itself on its own line */
+  .p-race .race-deck__group > .label {
+    grid-column: 1 / -1;
+    color: var(--data);
+  }
+
+  .p-race .race-deck__group .race-chip,
+  .p-race .race-deck__group .btn-primary,
+  .p-race .race-deck__group .btn-ghost {
+    width: 100%;
+    justify-content: center;
+    padding-inline: var(--s-2);
+  }
+
+  /* transport: the big verb first, pairs beneath */
+  .p-race .race-deck__group--transport .btn-primary { grid-column: 1 / -1; }
+
+  /* five speeds share one row */
+  .p-race .race-deck__group--time { grid-template-columns: repeat(5, 1fr); }
+  .p-race .race-deck__group--time > .label { grid-column: 1 / -1; }
+
+  /* ovulation: slider full-width, presets 2×2 */
+  .p-race .race-deck__group--ov { display: grid; grid-template-columns: 1fr; }
+  .p-race .race-slider { width: 100%; }
+  .p-race .race-deck__ovchips {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--s-2);
+  }
+  .p-race .race-deck__ovchips .race-chip { width: 100%; justify-content: center; }
+
+  /* seed: input + load side by side, the science sheet gets its own row */
+  .p-race .race-seed-input { width: 100%; }
+  .p-race .race-deck__science { grid-column: 1 / -1; }
 }
 
 /* Short viewports (landscape phones): a pinned film would swallow the whole
