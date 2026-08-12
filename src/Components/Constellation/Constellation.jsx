@@ -603,11 +603,12 @@ function MemberGrid({ members }) {
 /* ── THE CONSTELLATION ─────────────────────────────────────────────────── */
 
 export default function Constellation({ members = [], projects = [] }) {
-  /* Decided once at mount: coarse pointers, reduced motion and canvas-less
-     clients skip the graph entirely and get the visible roster only. */
+  /* Decided once at mount: reduced motion and canvas-less clients get the
+     roster only. Touch devices DO get the graph — tapping a star opens its
+     member panel, and modern phones render this canvas without breaking a
+     sweat; only the hover-highlight is inherently pointer-only. */
   const [graphCapable] = useState(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
-    if (window.matchMedia("(pointer: coarse)").matches) return false;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
     return true;
   });

@@ -56,10 +56,15 @@ const OrganismCanvas = forwardRef(function OrganismCanvas(
     let degradations = 0;
     let fellBack = false; // the poster is TERMINAL — nothing may restart the loop
 
+    /* No mobile quality tier: modern phone GPUs eat this scene — everyone
+       gets the full experience. Phones even get a HIGHER DPR cap (their 3x
+       panels make 1.75 look soft). The FPS watchdog below remains the only
+       arbiter: genuinely weak hardware degrades by MEASUREMENT, not by
+       pointer-type prejudice. */
     const coarse = window.matchMedia("(pointer: coarse)").matches;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     reducedRef.current = reduced;
-    let dprCap = coarse ? 1.3 : 1.75;
+    let dprCap = coarse ? 2.0 : 1.75;
 
     const fallback = () => host.classList.add("is-fallback");
 
@@ -118,9 +123,7 @@ const OrganismCanvas = forwardRef(function OrganismCanvas(
       if (disposed) return;
 
       try {
-        scene = mod.createCellScene(canvas, {
-          quality: coarse ? "low" : "high",
-        });
+        scene = mod.createCellScene(canvas, { quality: "high" });
       } catch {
         fallback();
         return;
@@ -170,7 +173,9 @@ const OrganismCanvas = forwardRef(function OrganismCanvas(
         }
         document.addEventListener("visibilitychange", onVisibility);
 
-        if (interactive && !coarse) {
+        /* touch included: pointermove fires during a drag, so a thumb
+           tracing the hero deforms the membrane exactly like a mouse */
+        if (interactive) {
           host.addEventListener("pointermove", onMove, { passive: true });
           host.addEventListener("pointerleave", onLeave, { passive: true });
         }
