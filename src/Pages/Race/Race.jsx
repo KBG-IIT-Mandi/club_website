@@ -276,6 +276,7 @@ export default function Race() {
 
         <p className="race-hud race-hud--bl label" aria-hidden="true">
           DISPLAY NOT TO SCALE — RADII LOG-SCALED · TRUE LENGTHS IN MM
+          <span className="race-hud__hint"> · DRAG ORBITS · ⌘/CTRL+SCROLL ZOOMS · DOUBLE-CLICK RESETS</span>
         </p>
 
         {s?.outcome && <OutcomePlate outcome={s.outcome} />}
@@ -306,6 +307,7 @@ export default function Race() {
               the honesty line lives here instead. */}
           <p className="label race-scale-note" aria-hidden="true">
             DISPLAY NOT TO SCALE — RADII LOG-SCALED · TRUE LENGTHS IN MM
+            · DRAG ORBITS · PINCH ZOOMS · DOUBLE-TAP RESETS
           </p>
           <CountsStrip snapshot={s} />
           <div className="race-grid">

@@ -27,6 +27,10 @@
   height: 100%;
 }
 
+/* One finger keeps scrolling the page; horizontal drags and two-finger
+   gestures belong to the film (orbit + pinch zoom). */
+.p-race .race-canvas { touch-action: pan-y; }
+
 .p-race .race-glfallback {
   position: absolute;
   left: 50%;
@@ -104,7 +108,7 @@
 }
 
 .p-race .race-outcome__head {
-  font-weight: 900;
+  font-weight: 680;
   font-size: var(--fs-4);
   line-height: var(--lh-1);
   text-transform: uppercase;

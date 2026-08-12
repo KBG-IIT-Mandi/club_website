@@ -192,35 +192,73 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
   let time = 0;
   let W = 300, H = 150;
 
-  /* ── USER ZOOM — trackpad pinch / ctrl+wheel, touch pinch, dbl-tap reset.
-     Composes with the director: every shot's distance divides by it. */
+  /* ── USER ZOOM + ORBIT — the film is explorable. Zoom: trackpad pinch /
+     ctrl+wheel / two-finger pinch. Orbit: mouse drag (both axes); on touch,
+     one-finger horizontal drag yaws (vertical stays page scroll) and the
+     two-finger gesture's midpoint pitches. Double-tap resets everything.
+     All of it composes with the director — you're steering the crew's
+     shoulder rig, not fighting the cuts. */
   let userZoom = 1;
   let userZoomTarget = 1;
+  let userYaw = 0;
+  let userPitch = 0;
   const ZOOM_MIN = 0.4, ZOOM_MAX = 3.2;
   const clampZoom = (z) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+  const clampPitch = (p) => Math.min(0.9, Math.max(-0.5, p));
   const onWheel = (e) => {
     /* plain wheel keeps scrolling the page; pinch-trackpads send ctrlKey */
     if (!e.ctrlKey && !e.metaKey) return;
     e.preventDefault();
     userZoomTarget = clampZoom(userZoomTarget * Math.exp(-e.deltaY * 0.0022));
   };
-  let pinch0 = 0, pinchZoom0 = 1;
+  let dragging = false, lastX = 0, lastY = 0;
+  const onPointerDown = (e) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    dragging = true;
+    lastX = e.clientX; lastY = e.clientY;
+    try { canvas.setPointerCapture?.(e.pointerId); } catch { /* synthetic pointers can't be captured */ }
+  };
+  const onPointerMove = (e) => {
+    if (!dragging) return;
+    userYaw += (e.clientX - lastX) * 0.006;
+    userPitch = clampPitch(userPitch + (lastY - e.clientY) * 0.005);
+    lastX = e.clientX; lastY = e.clientY;
+  };
+  const onPointerUp = () => { dragging = false; };
+  let pinch0 = 0, pinchZoom0 = 1, pinchMidY0 = 0, pinchPitch0 = 0, touch1X = 0;
   const touchDist = (e) => Math.hypot(
     e.touches[0].clientX - e.touches[1].clientX,
     e.touches[0].clientY - e.touches[1].clientY
   );
+  const touchMidY = (e) => (e.touches[0].clientY + e.touches[1].clientY) / 2;
   const onTouchStart = (e) => {
-    if (e.touches.length === 2) { pinch0 = touchDist(e); pinchZoom0 = userZoomTarget; }
+    if (e.touches.length === 2) {
+      pinch0 = touchDist(e);
+      pinchZoom0 = userZoomTarget;
+      pinchMidY0 = touchMidY(e);
+      pinchPitch0 = userPitch;
+    } else if (e.touches.length === 1) {
+      touch1X = e.touches[0].clientX;
+    }
   };
   const onTouchMove = (e) => {
     if (e.touches.length === 2 && pinch0 > 0) {
-      e.preventDefault(); // one finger still scrolls; two fingers zoom the film
+      e.preventDefault(); // two fingers own the film; one finger still scrolls
       userZoomTarget = clampZoom(pinchZoom0 * (touchDist(e) / pinch0));
+      userPitch = clampPitch(pinchPitch0 + (pinchMidY0 - touchMidY(e)) * 0.006);
+    } else if (e.touches.length === 1) {
+      /* touch-action: pan-y hands us the horizontal axis — yaw orbit */
+      userYaw += (e.touches[0].clientX - touch1X) * 0.007;
+      touch1X = e.touches[0].clientX;
     }
   };
   const onTouchEnd = (e) => { if (e.touches.length < 2) pinch0 = 0; };
-  const onDblClick = () => { userZoomTarget = 1; };
+  const onDblClick = () => { userZoomTarget = 1; userYaw = 0; userPitch = 0; };
   canvas.addEventListener('wheel', onWheel, { passive: false });
+  canvas.addEventListener('pointerdown', onPointerDown);
+  canvas.addEventListener('pointermove', onPointerMove);
+  canvas.addEventListener('pointerup', onPointerUp);
+  canvas.addEventListener('pointercancel', onPointerUp);
   canvas.addEventListener('touchstart', onTouchStart, { passive: true });
   canvas.addEventListener('touchmove', onTouchMove, { passive: false });
   canvas.addEventListener('touchend', onTouchEnd, { passive: true });
@@ -328,8 +366,18 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
     /* bias the swing toward the +z (viewer) side so anatomy reads front-on */
     if (_side.z < 0) _side.negate();
     const phi = 0.55 * Math.sin(precess);
-    out.addScaledVector(_side, distAbs * Math.cos(phi));
-    out.y += up + distAbs * 0.45 * Math.sin(phi);
+    /* the shot's own offset… */
+    const lat = distAbs * Math.cos(phi);
+    let ox = _side.x * lat;
+    let oz = _side.z * lat;
+    const oy = up + distAbs * 0.45 * Math.sin(phi) + distAbs * userPitch;
+    /* …swung around the subject by the user's orbit */
+    const cy = Math.cos(userYaw), sy = Math.sin(userYaw);
+    const rx = ox * cy + oz * sy;
+    const rz = -ox * sy + oz * cy;
+    out.x += rx;
+    out.y += oy;
+    out.z += rz;
     return out;
   };
 
@@ -1293,11 +1341,17 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
         const k0 = reducedMotion ? 1 : Math.min(1, dt * (shot === 'nofert' ? 0.5 : 1.4));
         rig.dist += (overviewDist - rig.dist) * k0;
         rig.fov += (45 - rig.fov) * k0;
-        _pp.set(
-          ANATOMY_CENTER.x + drift * 1.2,
-          ANATOMY_CENTER.y + 1.6 / userZoom,
-          ANATOMY_CENTER.z + rig.dist / userZoom
-        );
+        /* full free orbit around the whole anatomy */
+        {
+          const az = drift * 0.12 + userYaw;
+          const el = Math.min(1.1, Math.max(-0.5, 0.08 + userPitch));
+          const d = rig.dist / userZoom;
+          _pp.set(
+            ANATOMY_CENTER.x + Math.sin(az) * Math.cos(el) * d,
+            ANATOMY_CENTER.y + Math.sin(el) * d * 0.7 + 1.0,
+            ANATOMY_CENTER.z + Math.cos(az) * Math.cos(el) * d
+          );
+        }
         camera.position.lerp(_pp, k0);
         camera.lookAt(focusPoint);
         if (Math.abs(camera.fov - rig.fov) > 0.05) {
@@ -1440,6 +1494,10 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
     dispose() {
       disposed = true;
       canvas.removeEventListener('wheel', onWheel);
+      canvas.removeEventListener('pointerdown', onPointerDown);
+      canvas.removeEventListener('pointermove', onPointerMove);
+      canvas.removeEventListener('pointerup', onPointerUp);
+      canvas.removeEventListener('pointercancel', onPointerUp);
       canvas.removeEventListener('touchstart', onTouchStart);
       canvas.removeEventListener('touchmove', onTouchMove);
       canvas.removeEventListener('touchend', onTouchEnd);
