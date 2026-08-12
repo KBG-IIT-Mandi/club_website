@@ -192,6 +192,40 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
   let time = 0;
   let W = 300, H = 150;
 
+  /* ── USER ZOOM — trackpad pinch / ctrl+wheel, touch pinch, dbl-tap reset.
+     Composes with the director: every shot's distance divides by it. */
+  let userZoom = 1;
+  let userZoomTarget = 1;
+  const ZOOM_MIN = 0.4, ZOOM_MAX = 3.2;
+  const clampZoom = (z) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z));
+  const onWheel = (e) => {
+    /* plain wheel keeps scrolling the page; pinch-trackpads send ctrlKey */
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    userZoomTarget = clampZoom(userZoomTarget * Math.exp(-e.deltaY * 0.0022));
+  };
+  let pinch0 = 0, pinchZoom0 = 1;
+  const touchDist = (e) => Math.hypot(
+    e.touches[0].clientX - e.touches[1].clientX,
+    e.touches[0].clientY - e.touches[1].clientY
+  );
+  const onTouchStart = (e) => {
+    if (e.touches.length === 2) { pinch0 = touchDist(e); pinchZoom0 = userZoomTarget; }
+  };
+  const onTouchMove = (e) => {
+    if (e.touches.length === 2 && pinch0 > 0) {
+      e.preventDefault(); // one finger still scrolls; two fingers zoom the film
+      userZoomTarget = clampZoom(pinchZoom0 * (touchDist(e) / pinch0));
+    }
+  };
+  const onTouchEnd = (e) => { if (e.touches.length < 2) pinch0 = 0; };
+  const onDblClick = () => { userZoomTarget = 1; };
+  canvas.addEventListener('wheel', onWheel, { passive: false });
+  canvas.addEventListener('touchstart', onTouchStart, { passive: true });
+  canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+  canvas.addEventListener('touchend', onTouchEnd, { passive: true });
+  canvas.addEventListener('dblclick', onDblClick);
+
   const disposables = [];
   const track = (r) => { disposables.push(r); return r; };
 
@@ -723,23 +757,54 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
     }
   }
 
+  /* Each stage moves differently — the physics of the place, not one
+     generic drift: the vaginal pool churns in place; mucus channels file
+     cells forward in near-single-file; the uterus is crossed on
+     PERISTALTIC SURGES (a wave sweeps the whole tract and kicks whatever
+     it passes); the isthmus is a slow crawl against the countercurrent;
+     the ampulla is a wide, erratic search. */
+  const FEEL = STAGES.map((st, i) => {
+    if (i === STAGE_INDEX.vagina) return { drift: 0.0007, churn: 2.0, surge: 0 };
+    if (i === STAGE_INDEX.cervix) return { drift: 0.010, churn: 0.4, surge: 0.6 };
+    if (i === STAGE_INDEX.uterus) return { drift: 0.005, churn: 1.1, surge: 1 };
+    if (i === STAGE_INDEX.utj) return { drift: 0.012, churn: 0.3, surge: 0 };
+    if (i === IST) return { drift: 0.0035, churn: 0.6, surge: 0 };
+    if (i === AMP) return { drift: 0.008, churn: 1.7, surge: 0 };
+    return { drift: 0.004, churn: 1, surge: 0 };
+  });
+
   function updateSwarm(dt) {
+    /* the surge: a wave front sweeping t 0→1, with a beat of rest between */
+    const surgeT = (time * 0.09) % 1.3;
     for (let i = 0; i < POOL; i += 1) {
       const p = parts[i];
       if (!p.alive) {
         swarmPos[i * 3 + 1] = -999;
         continue;
       }
-      if (!reducedMotion) {
-        p.ph += dt * (2 + p.vj * 2);
-        p.s = Math.min(1, p.s + dt * (p.st === 0 ? 0.001 : 0.012) * p.vj);
-        p.ang += dt * 0.3 * Math.sin(p.ph * 0.7);
-        p.rr = Math.min(0.9, Math.max(0.08, p.rr + Math.sin(p.ph) * dt * 0.14));
-      }
+      const F = FEEL[p.st] ?? FEEL[0];
+      const seed = swarmSeed[i];
       let t;
       if (p.st >= STAGE_INDEX.cumulus) t = OOCYTE_T + (p.s - 0.5) * 0.004;
       else if (p.st === STAGE_INDEX.capacitation) t = tFor(IST, 0.85 + p.s * 0.1);
       else t = tFor(p.st, p.s);
+      if (!reducedMotion) {
+        p.ph += dt * (2 + p.vj * 2);
+        /* heading: smooth rotational wander scaled by the stage's churn */
+        p.ang += dt * F.churn * (0.5 * Math.sin(p.ph * 0.6 + seed * 9)
+          + 0.25 * Math.sin(time * 0.5 + seed * 31));
+        /* radial: mean-revert to a preferred lane, churn pushes off it */
+        const prefer = 0.22 + 0.58 * ((seed * 3.7) % 1);
+        p.rr += ((prefer - p.rr) * 0.6 + Math.sin(p.ph) * 0.22 * F.churn) * dt;
+        p.rr = Math.min(0.92, Math.max(0.06, p.rr));
+        /* axial: base drift plus the passing peristaltic wave */
+        let v = F.drift * p.vj;
+        if (F.surge > 0) {
+          const dw = Math.abs(t - surgeT);
+          if (dw < 0.05) v *= 1 + F.surge * 7 * (1 - dw / 0.05);
+        }
+        p.s = Math.min(1, p.s + dt * v);
+      }
       posAt(t, p.ang, p.rr, _pp);
       swarmPos[i * 3] = _pp.x;
       swarmPos[i * 3 + 1] = _pp.y;
@@ -996,20 +1061,29 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
     oocyteGroup.visible = false;
     scene.add(oocyteGroup);
   }
+  /* The egg is sized FROM the anatomy: the cumulus-oocyte complex rides
+     inside the ampulla, gently distending it — not ballooning around it. */
+  const EGG_SCALE = radiusAt(OOCYTE_T) * 1.25;
+  oocyteGroup.scale.setScalar(EGG_SCALE);
   const OOCYTE_HOME = new THREE.Vector3();
   posAt(OOCYTE_T, 0, 0, OOCYTE_HOME);
   const OVARY_LAUNCH = OVARY_POS.clone().add(new THREE.Vector3(0.1, 0.55, 0.15));
+  /* the pickup arc bows outward — the fimbriae reach, the egg falls in */
+  const PICKUP_MID = OVARY_LAUNCH.clone().lerp(fimbrialMouth, 0.5)
+    .add(new THREE.Vector3(0.45, 0.85, 0.3));
 
   const sparkMat = track(new THREE.ShaderMaterial({
     uniforms: {
       uT: { value: -1 },
       uBio: { value: palette.bio.clone() },
+      uScale: { value: 7.0 },
     },
     vertexShader: /* glsl */ `
+      uniform float uScale;
       varying vec2 vUv;
       void main() {
         vec4 mv = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
-        mv.xy += position.xy * 7.0;
+        mv.xy += position.xy * uScale;
         vUv = position.xy;
         gl_Position = projectionMatrix * mv;
       }
@@ -1038,6 +1112,7 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
   }));
   const spark = new THREE.Mesh(track(new THREE.PlaneGeometry(2, 2)), sparkMat);
   spark.renderOrder = 9;
+  sparkMat.uniforms.uScale.value = 16.0 * EGG_SCALE;
   spark.position.copy(OOCYTE_HOME);
   scene.add(spark);
   let fusionAtWall = -1;
@@ -1055,12 +1130,29 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
     const j = Math.min(1, Math.max(0, (tBio - o.ovulationAt) / span));
     const e = j * j * (3 - 2 * j); // smoothstep
     if (e < 0.4) {
-      /* free of the ovary, drifting to the fimbrial mouth */
-      _pp.copy(OVARY_LAUNCH).lerp(fimbrialMouth, e / 0.4);
-    } else {
+      /* free of the ovary: a bowed arc to the fimbrial mouth, tumbling */
+      const u = e / 0.4;
+      const iu = 1 - u;
+      _pp.set(0, 0, 0)
+        .addScaledVector(OVARY_LAUNCH, iu * iu)
+        .addScaledVector(PICKUP_MID, 2 * iu * u)
+        .addScaledVector(fimbrialMouth, u * u);
+      if (!reducedMotion) oocyteGroup.rotation.z = time * 0.6;
+    } else if (e < 1) {
       /* swept down the tube by the cilia */
       const tt = 1.0 - ((e - 0.4) / 0.6) * (1.0 - OOCYTE_T);
       posAt(tt, 0, 0, _pp);
+      if (!reducedMotion) oocyteGroup.rotation.z = time * 0.25;
+    } else {
+      /* home at the junction: suspended in fluid, never nailed down —
+         a slow bob along the tube and a breath across it */
+      _pp.copy(OOCYTE_HOME);
+      if (!reducedMotion) {
+        tangentAt(OOCYTE_T, _v1);
+        _pp.addScaledVector(_v1, Math.sin(time * 0.32) * 0.12);
+        _pp.y += Math.sin(time * 0.47 + 1.3) * 0.045;
+        oocyteGroup.rotation.z = Math.sin(time * 0.2) * 0.3;
+      }
     }
     oocyteGroup.position.copy(_pp);
   }
@@ -1165,7 +1257,7 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
         break;
       case 'ovulation':
         /* watch the egg leave the ovary and the fimbriae take it */
-        T = { t: 0.96, ang: rig.ang + dt * 0.12, dist: 3.6, up: 0.4, look: 0, focusMix: 1, fov: 48, ease: 1.6 };
+        T = { t: 0.96, ang: rig.ang + dt * 0.12, dist: 2.8, up: 0.35, look: 0, focusMix: 1, fov: 48, ease: 1.6 };
         focusPoint.copy(oocyteGroup.position);
         break;
       case 'hunt': {
@@ -1178,7 +1270,7 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
         break;
       }
       case 'approach':
-        T = { t: OOCYTE_T - 0.02, ang: rig.ang + dt * 0.12, dist: 3.2, up: 0.7, look: 0.02, focusMix: 1, fov: 50, ease: 1.4 };
+        T = { t: OOCYTE_T - 0.02, ang: rig.ang + dt * 0.12, dist: 2.1, up: 0.5, look: 0.02, focusMix: 1, fov: 50, ease: 1.4 };
         focusPoint.copy(oocyteGroup.position);
         break;
       case 'fusion': {
@@ -1186,7 +1278,7 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
         const settled = Math.min(1, since / 5);
         T = {
           t: OOCYTE_T - 0.012, ang: rig.ang + dt * (0.35 - settled * 0.25),
-          dist: 1.7 + settled * 1.5, up: 0.35 + settled * 0.4,
+          dist: 1.05 + settled * 0.9, up: 0.28 + settled * 0.3,
           look: 0, focusMix: 1, fov: 50 - settled * 4, ease: 2.0,
         };
         focusPoint.copy(oocyteGroup.position);
@@ -1203,8 +1295,8 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
         rig.fov += (45 - rig.fov) * k0;
         _pp.set(
           ANATOMY_CENTER.x + drift * 1.2,
-          ANATOMY_CENTER.y + 1.6,
-          ANATOMY_CENTER.z + rig.dist
+          ANATOMY_CENTER.y + 1.6 / userZoom,
+          ANATOMY_CENTER.z + rig.dist / userZoom
         );
         camera.position.lerp(_pp, k0);
         camera.lookAt(focusPoint);
@@ -1233,14 +1325,15 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
   }
 
   function applyRigOutside() {
-    railPos(clampT(rig.t), rig.ang, rig.dist, rig.up, _pp);
+    const d = Math.max(0.45, rig.dist / userZoom);
+    railPos(clampT(rig.t), rig.ang, d, rig.up / userZoom, _pp);
     camera.position.copy(_pp);
     posAt(clampT(rig.t + rig.look), 0, 0, _look);
     _look.lerp(focusPoint, rig.focusMix);
     camera.lookAt(_look);
     syncFov();
-    labelGroup.visible = rig.dist > 5.5;
-    ringGroup.visible = rig.dist > 4.5;
+    labelGroup.visible = d > 5.5;
+    ringGroup.visible = d > 4.5;
   }
 
   function applyRigInside() {
@@ -1310,6 +1403,7 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
       if (disposed) return;
       const dt = Math.min(0.1, dtMs / 1000);
       time += reducedMotion ? 0 : dt;
+      userZoom += (userZoomTarget - userZoom) * (reducedMotion ? 1 : Math.min(1, dt * 6));
 
       retarget(snapshot?.stages?.map((s) => s.count) ?? [], reducedMotion);
       updateSwarm(dt);
@@ -1345,6 +1439,11 @@ export function createRaceScene(canvas, { seed = 1, reducedMotion = false, parti
 
     dispose() {
       disposed = true;
+      canvas.removeEventListener('wheel', onWheel);
+      canvas.removeEventListener('touchstart', onTouchStart);
+      canvas.removeEventListener('touchmove', onTouchMove);
+      canvas.removeEventListener('touchend', onTouchEnd);
+      canvas.removeEventListener('dblclick', onDblClick);
       for (const s of labelSprites) { s.material.map.dispose(); s.material.dispose(); }
       for (const r of disposables) r.dispose?.();
       renderer.dispose();
