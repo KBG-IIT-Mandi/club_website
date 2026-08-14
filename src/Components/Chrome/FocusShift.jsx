@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigationType } from "react-router-dom";
 import "./FocusShift.css";
 
 /**
@@ -22,16 +22,58 @@ import "./FocusShift.css";
  */
 export default function FocusShift({ children }) {
   const location = useLocation();
+  const navigationType = useNavigationType();
   const ref = useRef(null);
   const firstRender = useRef(true);
 
   useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
+    const isFirstRender = firstRender.current;
+    firstRender.current = false;
+
+    if (isFirstRender && !location.hash) {
       return;
     }
-    ref.current?.focus({ preventScroll: true });
-  }, [location.pathname]);
+
+    if (!isFirstRender) ref.current?.focus({ preventScroll: true });
+
+    /* React Router preserves the document scroll position. That is useful for
+       back/forward restoration, but surprising for an explicit nav click: a
+       visitor leaving the bottom of one route otherwise arrives halfway down
+       the next. Hash destinations are observed because page copy is fetched
+       asynchronously and the target may not exist on the first frame. */
+    if (!location.hash) {
+      /* Let the browser restore a saved position for back/forward travel. */
+      if (navigationType !== "POP") {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      }
+      return undefined;
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const id = decodeURIComponent(location.hash.slice(1));
+    const main = document.getElementById("main");
+
+    const moveToTarget = () => {
+      const target = document.getElementById(id);
+      if (!target) return false;
+      target.scrollIntoView({ block: "start" });
+      target.focus({ preventScroll: true });
+      return true;
+    };
+
+    if (moveToTarget()) return undefined;
+
+    const observer = new MutationObserver(() => {
+      if (moveToTarget()) observer.disconnect();
+    });
+    if (main) observer.observe(main, { childList: true, subtree: true });
+    const timeout = window.setTimeout(() => observer.disconnect(), 8000);
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(timeout);
+    };
+  }, [location.pathname, location.hash, navigationType]);
 
   return (
     <div

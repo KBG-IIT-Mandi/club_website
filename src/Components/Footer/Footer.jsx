@@ -8,8 +8,26 @@ import "./Footer.css";
 
    footer.json live shape: { text: string, links: [{ label, href }] }. Those
    keys are used as-is; nothing is invented and no key is added or renamed.
-   The two live links point at /contact and /privacy, which are not routes —
-   they land on NotFound, which is a real page, so shipping them is fine. */
+   Global chrome has a local fallback: losing the content network should never
+   remove the site's final wayfinding surface. */
+
+const DEFAULT_FOOTER = {
+  text: 'Kamand Bioengineering Group · IIT Mandi',
+  links: [{ label: 'Contact', href: '/about#contact' }],
+};
+
+const INTERNAL_ROUTES = new Set([
+  '/',
+  '/about',
+  '/team',
+  '/events',
+  '/projects',
+  '/race',
+  '/contact',
+]);
+
+const internalHref = (href) =>
+  href === '/contact' ? '/about#contact' : href;
 
 const LINKS_REPO_COMMITS =
   "https://api.github.com/repos/KBG-IIT-Mandi/KBG_Links/commits?per_page=1";
@@ -27,7 +45,7 @@ const relativeSignal = (iso) => {
 };
 
 const Footer = () => {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(DEFAULT_FOOTER);
   const [signal, setSignal] = useState(null);
 
   useEffect(() => {
@@ -38,7 +56,7 @@ const Footer = () => {
       })
       .catch((error) => {
         console.error("Failed to load footer data:", error);
-        // A footer is not worth a SIGNAL LOST card — it just does not render.
+        setData(DEFAULT_FOOTER);
       });
 
     // The content-repo pulse. Strictly decorative telemetry: fail-silent,
@@ -56,8 +74,6 @@ const Footer = () => {
       cancelled = true;
     };
   }, []);
-
-  if (!data) return null;
 
   const links = Array.isArray(data.links) ? data.links : [];
 
@@ -84,22 +100,35 @@ const Footer = () => {
           {data.text && <p className="foot__text">{data.text}</p>}
 
           {!!links.length && (
-            <nav className="foot__links">
+            <nav className="foot__links" aria-label="Footer">
               {links.map((link, i) => {
                 if (!link || !link.href || !link.label) return null;
-                return link.href.startsWith("/") ? (
-                  <Link className="foot__link" key={i} to={link.href}>
-                    {link.label}
-                  </Link>
-                ) : (
+                if (link.href.startsWith("/")) {
+                  const path = link.href.split(/[?#]/)[0];
+                  /* Content may advertise a page before the application ships
+                     it. Do not turn global footer navigation into a 404 link. */
+                  if (!INTERNAL_ROUTES.has(path)) return null;
+                  return (
+                    <Link
+                      className="foot__link"
+                      key={`${link.href}-${i}`}
+                      to={internalHref(link.href)}
+                    >
+                      {link.label}
+                    </Link>
+                  );
+                }
+                return (
                   <a
                     className="foot__link"
-                    key={i}
+                    key={`${link.href}-${i}`}
                     href={link.href}
                     target="_blank"
                     rel="noopener noreferrer"
+                    aria-label={`${link.label} (opens in a new tab)`}
                   >
                     {link.label}
+                    <span className="foot__external" aria-hidden="true">↗</span>
                   </a>
                 );
               })}

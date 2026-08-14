@@ -79,10 +79,10 @@ const About = () => {
         {/* ── THE MASTHEAD ─────────────────────────────────────────────── */}
         <header className="about-head band">
           <p className="label label--live">THE JOURNAL</p>
-          {data.title && <h1 className="display-2 about-title grad-text">{data.title}</h1>}
+          {data.title && <h1 className="display-2 about-title locus-title">{data.title}</h1>}
         </header>
 
-        {/* ── MISSION — the pull-quote. 200 against the 900 masthead: the
+        {/* ── MISSION — the pull-quote. Light against the firm masthead: the
                journal's whole typographic argument in one spread. ────────── */}
         {data.mission && (
           <p className="about-mission band">
@@ -142,10 +142,15 @@ const About = () => {
 
         {/* ── CONTACT ──────────────────────────────────────────────────── */}
         {contact && (
-          <section className="section about-contact">
+          <section
+            className="section about-contact"
+            id="contact"
+            tabIndex={-1}
+            aria-labelledby="about-contact-heading"
+          >
             <div className="section-head band">
               <span className="about-ghost" aria-hidden="true">{num.contact}</span>
-              <h2>Contact</h2>
+              <h2 id="about-contact-heading">Contact</h2>
               <div className="rule" aria-hidden="true" />
             </div>
 

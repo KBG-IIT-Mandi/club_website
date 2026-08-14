@@ -101,7 +101,7 @@ const Projects = () => {
   }
 
   return (
-    <main className="p-projects world-lab" ref={pageRef}>
+    <div className="p-projects world-lab" ref={pageRef}>
       <section className="section">
         <div className="shell">
           <div className="section-head band">
@@ -172,7 +172,7 @@ const Projects = () => {
           )}
         </div>
       </section>
-    </main>
+    </div>
   );
 };
 

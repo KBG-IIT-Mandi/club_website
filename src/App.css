@@ -133,7 +133,8 @@ main {
 
 /* The enormous register. Never from JSON — brand lines only. */
 .display {
-  font-weight: 900;
+  font-family: var(--font-display);
+  font-weight: 780;
   font-size: var(--fs-display);
   line-height: var(--lh-0);
   letter-spacing: var(--tr-display);
@@ -143,7 +144,8 @@ main {
 }
 
 .display-2 {
-  font-weight: 900;
+  font-family: var(--font-display);
+  font-weight: 680;
   font-size: var(--fs-display-2);
   line-height: var(--lh-0);
   letter-spacing: var(--tr-display);

@@ -5,8 +5,8 @@
    .p-projects and never touch a global selector.
 
    One world, two registers:
-     .world-lab   near-black cinematic laboratory (everything lives here)
-     .grad-text   the plasma headline — display type filled bio→data
+     .world-lab    near-black cinematic laboratory (everything lives here)
+     .locus-title  solid display type carrying a precise genetic marker
 
    Two accents, roles FIXED and EXCLUSIVE — they encode the club's thesis:
      --bio   acid bio-lime  = biological / alive / active   (GFP fluorescence)
@@ -74,6 +74,7 @@
 
   /* TYPE */
   --font-sans: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
 
   --fs-00: 0.6875rem;  /* 11px — telemetry, sample tags, footer meta */
@@ -98,8 +99,8 @@
   --lh-3: 1.45;   /* mono, lists */
   --lh-4: 1.65;   /* body */
 
-  --tr-display: -0.02em;
-  --tr-head:    -0.01em;
+  --tr-display: -0.045em;
+  --tr-head:    -0.018em;
   --tr-body:    0;
   --tr-label:   0.14em;
 
@@ -194,6 +195,7 @@ ol {
    for a word with no legal break. No auto-hyphenation — it reads as broken
    in tight display type (see git history of this file). */
 h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
   max-width: var(--measure-h);
   text-wrap: balance;
   overflow-wrap: break-word;
@@ -206,7 +208,7 @@ p, li {
 }
 
 h1 {
-  font-weight: 900;
+  font-weight: 760;
   font-size: var(--fs-5);
   line-height: var(--lh-1);
   letter-spacing: var(--tr-display);
@@ -215,7 +217,7 @@ h1 {
 }
 
 h2 {
-  font-weight: 900;
+  font-weight: 720;
   font-size: var(--fs-4);
   line-height: var(--lh-2);
   letter-spacing: var(--tr-head);
@@ -224,7 +226,7 @@ h2 {
 }
 
 h3 {
-  font-weight: 700;
+  font-weight: 660;
   font-size: var(--fs-3);
   line-height: var(--lh-2);
   letter-spacing: var(--tr-head);
@@ -232,7 +234,7 @@ h3 {
 }
 
 h4 {
-  font-weight: 700;
+  font-weight: 660;
   font-size: var(--fs-3);
   line-height: var(--lh-2);
   letter-spacing: var(--tr-head);
@@ -240,14 +242,14 @@ h4 {
 }
 
 h5, h6 {
-  font-weight: 700;
+  font-weight: 660;
   font-size: var(--fs-2);
   line-height: var(--lh-2);
   letter-spacing: var(--tr-head);
   color: var(--specimen);
 }
 
-strong, b { font-weight: 700; }
+strong, b { font-weight: 660; }
 
 /* Prose links. Never a colour-only distinction. */
 a {
@@ -280,20 +282,38 @@ a:hover {
   color: var(--specimen);
 }
 
-/* THE PLASMA HEADLINE — the trendy register: display type filled with the
-   living gradient, bio pouring into data. Fallback engines keep specimen. */
-.grad-text {
+/* THE LOCUS TITLE — solid, modern display type. The paired rules are an
+   abstract allele marker: one biological strand and one data strand. This
+   is the only decorative accent on the title; the letterforms stay clean. */
+.locus-title {
+  position: relative;
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  padding-bottom: 0.32em;
+  font-weight: 680;
+  letter-spacing: -0.045em;
   color: var(--specimen);
 }
 
-@supports (-webkit-background-clip: text) or (background-clip: text) {
-  .grad-text {
-    background-image: linear-gradient(100deg, var(--bio) 0%, #2ee8d8 45%, var(--data) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
-  }
+.locus-title::after,
+.locus-title::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  height: 2px;
+}
+
+.locus-title::after {
+  left: 0;
+  width: clamp(2.5rem, 6vw, 4.75rem);
+  background: var(--bio);
+}
+
+.locus-title::before {
+  left: clamp(2.9rem, 6.7vw, 5.3rem);
+  width: clamp(0.65rem, 1.4vw, 1rem);
+  background: var(--data);
 }
 
 /* ── FOCUS — global. No exceptions. Custom cursor never suppresses this. ─── */

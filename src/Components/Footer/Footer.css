@@ -93,6 +93,11 @@
 
 .foot__link:hover { color: var(--bio); }
 
+.foot__external {
+  margin-left: var(--s-2);
+  color: var(--data);
+}
+
 @media (min-width: 640px) {
   .foot__inner {
     flex-direction: row;

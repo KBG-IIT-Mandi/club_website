@@ -13,17 +13,18 @@ import LabCursor from "./Components/Chrome/LabCursor";
 import FocusShift from "./Components/Chrome/FocusShift";
 import useKonami from "./CustomHooks/useKonami";
 import Home from "./Pages/Home/Home";
-import About from "./Pages/About/About";
-import Team from "./Pages/Team/Team";
-import Events from "./Pages/Events/Events";
-import Projects from "./Pages/Projects/Projects";
-import NotFound from "./Pages/NotFound/NotFound";
+import { loadRoute } from "./config/routes";
 import "./App.css";
 
-/* The Race carries its own simulation engine + canvas renderer — a heavy,
-   self-contained chunk. Lazy like the organism: the main bundle never
-   pays for it (bundle discipline, see README). */
-const Race = lazy(() => import("./Pages/Race/Race"));
+/* Home owns first paint. Every destination behind it is split into its own
+   chunk and warmed on nav intent (NavBar.jsx), keeping the opening specimen
+   light without making later navigation feel cold. */
+const About = lazy(() => loadRoute("/about"));
+const Team = lazy(() => loadRoute("/team"));
+const Events = lazy(() => loadRoute("/events"));
+const Projects = lazy(() => loadRoute("/projects"));
+const Race = lazy(() => loadRoute("/race"));
+const NotFound = lazy(() => loadRoute("*"));
 
 export default function App() {
   // The mutation listener lives for the whole session, outside any route.
@@ -39,27 +40,25 @@ export default function App() {
       <NavBar />
 
       {/* FocusShift keys on the pathname: each route racks into focus. */}
-      <main id="main">
+      <main id="main" tabIndex={-1}>
         <FocusShift>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/team" element={<Team />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route
-              path="/race"
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Race />
-                </Suspense>
-              }
-            />
-            {/* footer.json ships a /contact link; the contact block lives on
-                About — route it there instead of the 404. */}
-            <Route path="/contact" element={<Navigate to="/about" replace />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/race" element={<Race />} />
+              {/* The contact record lives on About. Preserve the intent as a
+                  real deep link so the visitor lands at the record itself. */}
+              <Route
+                path="/contact"
+                element={<Navigate to="/about#contact" replace />}
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </FocusShift>
       </main>
 

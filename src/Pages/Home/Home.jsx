@@ -156,7 +156,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* ── THE FIELD JOURNAL — editorial band, lab-dark with plasma heads ── */}
+      {/* ── THE FIELD JOURNAL — solid type with a compact locus marker ─── */}
       {homeError && (
         <section className="section world-lab">
           <ErrorState
@@ -174,7 +174,7 @@ const Home = () => {
             {sections.map((section, i) => (
               <article key={section.title || i} className="home-journal__article band">
                 {section.title && (
-                  <h2 className="home-journal__head display-2 grad-text">{section.title}</h2>
+                  <h2 className="home-journal__head display-2 locus-title">{section.title}</h2>
                 )}
                 {section.copy && <p className="home-journal__copy">{section.copy}</p>}
                 {Array.isArray(section.bullets) && section.bullets.length > 0 && (

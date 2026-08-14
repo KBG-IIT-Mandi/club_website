@@ -128,7 +128,7 @@
 .p-home .home-strain__line {
   flex: none;
   white-space: nowrap;
-  font-weight: 900;
+  font-weight: 720;
   font-size: var(--fs-display);
   line-height: var(--lh-0);
   letter-spacing: var(--tr-display);
@@ -170,8 +170,8 @@
   padding-top: 0;
 }
 
-/* plasma heads: .grad-text owns the fill; width shrinks to the text so
-   the gradient spans the words, not the column */
+/* The locus title shrinks to its text so the paired sequence marker stays
+   anchored to the heading rather than stretching across the article. */
 .p-home .home-journal__head {
   width: fit-content;
 }
@@ -235,7 +235,7 @@
   z-index: -1;
   top: var(--s-1);
   right: var(--s-3);
-  font-weight: 900;
+  font-weight: 760;
   font-size: var(--fs-display-2);
   line-height: var(--lh-0);
   letter-spacing: var(--tr-display);

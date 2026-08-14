@@ -237,6 +237,8 @@ const CLOUD_VERT = /* glsl */ `
   attribute vec3 aPosA;
   attribute vec3 aPosB;
   attribute float aSeed;
+  attribute float aGeneA;
+  attribute float aGeneB;
 
   uniform float uTime;
   uniform float uStageMix;
@@ -248,10 +250,12 @@ const CLOUD_VERT = /* glsl */ `
   varying float vSeed;
   varying float vTwinkle;
   varying float vWave;
+  varying float vGene;
   varying vec3 vShapePos;
 
   void main() {
     vSeed = aSeed;
+    vGene = mix(aGeneA, aGeneB, uStageMix);
 
     vec3 pos = mix(aPosA, aPosB, uStageMix);
 
@@ -287,12 +291,16 @@ const CLOUD_VERT = /* glsl */ `
     vTwinkle = 0.72 + 0.28 * sin(uTime * (1.2 + aSeed) + aSeed * 6.28);
 
     vec4 mv = modelViewMatrix * vec4(pos, 1.0);
-    gl_PointSize = uSize * (0.6 + aSeed * 0.8) * (1.0 + vWave * 0.4) / max(0.5, -mv.z);
+    float geneGlow = smoothstep(0.12, 0.82, abs(vGene));
+    float genePulse = 0.86 + 0.14 * sin(uTime * 2.4 + aSeed * 18.0);
+    gl_PointSize = uSize * (0.6 + aSeed * 0.8) * (1.0 + vWave * 0.4)
+      * (1.0 + geneGlow * (0.42 + 0.22 * genePulse)) / max(0.5, -mv.z);
     gl_Position = projectionMatrix * mv;
   }
 `;
 
 const CLOUD_FRAG = /* glsl */ `
+  uniform float uTime;
   uniform vec3 uBio;
   uniform vec3 uData;
   uniform vec3 uPal[9];
@@ -303,6 +311,7 @@ const CLOUD_FRAG = /* glsl */ `
   varying float vSeed;
   varying float vTwinkle;
   varying float vWave;
+  varying float vGene;
   varying vec3 vShapePos;
 
   ${PAL_PICK_GLSL}
@@ -340,6 +349,15 @@ const CLOUD_FRAG = /* glsl */ `
     float fusedSperm = wOvum * (1.0 - smoothstep(-1.18, -0.98, vShapePos.x));
     col = mix(col, vec3(0.9, 0.96, 1.0) * bright, fusedSperm * 0.96);
 
+    /* THE HERITABLE SIGNAL — the same highlighted particles move through
+       chromosomes, gametes, fertilization, mtDNA and the edited DNA locus.
+       Signed colour keeps maternal/bio and paternal/data material distinct
+       without labels, cards or an additional overlay draw call. */
+    float geneStrength = smoothstep(0.12, 0.82, abs(vGene));
+    float genePulse = 0.9 + 0.1 * sin(uTime * 2.4 + vSeed * 18.0);
+    vec3 geneCol = mix(uData, uBio, step(0.0, vGene));
+    col = mix(col, geneCol * (1.18 + genePulse * 0.22), geneStrength * 0.92);
+
     col = mix(col, uData, uDataMix * 0.7);
 
     /* the wavefront brightens the lattice and flashes LIME at its crest:
@@ -347,7 +365,8 @@ const CLOUD_FRAG = /* glsl */ `
     col *= 1.0 + vWave * 1.5;
     col = mix(col, uBio, smoothstep(0.72, 0.98, vWave));
 
-    gl_FragColor = vec4(col, soft * vTwinkle * uOpacity * (0.85 + vWave * 0.5));
+    float geneAlpha = 1.0 + geneStrength * 0.38;
+    gl_FragColor = vec4(col, soft * vTwinkle * uOpacity * (0.85 + vWave * 0.5) * geneAlpha);
   }
 `;
 
@@ -398,6 +417,12 @@ const ORGANELLE_FRAG = /* glsl */ `
 function buildStages(count) {
   const rand = mulberry32(20260810);
   const stages = [];
+  /* A signed per-particle signal travels with every morph target. Positive
+     values fluoresce biological lime, negative values computational blue,
+     and zero leaves the specimen's confocal stain untouched. Keeping this
+     in the existing point cloud makes the genetics feel inherited by the
+     organism instead of pasted over it as a second interface layer. */
+  const geneStages = [];
 
   /* S0 ORGANISM — the nucleus: a dense gaussian ball inside the membrane */
   {
@@ -408,6 +433,7 @@ function buildStages(count) {
       a[i * 3 + 2] = gauss(rand) * 0.42;
     }
     stages.push(a);
+    geneStages.push(new Float32Array(count));
   }
 
   /* S1 TISSUE — cells packed side by side: clusters around seeded centres */
@@ -428,28 +454,77 @@ function buildStages(count) {
       a[i * 3 + 2] = c[2] + gauss(rand) * 0.16;
     }
     stages.push(a);
+    geneStages.push(new Float32Array(count));
   }
 
-  /* S2 CELL — one cell alone: a hollow shell plus a tight nucleus */
+  /* S2 CELL — membrane, nuclear envelope and a compact karyotype. X and Y
+     are actual chromosome silhouettes, not typographic labels; the small
+     loop outside the nucleus is a plasmid, the genetic-engineering motif. */
   {
     const a = new Float32Array(count * 3);
+    const g = new Float32Array(count);
     for (let i = 0; i < count; i++) {
-      const inner = rand() < 0.3;
-      if (inner) {
-        a[i * 3] = gauss(rand) * 0.22;
-        a[i * 3 + 1] = gauss(rand) * 0.22;
-        a[i * 3 + 2] = gauss(rand) * 0.22;
-      } else {
-        /* uniform direction via normalized gaussian triple */
-        let x = gauss(rand), y = gauss(rand), z = gauss(rand);
-        const l = Math.hypot(x, y, z) || 1;
+      const kind = rand();
+      let x, y, z;
+      if (kind < 0.43) {
+        /* cell membrane */
+        const dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
+        const l = Math.hypot(dx, dy, dz) || 1;
         const r = 1.05 + (rand() - 0.5) * 0.08;
-        a[i * 3] = (x / l) * r;
-        a[i * 3 + 1] = (y / l) * r;
-        a[i * 3 + 2] = (z / l) * r;
+        x = (dx / l) * r;
+        y = (dy / l) * r;
+        z = (dz / l) * r;
+      } else if (kind < 0.57) {
+        /* nuclear envelope — enough negative space to frame the chromosomes */
+        const dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
+        const l = Math.hypot(dx, dy, dz) || 1;
+        const r = 0.67 + (rand() - 0.5) * 0.045;
+        x = (dx / l) * r;
+        y = (dy / l) * r;
+        z = (dz / l) * r;
+      } else if (kind < 0.68) {
+        /* diffuse chromatin, kept faint behind the condensed pair */
+        x = gauss(rand) * 0.42;
+        y = gauss(rand) * 0.42;
+        z = gauss(rand) * 0.24;
+      } else if (kind < 0.81) {
+        /* X chromosome: two chromatids crossing at the centromere */
+        const t = rand() - 0.5;
+        const strand = rand() < 0.5 ? -1 : 1;
+        x = -0.2 + strand * t * 0.48 + gauss(rand) * 0.022;
+        y = t * 1.08 + gauss(rand) * 0.022;
+        z = gauss(rand) * 0.045;
+        g[i] = -0.82;
+      } else if (kind < 0.91) {
+        /* Y chromosome: paired short arms joining one longer stem */
+        const arm = rand();
+        if (arm < 0.54) {
+          const t = rand();
+          const side = rand() < 0.5 ? -1 : 1;
+          x = 0.23 + side * t * 0.22 + gauss(rand) * 0.02;
+          y = 0.02 + t * 0.43 + gauss(rand) * 0.02;
+        } else {
+          const t = rand();
+          x = 0.23 + gauss(rand) * 0.022;
+          y = 0.03 - t * 0.5 + gauss(rand) * 0.02;
+        }
+        z = gauss(rand) * 0.045;
+        g[i] = 0.82;
+      } else {
+        /* engineered circular plasmid in the cytoplasm */
+        const ang = rand() * Math.PI * 2;
+        const r = 0.18 + gauss(rand) * 0.014;
+        x = 0.57 + Math.cos(ang) * r;
+        y = -0.58 + Math.sin(ang) * r;
+        z = gauss(rand) * 0.035;
+        g[i] = 0.58;
       }
+      a[i * 3] = x;
+      a[i * 3 + 1] = y;
+      a[i * 3 + 2] = z;
     }
     stages.push(a);
+    geneStages.push(g);
   }
 
   /* S3 GAMETE — the spermatozoon, anatomically proportioned: flattened
@@ -458,15 +533,24 @@ function buildStages(count) {
      in the vertex shader during the gamete band, so the cell SWIMS). */
   {
     const a = new Float32Array(count * 3);
+    const g = new Float32Array(count);
     for (let i = 0; i < count; i++) {
       const kind = rand();
       let x, y, z;
-      if (kind < 0.2) {
+      if (kind < 0.16) {
         /* head — flattened oval */
         x = -1.5 + gauss(rand) * 0.3;
         y = gauss(rand) * 0.22;
         z = gauss(rand) * 0.13;
-      } else if (kind < 0.34) {
+      } else if (kind < 0.23) {
+        /* the tightly packed haploid genome inside the head */
+        const t = rand() * Math.PI * 2;
+        const fold = 2.0 + ((rand() * 3) | 0);
+        x = -1.5 + Math.cos(t * fold) * 0.19 + gauss(rand) * 0.025;
+        y = Math.sin(t * (fold + 1)) * 0.12 + gauss(rand) * 0.02;
+        z = Math.sin(t * 2.0) * 0.055 + gauss(rand) * 0.018;
+        g[i] = -0.95;
+      } else if (kind < 0.37) {
         /* midpiece — the mitochondrial sheath, denser ring packing */
         const t = rand();
         const ang = rand() * Math.PI * 2;
@@ -474,7 +558,7 @@ function buildStages(count) {
         x = -1.16 + t * 0.61;
         y = Math.cos(ang) * r;
         z = Math.sin(ang) * r;
-      } else if (kind < 0.92) {
+      } else if (kind < 0.95) {
         /* flagellum — tapering, with a frozen S-wave the shader animates */
         const t = rand();
         x = -0.55 + t * 3.15;
@@ -492,6 +576,7 @@ function buildStages(count) {
       a[i * 3 + 2] = z;
     }
     stages.push(a);
+    geneStages.push(g);
   }
 
   /* S4 FUSION — the ovum at the moment of fertilization: a great cell
@@ -500,10 +585,11 @@ function buildStages(count) {
      is the approach itself: the swimmer's points stream into the egg. */
   {
     const a = new Float32Array(count * 3);
+    const g = new Float32Array(count);
     for (let i = 0; i < count; i++) {
       const kind = rand();
       let x, y, z;
-      if (kind < 0.38) {
+      if (kind < 0.32) {
         /* Ooplasm — a true filled sphere. The former gaussian cloud leaked
            through its own zona and made the egg read fuzzy at phone scale. */
         let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
@@ -512,7 +598,7 @@ function buildStages(count) {
         x = (dx / l) * rr;
         y = (dy / l) * rr;
         z = (dz / l) * rr;
-      } else if (kind < 0.56) {
+      } else if (kind < 0.5) {
         /* zona pellucida — the glycoprotein shell */
         let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
         const l = Math.hypot(dx, dy, dz) || 1;
@@ -520,7 +606,7 @@ function buildStages(count) {
         x = (dx / l) * shell;
         y = (dy / l) * shell;
         z = (dz / l) * shell;
-      } else if (kind < 0.72) {
+      } else if (kind < 0.65) {
         /* corona radiata — follicle cells clinging outside in clumps */
         let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
         const l = Math.hypot(dx, dy, dz) || 1;
@@ -528,12 +614,27 @@ function buildStages(count) {
         x = (dx / l) * rr + gauss(rand) * 0.1;
         y = (dy / l) * rr + gauss(rand) * 0.1;
         z = (dz / l) * rr + gauss(rand) * 0.1;
-      } else if (kind < 0.82) {
+      } else if (kind < 0.72) {
+        /* maternal chromatin, gathering into the female pronucleus */
+        const t = rand() * Math.PI * 2;
+        const rr = 0.22 + 0.045 * Math.sin(t * 3.0);
+        x = 0.3 + Math.cos(t) * rr + gauss(rand) * 0.025;
+        y = -0.03 + Math.sin(t) * rr * 0.74 + gauss(rand) * 0.025;
+        z = gauss(rand) * 0.07;
+        g[i] = 0.92;
+      } else if (kind < 0.8) {
         /* The winner's head, half through the zona at the west pole. A
            larger, flattened ellipsoid stays readable after the phone pull. */
         x = -1.48 + gauss(rand) * 0.18;
         y = 0.22 + gauss(rand) * 0.12;
         z = gauss(rand) * 0.08;
+      } else if (kind < 0.86) {
+        /* paternal chromatin decondensing just inside the egg */
+        const t = rand() * Math.PI * 2;
+        x = -0.69 + Math.cos(t * 3.0) * 0.17 + gauss(rand) * 0.02;
+        y = 0.18 + Math.sin(t * 4.0) * 0.12 + gauss(rand) * 0.02;
+        z = Math.sin(t * 2.0) * 0.05 + gauss(rand) * 0.018;
+        g[i] = -0.92;
       } else {
         /* its tail, still outside, going slack */
         const t = rand();
@@ -547,6 +648,7 @@ function buildStages(count) {
       a[i * 3 + 2] = z;
     }
     stages.push(a);
+    geneStages.push(g);
   }
 
   /* S5 EMBRYO — the baby, drawn like an anatomical study rather than a
@@ -651,18 +753,19 @@ function buildStages(count) {
       a[i * 3 + 2] = x * 1.25;
     }
     stages.push(a);
+    geneStages.push(new Float32Array(count));
   }
 
   /* S6 ORGANELLE — the mitochondrion: bent outer membrane (the bean),
-     inner membrane, and ~9 wavy cristae shelves packed across the matrix —
-     the fold pattern every textbook section shows. */
+     inner membrane, ~9 wavy cristae shelves and its own circular mtDNA. */
   {
     const a = new Float32Array(count * 3);
+    const g = new Float32Array(count);
     const bend = (x) => 0.16 * Math.sin(x * 1.1);
     for (let i = 0; i < count; i++) {
       const kind = rand();
       let x, y, z;
-      if (kind < 0.3) {
+      if (kind < 0.28) {
         /* outer membrane shell */
         let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
         const l = Math.hypot(dx, dy, dz) || 1;
@@ -670,14 +773,14 @@ function buildStages(count) {
         x = (dx / l) * 1.42 * shell;
         y = (dy / l) * 0.6 * shell + bend(x);
         z = (dz / l) * 0.6 * shell;
-      } else if (kind < 0.45) {
+      } else if (kind < 0.43) {
         /* inner membrane, just beneath */
         let dx = gauss(rand), dy = gauss(rand), dz = gauss(rand);
         const l = Math.hypot(dx, dy, dz) || 1;
         x = (dx / l) * 1.22;
         y = (dy / l) * 0.5 + bend(x);
         z = (dz / l) * 0.5;
-      } else if (kind < 0.9) {
+      } else if (kind < 0.86) {
         /* cristae — nine folded shelves across the long axis */
         const shelf = (rand() * 9) | 0;
         const sx = -1.12 + shelf * 0.28;
@@ -688,6 +791,13 @@ function buildStages(count) {
         x = sx + 0.09 * Math.sin(ry * 9.0) + gauss(rand) * 0.015;
         y = ry + bend(sx);
         z = rz;
+      } else if (kind < 0.94) {
+        /* mitochondrial DNA — a compact circular genome in the matrix */
+        const ang = rand() * Math.PI * 2;
+        x = -0.38 + Math.cos(ang) * 0.24 + gauss(rand) * 0.014;
+        y = bend(-0.38) + Math.sin(ang) * 0.17 + gauss(rand) * 0.014;
+        z = gauss(rand) * 0.025;
+        g[i] = 0.88;
       } else {
         /* matrix scatter */
         x = (rand() - 0.5) * 2.4;
@@ -701,6 +811,7 @@ function buildStages(count) {
       a[i * 3 + 2] = x;
     }
     stages.push(a);
+    geneStages.push(g);
   }
 
   /* S7 PROTEIN — the double helix, built like actual B-DNA:
@@ -712,11 +823,15 @@ function buildStages(count) {
          pair reads as a solid line, not a scatter of dots */
   {
     const a = new Float32Array(count * 3);
+    const g = new Float32Array(count);
     const turns = 3.0;
     const height = 3.9;
     const R = 0.62;
     const RUNGS = 30;
     const GROOVE = 2.1; /* rad ≈ 120° between backbones */
+    const alleleRung = 19;
+    const editRungs = [9, 10];
+    const rungY = (rung) => (rung / (RUNGS - 1) - 0.5) * height;
     for (let i = 0; i < count; i++) {
       const kind = rand();
       const t = rand();
@@ -726,13 +841,18 @@ function buildStages(count) {
         a[i * 3] = Math.cos(ang) * R + gauss(rand) * 0.016;
         a[i * 3 + 1] = y;
         a[i * 3 + 2] = Math.sin(ang) * R + gauss(rand) * 0.016;
+        if (Math.abs(y - rungY(alleleRung)) < 0.1) g[i] = -0.58;
+        if (Math.abs(y - rungY(editRungs[0])) < 0.14) g[i] = 0.42;
       } else if (kind < 0.66) {
         a[i * 3] = Math.cos(ang + GROOVE) * R + gauss(rand) * 0.016;
         a[i * 3 + 1] = y;
         a[i * 3 + 2] = Math.sin(ang + GROOVE) * R + gauss(rand) * 0.016;
+        if (Math.abs(y - rungY(alleleRung)) < 0.1) g[i] = 0.58;
+        if (Math.abs(y - rungY(editRungs[1])) < 0.14) g[i] = 0.42;
       } else {
         /* base pairs: straight chords bridging the two backbones */
-        const yq = ((rand() * RUNGS | 0) / (RUNGS - 1) - 0.5) * height;
+        const rung = (rand() * RUNGS) | 0;
+        const yq = rungY(rung);
         const aq = (yq / height + 0.5) * turns * Math.PI * 2;
         const s = Math.floor(rand() * 44) / 43; /* 44 even slots per rung */
         const ax = Math.cos(aq) * R, az = Math.sin(aq) * R;
@@ -740,9 +860,14 @@ function buildStages(count) {
         a[i * 3] = ax + (bx - ax) * s + gauss(rand) * 0.006;
         a[i * 3 + 1] = yq + gauss(rand) * 0.006;
         a[i * 3 + 2] = az + (bz - az) * s + gauss(rand) * 0.006;
+        /* One allele-defining base pair carries opposing fluorophores; two
+           adjacent rungs below it form a restrained gene-edit cut site. */
+        if (rung === alleleRung) g[i] = s < 0.5 ? -1 : 1;
+        if (editRungs.includes(rung)) g[i] = 0.72;
       }
     }
     stages.push(a);
+    geneStages.push(g);
   }
 
   /* S8 NEURAL — the brain. AI × Biology ends the descent as a mind made of
@@ -801,9 +926,10 @@ function buildStages(count) {
       a[i * 3 + 2] = -x * sy + z * cy;
     }
     stages.push(a);
+    geneStages.push(new Float32Array(count));
   }
 
-  return stages;
+  return { positions: stages, genes: geneStages };
 }
 
 /* ── palette from CSS — the Konami mutation reaches the GL through here ──── */
@@ -871,10 +997,12 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
 
   /* morph cloud */
   const count = COUNTS[quality] || COUNTS.high;
-  const stages = buildStages(count);
+  const { positions: stages, genes: geneStages } = buildStages(count);
   const cloudGeo = new THREE.BufferGeometry();
   const posA = new Float32Array(stages[0]);
   const posB = new Float32Array(stages[1]);
+  const geneA = new Float32Array(geneStages[0]);
+  const geneB = new Float32Array(geneStages[1]);
   const seeds = new Float32Array(count);
   {
     const rand = mulberry32(11);
@@ -884,6 +1012,8 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
   cloudGeo.setAttribute("position", new THREE.BufferAttribute(stages[0].slice(), 3));
   cloudGeo.setAttribute("aPosA", new THREE.BufferAttribute(posA, 3));
   cloudGeo.setAttribute("aPosB", new THREE.BufferAttribute(posB, 3));
+  cloudGeo.setAttribute("aGeneA", new THREE.BufferAttribute(geneA, 1));
+  cloudGeo.setAttribute("aGeneB", new THREE.BufferAttribute(geneB, 1));
   cloudGeo.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
   cloudGeo.boundingSphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 6);
 
@@ -1275,8 +1405,12 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     stagePair = [a, b];
     cloudGeo.getAttribute("aPosA").array.set(stages[a]);
     cloudGeo.getAttribute("aPosB").array.set(stages[b]);
+    cloudGeo.getAttribute("aGeneA").array.set(geneStages[a]);
+    cloudGeo.getAttribute("aGeneB").array.set(geneStages[b]);
     cloudGeo.getAttribute("aPosA").needsUpdate = true;
     cloudGeo.getAttribute("aPosB").needsUpdate = true;
+    cloudGeo.getAttribute("aGeneA").needsUpdate = true;
+    cloudGeo.getAttribute("aGeneB").needsUpdate = true;
   };
 
   /* everything progress-driven lives here so a static render is one call */
@@ -1308,13 +1442,13 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
     haloMat.uniforms.uFuse.value = fuse;
     halo.visible = fuse > 0.01;
 
-    /* THE CAMERA RIG — the journey is a flight, not a push.
-       The camera rides an orbit whose angle accumulates with depth:
+    /* THE CAMERA RIG — the journey is a full microscope orbit, not a push.
+       The camera completes exactly 360° as its angle accumulates with depth:
          dive      straight through the membrane
          tissue    swing wide to the side — the world streams past
          cell      keep swinging, rise above the orbitals, look down
-         protein   CORKSCREW: a fast 130° sweep around the spinning helix
-         finale    settle behind the storm, brain framed clear of the text */
+         protein   CORKSCREW: complete the orbit around the spinning helix
+         finale    return to the opening azimuth, brain clear of the text */
     const dive = THREE.MathUtils.smoothstep(p, 0.02, 0.24);
     /* the protein stage pulls back: the ladder is 3.9 tall and deserves to
        be SEEN — the corkscrew sweeps wide around it, then closes back in */
@@ -1381,12 +1515,21 @@ export function createCellScene(canvas, { quality = "high" } = {}) {
       phoneHeroDolly +
       phoneGameteDolly +
       phoneFusionDolly;
-    const theta =
+    /* Preserve the measured presentation angles through conception: a flat
+       0→TAU interpolation would look directly down the sperm's long axis on
+       its plateau. The helix is rotationally legible, so it owns the larger
+       final sweep. At p=.965 the rig lands on exactly TAU (360°), returning
+       the finale to the opening azimuth without a visible seam. */
+    const preHelixOrbit =
       0.55 * THREE.MathUtils.smoothstep(p, 0.16, 0.3) +
       0.55 * THREE.MathUtils.smoothstep(p, 0.3, 0.46) +
       0.4 * THREE.MathUtils.smoothstep(p, 0.5, 0.64) +
-      0.4 * THREE.MathUtils.smoothstep(p, 0.66, 0.78) +
-      2.2 * THREE.MathUtils.smoothstep(p, 0.8, 0.92);
+      0.4 * THREE.MathUtils.smoothstep(p, 0.66, 0.78);
+    const preHelixOrbitMax = 1.9;
+    const helixOrbit =
+      (Math.PI * 2 - preHelixOrbitMax) *
+      THREE.MathUtils.smoothstep(p, 0.79, 0.965);
+    const theta = preHelixOrbit + helixOrbit;
     /* look-target pan flips with the camera's side so the brain always lands
        screen-right, clear of the stage text — tightened on portrait */
     const phoneFusionPan = phonePortrait ? -0.34 * ovumPull : 0;

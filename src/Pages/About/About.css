@@ -4,10 +4,9 @@
    (.shell/.section/.section-head/.label/.rule/.display-2/.btn-ghost/
    .band/.row). This file consumes both and declares neither.
 
-   The journal, re-cut for the lab: same editorial bones — 900 masthead
-   against the 200 mission pull-quote, mono margin-notes — but on the void,
-   with the masthead and pull-quote filled by the plasma gradient. No new
-   typeface anywhere; the paper is gone, the paper's typography stays.
+   The journal, re-cut for the lab: a measured variable-weight masthead
+   against the light mission pull-quote, mono margin-notes, and one paired
+   locus marker. Solid type replaces the old plasma fill.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* ── PAGE ────────────────────────────────────────────────────────────────── */
@@ -32,7 +31,7 @@
 /* ── GHOST NUMERALS — the field-journal's section index ──────────────────── */
 
 /* Every journal section carries its number as a huge display-register
-   watermark at its top-left: Archivo 900 a shade above the void ground,
+   watermark at its top-left: Archivo display a shade above the void ground,
    so the article reads as a numbered field-journal. The sequence
    is real — render order over the sections the JSON actually ships
    (About.jsx) — and aria-hidden: it indexes document order, nothing more.
@@ -51,7 +50,7 @@
   top: 0;
   left: 0;
   z-index: -1;
-  font-weight: 900;
+  font-weight: 760;
   font-size: var(--fs-display);
   line-height: var(--lh-0);
   letter-spacing: var(--tr-display);
@@ -148,9 +147,9 @@
   gap: var(--s-2);
 }
 
-/* 900 against the note's 11px mono — the paper's figure-heading register. */
+/* A compact semibold against the note's 11px mono. */
 .p-about .feature__title {
-  font-weight: 900;
+  font-weight: 680;
   font-size: var(--fs-3);
   line-height: var(--lh-2);
   letter-spacing: var(--tr-head);
@@ -206,6 +205,11 @@
 }
 
 /* ── CONTACT ─────────────────────────────────────────────────────────────── */
+
+.p-about .about-contact {
+  scroll-margin-top: calc(var(--nav-h) + var(--s-4));
+  outline: none;
+}
 
 .p-about .about-contact__grid {
   display: grid;

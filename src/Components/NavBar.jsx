@@ -1,7 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './NavBar.css';
 import { API_ENDPOINTS, fetchData, prefetch } from '../config/api';
+import { prefetchRouteModule } from '../config/routes';
+
+/* The global wayfinding must never depend on the content network. Remote JSON
+   may rename/reorder these labels, but this complete local record paints on
+   frame one and remains available offline. */
+const DEFAULT_NAV = {
+  brand: 'KBG',
+  tagline: 'Kamand Bioengineering Group',
+  links: [
+    { label: 'Home', to: '/' },
+    { label: 'About', to: '/about' },
+    { label: 'Team', to: '/team' },
+    { label: 'Events', to: '/events' },
+    { label: 'Projects', to: '/projects' },
+    { label: 'Race', to: '/race' },
+  ],
+};
 
 // link.to -> API_ENDPOINTS key. Only these five routes carry data.
 const ENDPOINT_FOR_PATH = {
@@ -18,6 +35,7 @@ const ENDPOINT_FOR_PATH = {
 const prefetched = new Set();
 
 const prefetchRoute = (to) => {
+  prefetchRouteModule(to);
   const key = ENDPOINT_FOR_PATH[to];
   const url = key ? API_ENDPOINTS[key] : null;
   if (!url || prefetched.has(url)) return;
@@ -28,21 +46,28 @@ const prefetchRoute = (to) => {
 const NavBar = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(DEFAULT_NAV);
   const [scrolled, setScrolled] = useState(false);
+  const toggleRef = useRef(null);
+  const progressRef = useRef(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const navbarData = await fetchData(API_ENDPOINTS.navbar);
-        setData(navbarData);
+        const remoteLinks = Array.isArray(navbarData?.links)
+          ? navbarData.links.filter((link) => link?.label && link?.to)
+          : [];
+        /* Race is a first-class interactive route and should remain globally
+           discoverable even while older navbar JSON is still in circulation. */
+        const links = remoteLinks.length ? [...remoteLinks] : DEFAULT_NAV.links;
+        if (!links.some((link) => link.to === '/race')) {
+          links.push(DEFAULT_NAV.links.at(-1));
+        }
+        setData({ ...DEFAULT_NAV, ...navbarData, links });
       } catch (error) {
         console.error('Failed to load navbar data:', error);
-        setData({
-          brand: 'KBG',
-          tagline: 'Kamand Bioengineering Group',
-          links: [],
-        });
+        setData(DEFAULT_NAV);
       }
     };
     loadData();
@@ -53,11 +78,25 @@ const NavBar = () => {
   // with content (About starts on IVORY, where light nav text would vanish),
   // so off-home the bar always carries its backdrop.
   useEffect(() => {
-    const onScroll = () =>
+    let frame = 0;
+    const sync = () => {
+      frame = 0;
       setScrolled(window.scrollY > 48 || location.pathname !== '/');
-    onScroll();
+      const available = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = available > 0 ? Math.min(1, window.scrollY / available) : 0;
+      progressRef.current?.style.setProperty('--nav-progress', progress);
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(sync);
+    };
+    sync();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
   }, [location.pathname]);
 
   // Close menu when route changes
@@ -88,7 +127,10 @@ const NavBar = () => {
   useEffect(() => {
     if (!isMenuOpen) return undefined;
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') setIsMenuOpen(false);
+      if (e.key === 'Escape') {
+        setIsMenuOpen(false);
+        window.requestAnimationFrame(() => toggleRef.current?.focus());
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
@@ -98,10 +140,6 @@ const NavBar = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  if (!data) {
-    return null;
-  }
-
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
@@ -110,10 +148,19 @@ const NavBar = () => {
 
   return (
     <>
-      <nav className={`nav ${scrolled ? 'is-scrolled' : ''}`}>
+      <nav
+        className={`nav ${scrolled ? 'is-scrolled' : ''} ${isMenuOpen ? 'is-menu-open' : ''}`}
+        aria-label="Primary"
+      >
         <div className="shell nav__inner">
           {/* Brand: the real mark — shield, helix and gear. */}
-          <Link to="/" className="nav__brand" onClick={closeMenu}>
+          <Link
+            to="/"
+            className="nav__brand"
+            onClick={closeMenu}
+            onPointerEnter={() => prefetchRoute('/')}
+            onFocus={() => prefetchRoute('/')}
+          >
             <span className="nav__mark" aria-hidden="true">
               <img src="/kbg.svg" alt="" width="30" height="30" />
             </span>
@@ -122,21 +169,30 @@ const NavBar = () => {
               {data.tagline && (
                 <span className="nav__brand-tagline">{data.tagline}</span>
               )}
+              <span className="nav__brand-meta" aria-hidden="true">
+                Bioengineering · IIT Mandi
+              </span>
             </span>
           </Link>
 
           {/* Mobile drawer toggle */}
           <button
+            ref={toggleRef}
             type="button"
             className={`nav__toggle ${isMenuOpen ? 'is-open' : ''}`}
             onClick={toggleMenu}
-            aria-label="Toggle menu"
+            aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={isMenuOpen}
             aria-controls="nav-links"
           >
-            <span className="nav__bar"></span>
-            <span className="nav__bar"></span>
-            <span className="nav__bar"></span>
+            <span className="nav__toggle-label" aria-hidden="true">
+              {isMenuOpen ? 'Close' : 'Menu'}
+            </span>
+            <span className="nav__toggle-bars" aria-hidden="true">
+              <span className="nav__bar" />
+              <span className="nav__bar" />
+              <span className="nav__bar" />
+            </span>
           </button>
 
           {/* Links + system status */}
@@ -146,15 +202,21 @@ const NavBar = () => {
           >
             {links.map((link, i) => (
               <Link
-                key={i}
+                key={`${link.to}-${i}`}
                 to={link.to}
-                className={`nav__link ${location.pathname === link.to ? 'is-active' : ''}`}
+                className={`nav__link${link.to === '/race' ? ' nav__link--race' : ''}${location.pathname === link.to ? ' is-active' : ''}`}
                 aria-current={location.pathname === link.to ? 'page' : undefined}
                 onClick={closeMenu}
                 onPointerEnter={() => prefetchRoute(link.to)}
                 onFocus={() => prefetchRoute(link.to)}
               >
-                {link.label}
+                <span>{link.label}</span>
+                {link.to === '/race' && (
+                  <span className="nav__link-badge">Live sim</span>
+                )}
+                <span className="nav__link-index" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
               </Link>
             ))}
 
@@ -165,7 +227,9 @@ const NavBar = () => {
           </div>
         </div>
 
-        <div className="nav__edge" aria-hidden="true"></div>
+        <div className="nav__edge" aria-hidden="true">
+          <span ref={progressRef} className="nav__progress" />
+        </div>
       </nav>
 
       {/* Drawer scrim */}
