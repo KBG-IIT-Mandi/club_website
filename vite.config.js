@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  test: {
+    // Workspace scratch directories may contain tests from unrelated repos.
+    // Only this application's source tree belongs to its Vitest suite.
+    include: ['src/**/*.test.{js,jsx,ts,tsx}'],
+  },
   build: {
     // CLOSED SOURCE: dist/ is published to a public deploy repo and served
     // publicly — a .map file would ship the entire original source with it.

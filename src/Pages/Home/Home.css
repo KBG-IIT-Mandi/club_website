@@ -369,6 +369,14 @@
   max-width: 40ch;
 }
 
+.p-home .home-join__actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .p-home .hero-cue__arrow { animation: none; }
   .p-home .home-join__blob { animation: none; }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './NavBar.css';
 import { API_ENDPOINTS, fetchData, prefetch } from '../config/api';
+import { DISCORD_INVITE_URL } from '../config/community';
 import { prefetchRouteModule } from '../config/routes';
 
 /* The global wayfinding must never depend on the content network. Remote JSON
@@ -219,6 +220,18 @@ const NavBar = () => {
                 </span>
               </Link>
             ))}
+
+            <a
+              className="nav__discord"
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Join KBG Global on Discord (opens in a new tab)"
+              onClick={closeMenu}
+            >
+              <span>Join Discord</span>
+              <span className="nav__discord-arrow" aria-hidden="true">↗</span>
+            </a>
 
             <span className="nav__status" aria-hidden="true">
               <span className="nav__status-dot" />

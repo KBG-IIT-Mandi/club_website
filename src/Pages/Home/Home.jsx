@@ -4,6 +4,7 @@ import './Home.css';
 import useDocumentTitle from '../../CustomHooks/useDocumentTitle';
 import useDrawOnScroll from '../../CustomHooks/useDrawOnScroll';
 import { API_ENDPOINTS, fetchData } from '../../config/api';
+import { DISCORD_INVITE_URL } from '../../config/community';
 import { ErrorState } from '../../Components/Loading';
 
 /* The field (gsap + the three scene behind it) is its own chunk. The hero
@@ -41,7 +42,6 @@ const STRAIN_LINE =
 const Hero = ({ home }) => {
   const activity = useTelemetry();
   const hero = home?.hero || {};
-  const cta = hero.cta && hero.cta.href && hero.cta.label ? hero.cta : null;
 
   return (
     <>
@@ -70,11 +70,16 @@ const Hero = ({ home }) => {
           <Link className="btn-primary" to="/projects" data-cursor="explore">
             Enter the lab
           </Link>
-          {cta && (
-            <a className="btn-ghost" href={cta.href} data-cursor="explore">
-              Join the collective
-            </a>
-          )}
+          <a
+            className="btn-ghost"
+            href={DISCORD_INVITE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Join KBG Global on Discord (opens in a new tab)"
+            data-cursor="explore"
+          >
+            Join Discord
+          </a>
         </div>
       </div>
 
@@ -291,9 +296,21 @@ const Home = () => {
             The lab takes new researchers every semester. Bring biology,
             bring code, bring hardware — bring curiosity.
           </p>
-          <a className="btn-primary" href={mailto} data-cursor="explore">
-            Join the collective
-          </a>
+          <div className="home-join__actions">
+            <a
+              className="btn-primary"
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Join KBG Global on Discord (opens in a new tab)"
+              data-cursor="explore"
+            >
+              Join KBG Global
+            </a>
+            <a className="btn-ghost" href={mailto} data-cursor="explore">
+              Contact the club
+            </a>
+          </div>
         </div>
       </section>
     </div>

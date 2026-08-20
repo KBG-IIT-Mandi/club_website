@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { API_ENDPOINTS, fetchData } from "../../config/api";
+import { DISCORD_INVITE_URL } from "../../config/community";
 import "./Footer.css";
 
 /* The footer is the lab's telemetry block: station coordinates, the last
@@ -75,7 +76,9 @@ const Footer = () => {
     };
   }, []);
 
-  const links = Array.isArray(data.links) ? data.links : [];
+  const links = Array.isArray(data.links)
+    ? data.links.filter((link) => link?.href !== DISCORD_INVITE_URL)
+    : [];
 
   return (
     <footer className="foot world-lab">
@@ -99,8 +102,7 @@ const Footer = () => {
         <div className="foot__small">
           {data.text && <p className="foot__text">{data.text}</p>}
 
-          {!!links.length && (
-            <nav className="foot__links" aria-label="Footer">
+          <nav className="foot__links" aria-label="Footer">
               {links.map((link, i) => {
                 if (!link || !link.href || !link.label) return null;
                 if (link.href.startsWith("/")) {
@@ -132,8 +134,17 @@ const Footer = () => {
                   </a>
                 );
               })}
-            </nav>
-          )}
+            <a
+              className="foot__link"
+              href={DISCORD_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Discord (opens in a new tab)"
+            >
+              Discord
+              <span className="foot__external" aria-hidden="true">↗</span>
+            </a>
+          </nav>
         </div>
       </div>
     </footer>

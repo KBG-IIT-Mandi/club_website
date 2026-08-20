@@ -176,6 +176,38 @@
   border-bottom-color: var(--bio);
 }
 
+.nav__discord {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 36px;
+  padding-inline: var(--s-3);
+  border: 1px solid var(--bio-dim);
+  color: var(--bio);
+  font-family: var(--font-mono);
+  font-size: var(--fs-0);
+  font-weight: 700;
+  letter-spacing: var(--tr-label);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
+}
+
+.nav__discord:hover,
+.nav__discord:focus-visible {
+  background: var(--bio);
+  color: var(--void);
+}
+
+.nav__discord-arrow {
+  color: var(--data);
+}
+
+.nav__discord:hover .nav__discord-arrow,
+.nav__discord:focus-visible .nav__discord-arrow {
+  color: currentcolor;
+}
+
 @media (max-width: 1080px) and (min-width: 861px) {
   .nav__links { gap: var(--s-4); }
   .nav__brand-tagline,
@@ -462,6 +494,15 @@
 
   .nav__link.is-active .nav__link-index {
     color: var(--bio);
+  }
+
+  .nav__discord {
+    justify-content: space-between;
+    width: 100%;
+    min-height: 52px;
+    margin-top: var(--s-5);
+    padding-inline: var(--s-4);
+    font-size: var(--fs-1);
   }
 
   .nav__status {
