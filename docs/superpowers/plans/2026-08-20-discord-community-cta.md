@@ -114,11 +114,11 @@ Run: `git diff --check && git status --short && git diff -- src/config/community
 
 Expected: no whitespace errors and no unrelated tracked files.
 
-- [ ] **Step 3: Commit and push**
+- [x] **Step 3: Commit and push**
 
 Stage only the spec, plan, configuration, test, and component files. Commit with `feat: publish Discord community invite`, then run `git push origin main`.
 
-- [ ] **Step 4: Verify remote delivery**
+- [x] **Step 4: Verify remote delivery**
 
 Run: `git rev-parse HEAD && git ls-remote origin refs/heads/main`
 
